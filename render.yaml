@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: cabinet_compta
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python manage.py migrate && gunicorn cabinet_compta.wsgi:application
+    rootDir: .
