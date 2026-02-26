@@ -347,7 +347,6 @@ def liste_mois_client(request, client_id):
 
 from django.template.loader import get_template
 from django.http import HttpResponse
-from xhtml2pdf import pisa
 
 @login_required
 def export_pdf_variables(request, paie_mois_id):
