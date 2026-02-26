@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% load custom_tags %}
+
+{% block content %}
+
+<section class="section">
+
+
+<h1>Saisie TVA mensuelle – {{ tca.client.nom }} ({{ tca.module.annee.annee }})</h1>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <table class="table table-bordered align-middle mt-4">
+        <thead>
+            <tr>
+                <th>Mois</th>
+                <th>Montant TVA</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <!-- JANVIER -->
+            <tr>
+                <td>Janvier</td>
+                <td>
+                    <input type="text" name="tva_janvier" class="form-control"
+                           value="{{ declaration.tva_janvier }}">
+                </td>
+                <td>
+                    <select name="statut_janvier" class="form-select">
+                        {% for code, label in declaration.TVA_STATUTS %}
+                            <option value="{{ code }}"
+                                {% if declaration.statut_janvier == code %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- FÉVRIER -->
+            <tr>
+                <td>Février</td>
+                <td>
+                    <input type="text" name="tva_fevrier" class="form-control"
+                           value="{{ declaration.tva_fevrier }}">
+                </td>
+                <td>
+                    <select name="statut_fevrier" class="form-select">
+                        {% for code, label in declaration.TVA_STATUTS %}
+                            <option value="{{ code }}"
+                                {% if declaration.statut_fevrier == code %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- MARS -->
+            <tr>
+                <td>Mars</td>
+                <td>
+                    <input type="text" name="tva_mars" class="form-control"
+                           value="{{ declaration.tva_mars }}">
+                </td>
+                <td>
+                    <select name="statut_mars" class="form-select">
+                        {% for code, label in declaration.TVA_STATUTS %}
+                            <option value="{{ code }}"
+                                {% if declaration.statut_mars == code %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- AVRIL -->
+            <tr>
+                <td>Avril</td>
+                <td>
+                    <input type="text" name="tva_avril" class="form-control"
+                           value="{{ declaration.tva_avril }}">
+                </td>
+                <td>
+                    <select name="statut_avril" class="form-select">
+                        {% for code, label in declaration.TVA_STATUTS %}
+                            <option value="{{ code }}"
+                                {% if declaration.statut_avril == code %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- MAI -->
+            <tr>
+                <td>Mai</td>
+                <td>
+                    <input type="text" name="tva_mai" class="form-control"
+                           value="{{ declaration.tva_mai }}">
+                </td>
+                <td>
+                    <select name="statut_mai" class="form-select">
+                        {% for code, label in declaration.TVA_STATUTS %}
+                            <option value="{{ code }}"
+                                {% if declaration.statut_mai == code %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- JUIN -->
+            <tr>
+                <td>Juin</td>
+                <td>
+                    <input type="text" name="tva_juin" class="form-control"
+                           value="{{ declaration.tva_juin }}">
+                </td>
+                <td>
+                    <select name="statut_juin" class="form-select">
+                        {% for code, label in declaration.TVA_STATUTS %}
+                            <option value="{{ code }}"
+                                {% if declaration.statut_juin == code %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- JUILLET -->
+            <tr>
+                <td>Juillet</td>
+                <td>
+                    <input type="text" name="tva_juillet" class="form-control"
+                           value="{{ declaration.tva_juillet }}">
+                </td>
+                <td>
+                    <select name="statut_juillet" class="form-select">
+                        {% for code, label in declaration.TVA_STATUTS %}
+                            <option value="{{ code }}"
+                                {% if declaration.statut_juillet == code %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- AOÛT -->
+            <tr>
+                <td>Août</td>
+                <td>
+                    <input type="text" name="tva_aout" class="form-control"
+                           value="{{ declaration.tva_aout }}">
+                </td>
+                <td>
+                    <select name="statut_aout" class="form-select">
+                        {% for code, label in declaration.TVA_STATUTS %}
+                            <option value="{{ code }}"
+                                {% if declaration.statut_aout == code %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- SEPTEMBRE -->
+            <tr>
+                <td>Septembre</td>
+                <td>
+                    <input type="text" name="tva_septembre" class="form-control"
+                           value="{{ declaration.tva_septembre }}">
+                </td>
+                <td>
+                    <select name="statut_septembre" class="form-select">
+                        {% for code, label in declaration.TVA_STATUTS %}
+                            <option value="{{ code }}"
+                                {% if declaration.statut_septembre == code %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- OCTOBRE -->
+            <tr>
+                <td>Octobre</td>
+                <td>
+                    <input type="text" name="tva_octobre" class="form-control"
+                           value="{{ declaration.tva_octobre }}">
+                </td>
+                <td>
+                    <select name="statut_octobre" class="form-select">
+                        {% for code, label in declaration.TVA_STATUTS %}
+                            <option value="{{ code }}"
+                                {% if declaration.statut_octobre == code %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- NOVEMBRE -->
+            <tr>
+                <td>Novembre</td>
+                <td>
+                    <input type="text" name="tva_novembre" class="form-control"
+                           value="{{ declaration.tva_novembre }}">
+                </td>
+                <td>
+                    <select name="statut_novembre" class="form-select">
+                        {% for code, label in declaration.TVA_STATUTS %}
+                            <option value="{{ code }}"
+                                {% if declaration.statut_novembre == code %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- DÉCEMBRE -->
+            <tr>
+                <td>Décembre</td>
+                <td>
+                    <input type="text" name="tva_decembre" class="form-control"
+                           value="{{ declaration.tva_decembre }}">
+                </td>
+                <td>
+                    <select name="statut_decembre" class="form-select">
+                        {% for code, label in declaration.TVA_STATUTS %}
+                            <option value="{{ code }}"
+                                {% if declaration.statut_decembre == code %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+
+        </tbody>
+    </table>
+
+<div class="d-flex justify-content-between align-items-center mt-4">
+
+    {# --- Bouton gauche : Retour au module mensuel --- #}
+    <a href="{% url 'tva_clients_module' tca.module.id %}"
+       class="btn btn-outline-secondary">
+        Retour au Module Mensuel
+    </a>
+
+    <div class="d-flex gap-2">
+
+        {# --- Bouton centre : Retour à la gestion TVA mensuelle --- #}
+        <a href="{% url 'tva_gestion_ca3m' %}?annee={{ tca.annee.id }}"
+           class="btn btn-outline-dark">
+            Retour
+        </a>
+
+        {# --- Bouton droite : Enregistrer --- #}
+        <button type="submit" class="btn btn-primary">
+            Enregistrer
+        </button>
+
+    </div>
+
+</div>
+
+</form>
+
+{% endblock %}

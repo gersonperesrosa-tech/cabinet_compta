@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="section">
+
+<div class="py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Mes tâches</h2>
+
+        <a href="{% url 'user_space' %}" class="btn btn-outline-secondary">
+            ← Retour au tableau de bord
+        </a>
+    </div>
+
+    <div class="row">
+
+        <!-- ========================= -->
+        <!--   COLONNE GAUCHE : LISTE  -->
+        <!-- ========================= -->
+        <div class="col-lg-7">
+
+            <!-- SECTION : Aujourd’hui -->
+            {% if today_tasks %}
+                <h4 class="mt-4">Aujourd’hui</h4>
+                <ul class="list-group mb-4">
+                    {% for todo in today_tasks %}
+                        {% include "todo/todo_item.html" %}
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <!-- SECTION : Demain -->
+            {% if tomorrow_tasks %}
+                <h4 class="mt-4">Demain</h4>
+                <ul class="list-group mb-4">
+                    {% for todo in tomorrow_tasks %}
+                        {% include "todo/todo_item.html" %}
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <!-- SECTION : À venir -->
+            {% if upcoming_tasks %}
+                <h4 class="mt-4">À venir</h4>
+                <ul class="list-group mb-4">
+                    {% for todo in upcoming_tasks %}
+                        {% include "todo/todo_item.html" %}
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <!-- SECTION : Sans date -->
+            {% if no_date_tasks %}
+                <h4 class="mt-4">Sans date</h4>
+                <ul class="list-group mb-4">
+                    {% for todo in no_date_tasks %}
+                        {% include "todo/todo_item.html" %}
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <!-- SECTION : En retard -->
+            {% if overdue_tasks %}
+                <h4 class="mt-4 text-danger">En retard</h4>
+                <ul class="list-group mb-4">
+                    {% for todo in overdue_tasks %}
+                        {% include "todo/todo_item.html" %}
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <!-- SECTION : Terminées -->
+            {% if completed_tasks %}
+                <h4 class="mt-4 text-muted">Terminées</h4>
+                <ul class="list-group mb-4">
+                    {% for todo in completed_tasks %}
+                        {% include "todo/todo_item.html" %}
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+        </div>
+
+
+<!-- ========================= -->
+<!--   COLONNE DROITE : FORM   -->
+<!-- ========================= -->
+<div class="col-lg-5">
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-light fw-bold">
+            Nouvelle tâche
+        </div>
+
+        <div class="card-body">
+
+            <form method="POST" action="{% url 'todo_add' %}">
+                {% csrf_token %}
+
+                <!-- Titre -->
+                <label class="form-label">Titre</label>
+                <input type="text" name="title" class="form-control" required>
+
+                <!-- Description -->
+                <label class="form-label mt-3">Description</label>
+                <textarea name="description" class="form-control"></textarea>
+
+                <!-- Priorité -->
+                <label class="form-label mt-3">Priorité</label>
+                <select name="priority" class="form-select">
+                    <option value="low">Faible</option>
+                    <option value="normal" selected>Normale</option>
+                    <option value="high">Haute</option>
+                </select>
+
+                <!-- Date d’échéance -->
+                <label class="form-label mt-3">Date d’échéance</label>
+                <input type="date" name="due_date" class="form-control">
+
+                <!-- Rappel -->
+                <label class="form-label mt-3">Rappel</label>
+                <input type="datetime-local" name="reminder_date" class="form-control">
+
+                <!-- Récurrence -->
+                <label class="form-label mt-3">Récurrence</label>
+                <select name="recurrence_type" class="form-select" id="recurrenceSelect">
+                    <option value="none">Aucune</option>
+                    <option value="monthly_first">Tous les 1er du mois</option>
+                    <option value="monthly_day">Tous les mois le…</option>
+                </select>
+
+                <!-- Jour du mois (affiché seulement si nécessaire) -->
+                <div id="recurrenceDayWrapper" class="mt-3" style="display:none;">
+                    <label class="form-label">Jour du mois</label>
+                    <input type="number" name="recurrence_day" class="form-control" min="1" max="31">
+                </div>
+
+                <div class="mt-4">
+                    <button class="btn btn-primary w-100">Créer la tâche</button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- Script pour afficher/masquer le champ "jour du mois" -->
+<script>
+document.getElementById("recurrenceSelect").addEventListener("change", function() {
+    const show = this.value === "monthly_day";
+    document.getElementById("recurrenceDayWrapper").style.display = show ? "block" : "none";
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="m-0">Gestion TVS</h1>
+
+    <div class="d-flex align-items-center gap-3">
+        <input type="text" id="searchInput" class="form-control"
+               placeholder="Rechercher un client…" style="width:220px;">
+
+        <form method="GET" class="m-0">
+            <select name="annee" class="form-select py-2"
+                    style="width:120px;" onchange="this.form.submit()">
+                {% for a in annees %}
+                    <option value="{{ a.annee }}" {% if a.annee == annee.annee %}selected{% endif %}>
+                        {{ a.annee }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+</div>
+
+<table class="table table-bordered align-middle mt-4">
+    <thead class="table-light">
+        <tr>
+            <th>Client</th>
+            <th>TVS N‑1</th>
+            <th>Montant</th>
+            <th>Statut</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+    {% for cm in cms %}
+        {% with decl=cm.tvs_declaration %}
+        <tr>
+            <td><strong>{{ cm.client.nom }}</strong></td>
+
+            <td>{{ decl.tvs_n_1|default:"—" }}</td>
+
+            <td>{{ decl.montant|default:"—" }}</td>
+
+            <td>
+                {% include "partials/statut_badge.html" with statut=decl.statut_tvs %}
+            </td>
+
+            <td>
+                <a href="{% url 'tvs_saisie' cm.id %}" class="btn btn-sm btn-outline-primary">
+                    Saisir TVS
+                </a>
+            </td>
+        </tr>
+        {% endwith %}
+    {% endfor %}
+    </tbody>
+</table>
+
+</section>
+
+<script>
+document.getElementById("searchInput").addEventListener("keyup", function () {
+    let filter = this.value.toLowerCase();
+    let rows = document.querySelectorAll("table tbody tr");
+
+    rows.forEach(row => {
+        let name = row.querySelector("td strong").textContent.toLowerCase();
+        row.style.display = name.includes(filter) ? "" : "none";
+    });
+});
+</script>
+
+{% endblock %}

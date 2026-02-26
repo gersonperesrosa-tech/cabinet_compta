@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="section">
+
+<h1>Saisie CFE – {{ client_module.client.nom }} ({{ client_module.annee.annee }})</h1>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <table class="table table-bordered align-middle mt-4">
+        <thead>
+            <tr>
+                <th>Élément</th>
+                <th>Montant / Info</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <tr>
+                <td><strong>CFE N‑1</strong></td>
+                <td>
+                    <input type="text"
+                           class="form-control"
+                           value="{{ declaration.cfe_n_1 }}"
+                </td>
+                <td></td>
+            </tr>
+
+            <tr>
+                <td><strong>Acompte CFE (15/06)</strong></td>
+                <td>
+                    <input type="text"
+                           name="acompte_cfe"
+			   id="acompte_cfe"
+                           class="form-control"
+                           value="{{ declaration.acompte_cfe }}">
+                </td>
+                <td>
+                    <select name="statut_acompte" class="form-select">
+                        {% include "partials/statut_options.html" with selected=declaration.statut_acompte %}
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td><strong>Solde CFE</strong></td>
+                <td>
+                    <input type="text"
+                           name="solde_cfe"
+			   id="solde_cfe"
+                           class="form-control"
+                           value="{{ declaration.solde_cfe }}">
+                </td>
+                <td>
+                    <select name="statut_solde" class="form-select">
+                        {% include "partials/statut_options.html" with selected=declaration.statut_solde %}
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td><strong>Mode de paiement</strong></td>
+                <td>
+                    <input type="text"
+                           name="mode_paiement"
+                           class="form-control"
+                           value="{{ declaration.mode_paiement }}">
+                </td>
+                <td></td>
+            </tr>
+
+            <tr>
+                <td><strong>Dégrèvement</strong></td>
+                <td>
+                    <input type="text"
+                           name="degrevement"
+                           class="form-control"
+                           value="{{ declaration.degrevement }}">
+                </td>
+                <td></td>
+            </tr>
+
+            <tr>
+                <td><strong>Formulaire 1447C</strong></td>
+                <td>
+                    <input type="text"
+                           name="formulaire_1447c"
+                           class="form-control"
+                           value="{{ declaration.formulaire_1447c }}">
+                </td>
+                <td>
+                    <select name="statut_1447c" class="form-select">
+                        {% include "partials/statut_options.html" with selected=declaration.statut_1447c %}
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td><strong>Commentaire si CFE > 3000 €</strong></td>
+                <td colspan="2">
+                    <textarea name="commentaire_plus_3000"
+                              class="form-control"
+                              rows="3">{{ declaration.commentaire_plus_3000 }}</textarea>
+                </td>
+            </tr>
+
+        </tbody>
+    </table>
+
+    <div class="p-3 mt-4 rounded" style="background:#f5f7fa; border:1px solid #dce1e7;">
+        <strong>Total CFE :</strong>
+        <span id="total_cfe_display" style="font-size:1.2rem; font-weight:600;">
+            {{ declaration.total_cfe|floatformat:2 }} €
+        </span>
+    </div>
+
+    <!-- BOUTONS BAS DE PAGE -->
+    <div class="d-flex justify-content-between align-items-center mt-4">
+
+        <!-- Bouton gauche : Retour au Module CFE -->
+        <a href="{% url 'fiscal_clients_module' client_module.annee.id client_module.module.id %}"
+           class="btn btn-outline-secondary">
+            Retour au Module CFE
+        </a>
+
+        <div class="d-flex gap-2 justify-content-end">
+
+            <!-- Bouton centre : Retour à la gestion CFE -->
+            <a href="{% url 'cfe_gestion' client_module.annee.id %}"
+               class="btn btn-outline-dark">
+                Retour
+            </a>
+
+            <!-- Bouton droite : Enregistrer -->
+            <button type="submit" class="btn btn-primary">
+                Enregistrer
+            </button>
+
+        </div>
+
+    </div>
+
+</form>
+
+<script>
+function toNumber(value) {
+    if (!value) return 0;
+    return parseFloat(value.replace(",", "."));
+}
+
+function updateTotalCFE() {
+    const acompte = toNumber(document.getElementById("acompte_cfe").value);
+    const solde = toNumber(document.getElementById("solde_cfe").value);
+
+    const total = acompte + solde;
+
+    document.getElementById("total_cfe_display").innerText =
+        total.toFixed(2).replace(".", ",") + " €";
+}
+
+// Mise à jour en temps réel
+document.getElementById("acompte_cfe").addEventListener("input", updateTotalCFE);
+document.getElementById("solde_cfe").addEventListener("input", updateTotalCFE);
+</script>
+
+
+</section>
+
+{% endblock %}

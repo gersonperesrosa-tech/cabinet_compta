@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section">
+
+<h1>Saisie Dividendes – {{ client_module.client.nom }} ({{ client_module.annee.annee }})</h1>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <table class="table table-bordered align-middle mt-4">
+
+        <tr>
+            <th>Nom</th>
+            <td colspan="2">
+                <input type="text" name="nom" class="form-control"
+                       value="{{ declaration.nom }}">
+            </td>
+        </tr>
+
+        <tr>
+            <th>Montant des dividendes</th>
+            <td colspan="2">
+                <input type="text" name="montant" class="form-control"
+                       value="{{ declaration.montant }}">
+            </td>
+        </tr>
+
+        <tr>
+            <th>Date de paiement</th>
+            <td colspan="2">
+                <input type="date" name="date_paiement" class="form-control"
+                       value="{{ declaration.date_paiement|date:'Y-m-d' }}">
+            </td>
+        </tr>
+
+        <tr>
+            <th>Date 2777D</th>
+            <td colspan="2">
+                <input type="date" name="date_2777d" class="form-control"
+                       value="{{ declaration.date_2777d|date:'Y-m-d' }}">
+            </td>
+        </tr>
+
+        <tr>
+            <th>Date 2561</th>
+            <td colspan="2">
+                <input type="date" name="date_2561" class="form-control"
+                       value="{{ declaration.date_2561|date:'Y-m-d' }}">
+            </td>
+        </tr>
+
+        <tr>
+            <th>Année de versement</th>
+            <td colspan="2">
+                <input type="text" name="annee_versement" class="form-control"
+                       value="{{ declaration.annee_versement }}">
+            </td>
+        </tr>
+
+        <tr>
+            <th>Commentaires</th>
+            <td colspan="2">
+                <textarea name="commentaires" class="form-control" rows="3">{{ declaration.commentaires }}</textarea>
+            </td>
+        </tr>
+
+        <tr>
+            <th>Statut des dividendes</th>
+            <td colspan="2">
+                <select name="statut_dividendes" class="form-select">
+                    {% include "partials/statut_options.html" with selected=declaration.statut_dividendes %}
+                </select>
+            </td>
+        </tr>
+
+    </table>
+
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{% url 'fiscal_clients_module' client_module.annee.id client_module.module.id %}"
+           class="btn btn-outline-secondary">Retour</a>
+
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+    </div>
+
+</form>
+
+</section>
+
+{% endblock %}

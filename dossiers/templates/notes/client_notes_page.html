@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<section class="section">
+
+<div class="container py-4">
+
+    <!-- HEADER -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="m-0">Notes privées – {{ client.nom }}</h3>
+
+    <div class="d-flex gap-2">
+        <a href="{% url 'fiche_client' client.id %}" class="btn btn-secondary">
+            ← Fiche client
+        </a>
+
+    </div>
+</div>
+
+    <div class="row">
+
+        <!-- COLONNE GAUCHE (30%) -->
+        <div class="col-lg-4 col-md-12">
+
+            <!-- FORMULAIRE AJOUT NOTE -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h5 class="mb-3">Ajouter une note</h5>
+
+                    <form method="POST">
+                        {% csrf_token %}
+
+                        <textarea name="contenu" class="form-control mb-3"
+                                  placeholder="Écrire une note…" rows="4"></textarea>
+
+                        <!-- CATEGORIE -->
+                        <label class="form-label">Catégorie</label>
+                        <select name="categorie" class="form-select mb-3">
+                            <option value="">—</option>
+                            {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.nom }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <button class="btn btn-primary w-100">Ajouter</button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- COLONNE DROITE (70%) -->
+        <div class="col-lg-8 col-md-12">
+
+            <!-- FILTRE GLOBAL -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h5 class="mb-3">Filtrer les notes</h5>
+
+                    <input type="text" id="searchInput" class="form-control"
+                           placeholder="Rechercher dans toutes les notes…">
+                </div>
+            </div>
+
+            <!-- GESTION CATEGORIES + NOUVELLE CATEGORIE -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="m-0">Catégories</h5>
+
+                        <!-- AJOUT CATEGORIE -->
+                        <form method="POST" action="{% url 'add_categorie' client.id %}" class="d-flex">
+                            {% csrf_token %}
+                            <input name="nom" class="form-control form-control-sm me-2"
+                                   placeholder="Nouvelle catégorie">
+                            <button class="btn btn-sm btn-primary">+</button>
+                        </form>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for cat in categories %}
+                            <span class="badge bg-secondary">
+                                {{ cat.nom }}
+                                <a href="{% url 'delete_categorie' cat.id %}" class="text-white ms-1">×</a>
+                            </span>
+                        {% endfor %}
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TIMELINE PREMIUM -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+
+                    <h5 class="mb-4">Timeline</h5>
+
+                    <div class="timeline">
+
+                        {% for note in notes %}
+                            <div class="timeline-item mb-4 note-item"
+                                 data-text="{{ note.contenu|striptags|lower }}"
+                                 data-categorie="{{ note.categorie_nom|lower }}">
+
+                                <div class="timeline-dot"></div>
+
+                                <div class="timeline-content">
+
+                                    <div class="d-flex justify-content-between">
+                                        <div class="small text-muted">
+                                            {{ note.created_at|date:"d/m/Y H:i" }}
+                                        </div>
+
+                                        <div>
+                                            <a href="{% url 'edit_note' note.id %}"
+                                               class="btn btn-sm btn-outline-primary">Éditer</a>
+
+                                            <a href="{% url 'delete_note' note.id %}"
+                                               class="btn btn-sm btn-outline-danger">Supprimer</a>
+                                        </div>
+                                    </div>
+
+                                    <div class="fw-bold mt-2">
+                                        {{ note.categorie.nom|default:"Note" }}
+                                    </div>
+
+                                    <div class="mt-2">{{ note.contenu|linebreaks }}</div>
+
+                                </div>
+                            </div>
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- SCRIPT FILTRE DYNAMIQUE -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.getElementById("searchInput");
+    const notes = document.querySelectorAll(".note-item");
+
+    if (!searchInput) return;
+
+    searchInput.addEventListener("input", function() {
+        const q = this.value.toLowerCase();
+
+        notes.forEach(note => {
+            const text = (note.dataset.text || "").toLowerCase();
+            const match = text.includes(q);
+            note.style.display = match ? "" : "none";
+        });
+    });
+});
+</script>
+
+<!-- STYLE TIMELINE -->
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+.timeline::before {
+    content: "";
+    position: absolute;
+    left: 12px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #e5e7eb;
+}
+.timeline-item {
+    position: relative;
+}
+.timeline-dot {
+    position: absolute;
+    left: -2px;
+    width: 15px;
+    height: 15px;
+    background: #0d6efd;
+    border-radius: 50%;
+    top: 5px;
+}
+.timeline-content {
+    margin-left: 20px;
+}
+</style>
+
+{% endblock %}

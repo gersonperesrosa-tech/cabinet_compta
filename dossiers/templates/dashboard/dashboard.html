@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="page-title mb-4">Dashboard</div>
+
+<!-- SECTION : KPIs -->
+<div class="dashboard-grid mb-4">
+    <div class="kpi-card">Nombre de clients : {{ total_clients }}</div>
+    <div class="kpi-card">Bulletins du mois : {{ bulletins_count }}</div>
+    <div class="kpi-card">Tâches en cours : {{ tasks_count }}</div>
+</div>
+
+<!-- SECTION : Graphiques -->
+<div class="section-title mb-3">Statistiques</div>
+
+<div class="two-columns mb-4">
+    <div class="corporate-card p-3">
+        <h5 class="mb-3">Graphique 1</h5>
+        <!-- Ton premier graphique -->
+        {{ graph1|safe }}
+    </div>
+
+    <div class="corporate-card p-3">
+        <h5 class="mb-3">Graphique 2</h5>
+        <!-- Ton deuxième graphique -->
+        {{ graph2|safe }}
+    </div>
+</div>
+
+<!-- SECTION : Calendrier -->
+<div class="section-title mb-3">Calendrier</div>
+
+<div class="corporate-card p-3">
+    <!-- Ton calendrier -->
+    {{ calendar|safe }}
+</div>
+
+{% endblock %}

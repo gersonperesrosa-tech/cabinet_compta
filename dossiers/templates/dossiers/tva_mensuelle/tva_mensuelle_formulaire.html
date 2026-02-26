@@ -1,0 +1,126 @@
+<form id="form-tva-mensuelle" data-client="{{ client.id }}">
+
+<div class="modal-header">
+    <h5 class="modal-title">TVA mensuelle – {{ client.nom }}</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+
+
+<style>
+    .popup-container {
+        padding: 10px 5px 80px;
+    }
+
+    .form-section {
+        background: #ffffff;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .form-section h5 {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 15px;
+        color: #374151;
+        border-left: 4px solid #0d6efd;
+        padding-left: 10px;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 15px 20px;
+    }
+
+    .form-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #4b5563;
+        margin-bottom: 4px;
+    }
+
+    .form-control, .form-select {
+        border-radius: 6px;
+        height: 36px;
+    }
+
+    .modal-footer-fixed {
+        position: sticky;
+        bottom: 0;
+        background: #ffffff;
+        padding: 15px;
+        border-top: 1px solid #e5e7eb;
+        text-align: right;
+        box-shadow: 0 -2px 6px rgba(0,0,0,0.05);
+    }
+</style>
+
+<div class="popup-container">
+
+    <!-- SECTION 1 : Informations générales -->
+    <div class="form-section">
+        <h5>Informations générales</h5>
+
+        <div class="form-grid">
+
+            <div>
+                <label class="form-label">Numéro client</label>
+                <input type="text" class="form-control" value="{{ client.numero }}" disabled>
+            </div>
+
+            <div>
+                <label class="form-label">Régime TVA</label>
+                <input type="text" class="form-control" value="{{ client.regime_tva }}" disabled>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- SECTION 2 : Déclarations mensuelles -->
+    <div class="form-section">
+        <h5>Déclarations mensuelles</h5>
+
+        <div class="form-grid">
+
+            {% for mois, label in 
+                "janvier:Janvier,février:Février,mars:Mars,avril:Avril,mai:Mai,juin:Juin,juillet:Juillet,août:Août,septembre:Septembre,octobre:Octobre,novembre:Novembre,décembre:Décembre".split(",") 
+            %}
+                {% with 
+                    mois_slug=mois.split(":")[0] 
+                    mois_label=mois.split(":")[1] 
+                %}
+
+                <div>
+                    <label class="form-label">TVA {{ mois_label }}</label>
+                    <input type="text" class="form-control"
+                           name="tva_{{ mois_slug }}"
+                           value="{{ tva|get_item:'tva_'|add:mois_slug }}">
+                </div>
+
+                <div>
+                    <label class="form-label">Statut {{ mois_label }}</label>
+                    <select name="statut_{{ mois_slug }}" class="form-select">
+                        <option value="BLANC" {% if tva|get_item:'statut_'|add:mois_slug == "BLANC" %}selected{% endif %}>Blanc</option>
+                        <option value="JAUNE" {% if tva|get_item:'statut_'|add:mois_slug == "JAUNE" %}selected{% endif %}>Jaune</option>
+                        <option value="VERT_CLAIR" {% if tva|get_item:'statut_'|add:mois_slug == "VERT_CLAIR" %}selected{% endif %}>Vert clair</option>
+                        <option value="VERT_FONCE" {% if tva|get_item:'statut_'|add:mois_slug == "VERT_FONCE" %}selected{% endif %}>Vert foncé</option>
+                    </select>
+                </div>
+
+                {% endwith %}
+            {% endfor %}
+
+        </div>
+    </div>
+
+</div>
+
+<!-- FOOTER FIXE -->
+<div class="modal-footer-fixed">
+    <button type="submit" class="btn btn-primary px-4">Enregistrer</button>
+</div>
+
+</form>

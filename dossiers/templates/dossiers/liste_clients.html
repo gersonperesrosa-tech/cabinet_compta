@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="section">
+
+    <!-- Ligne : Titre + Recherche + Bouton Ajouter -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+
+        <!-- Titre -->
+        <h1 class="mb-0">Liste des clients</h1>
+
+        <!-- Recherche + Bouton -->
+        <div class="d-flex align-items-center gap-2">
+
+            <!-- Barre de recherche -->
+            <input type="text"
+                   id="global-search"
+                   placeholder="Rechercher..."
+                   class="global-search form-control">
+
+            <!-- Bouton Ajouter un client -->
+ 
+<a href="{% url 'ajouter_client' %}"
+   class="btn btn-primary"
+   style="white-space: nowrap; height: 38px;">
+    + Ajouter un client
+</a>
+
+
+        </div>
+    </div>
+
+    <!-- Tableau -->
+    <div class="table-responsive">
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Numéro</th>
+                    <th>Nom</th>
+                    <th>Forme juridique</th>
+                    <th>Régime d’imposition</th>
+                    <th>Régime TVA</th>
+                    <th>Jour échéance TVA</th>
+                    <th>Périodicité</th>
+                    <th>Modules</th> <!-- ⭐ nouvelle colonne --> 
+                    <th></th> <!-- actions -->
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for client in clients %}
+                <tr>
+<tr style="cursor:pointer;" onclick="window.location.href='{% url 'fiche_client' client.id %}'"> <td>{{ client.numero }}</td>
+
+                    <td>
+                        <a href="{% url 'fiche_client' client.id %}" class="client-link">
+                            {{ client.nom }}
+                        </a>
+                    </td>
+
+                    <td>{{ client.forme_juridique|default_if_none:"" }}</td>
+                    <td>{{ client.regime_imposition|default_if_none:"" }}</td>
+                    <td>{{ client.regime_tva|default_if_none:"" }}</td>
+                    <td>{{ client.jour_echeance_tva|default_if_none:"" }}</td>
+                    <td>{{ client.periodicite|default_if_none:"" }}</td>
+               <!-- ICI on ajoute la cellule Modules --> 
+<td class="text-center">
+
+    <!-- Saisie comptable -->
+    {% if client.module_saisie %}
+        <span class="badge rounded-pill bg-primary">Saisie</span>
+    {% endif %}
+
+    <!-- Paie -->
+    {% if client.module_paie %}
+        <span class="badge rounded-pill bg-success">Paie</span>
+    {% endif %}
+
+    <!-- TVA -->
+    {% if client.tva_actuelle %}
+        {% with tva=client.tva_actuelle.0 %}
+            <span class="badge rounded-pill bg-info">
+                TVA : {{ tva.module.get_type_display }}
+            </span>
+        {% endwith %}
+    {% else %}
+        <span class="badge rounded-pill bg-light text-muted">TVA : —</span>
+    {% endif %}
+
+    <!-- Fiscalité -->
+    {% if client.fiscal_actuel %}
+        {% for mf in client.fiscal_actuel %}
+            <span class="badge rounded-pill bg-warning text-dark">
+                {{ mf.module.nom }}
+            </span>
+        {% endfor %}
+    {% else %}
+        <span class="badge rounded-pill bg-light text-muted">Fiscal :—</span>
+    {% endif %}
+
+</td>
+
+</td>
+                   
+
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+
+</section>
+
+<!-- Recherche dynamique -->
+<script>
+document.getElementById("global-search").addEventListener("keyup", function() {
+    let filter = this.value.toLowerCase();
+    let rows = document.querySelectorAll(".table tbody tr");
+
+    rows.forEach(row => {
+        let text = row.textContent.toLowerCase();
+        row.style.display = text.includes(filter) ? "" : "none";
+    });
+});
+</script>
+
+
+<script>
+document.querySelectorAll(".client-link").forEach(link => {
+    link.addEventListener("click", function(e) {
+        e.preventDefault();
+
+        fetch(this.href, {
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById("clientModalContent").innerHTML = html;
+
+            let modal = new bootstrap.Modal(document.getElementById("clientModal"));
+            modal.show();
+        });
+    });
+});
+</script>
+
+<script>
+document.addEventListener("submit", function(e) {
+    if (e.target.id === "clientForm") {
+        e.preventDefault();
+
+        let form = e.target;
+        let url = form.action || window.location.href;
+
+        fetch(url, {
+            method: "POST",
+            body: new FormData(form),
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                let modal = bootstrap.Modal.getInstance(document.getElementById("clientModal"));
+                modal.hide();
+                window.location.reload();
+            }
+        });
+    }
+});
+</script>
+
+<!-- Popup pour AJOUTER un client -->
+<div class="modal fade" id="addClientModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Ajouter un client</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form method="POST" action="{% url 'ajouter_client' %}">
+        {% csrf_token %}
+
+        <div class="modal-body">
+
+          <!-- SECTION : Informations générales -->
+          <h6 class="section-title mb-3">Informations générales</h6>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              {{ form.nom.label_tag }}
+              {{ form.nom }}
+            </div>
+
+            <div class="col-md-6">
+              {{ form.numero.label_tag }}
+              {{ form.numero }}
+            </div>
+
+            <div class="col-md-6">
+              {{ form.date_cloture.label_tag }}
+              {{ form.date_cloture }}
+            </div>
+
+            <div class="col-md-12">
+              {{ form.commentaires.label_tag }}
+              {{ form.commentaires }}
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- SECTION : Statuts & Régimes -->
+          <h6 class="section-title mb-3">Statuts & Régimes</h6>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              {{ form.forme_juridique.label_tag }}
+              {{ form.forme_juridique }}
+            </div>
+
+            <div class="col-md-6">
+              {{ form.regime_imposition.label_tag }}
+              {{ form.regime_imposition }}
+            </div>
+
+            <div class="col-md-6">
+              {{ form.regime_tva.label_tag }}
+              {{ form.regime_tva }}
+            </div>
+
+            <div class="col-md-6">
+              {{ form.periodicite.label_tag }}
+              {{ form.periodicite }}
+            </div>
+
+            <div class="col-md-6">
+              {{ form.jour_echeance_tva.label_tag }}
+              {{ form.jour_echeance_tva }}
+            </div>
+
+            <div class="col-md-6 d-flex align-items-center mt-4">
+              {{ form.archive }}
+              <label class="ms-2">{{ form.archive.label }}</label>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- SECTION : Modules activés -->
+          <h6 class="section-title mb-3">Modules activés</h6>
+
+          <div class="row g-3">
+
+            <div class="col-md-4">
+              <div class="form-check">
+                {{ form.module_saisie }}
+                <label class="form-check-label ms-1">{{ form.module_saisie.label }}</label>
+              </div>
+
+              <div class="form-check">
+                {{ form.module_cfe }}
+                <label class="form-check-label ms-1">{{ form.module_cfe.label }}</label>
+              </div>
+
+              <div class="form-check">
+                {{ form.module_cvae }}
+                <label class="form-check-label ms-1">{{ form.module_cvae.label }}</label>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="form-check">
+                {{ form.module_tvs }}
+                <label class="form-check-label ms-1">{{ form.module_tvs.label }}</label>
+              </div>
+
+              <div class="form-check">
+                {{ form.module_cloture }}
+                <label class="form-check-label ms-1">{{ form.module_cloture.label }}</label>
+              </div>
+
+              <div class="form-check">
+                {{ form.module_dividendes }}
+                <label class="form-check-label ms-1">{{ form.module_dividendes.label }}</label>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="form-check">
+                {{ form.module_social }}
+                <label class="form-check-label ms-1">{{ form.module_social.label }}</label>
+              </div>
+
+              <div class="form-check">
+                {{ form.module_ir }}
+                <label class="form-check-label ms-1">{{ form.module_ir.label }}</label>
+              </div>
+
+              <div class="form-check">
+                {{ form.module_suivi_mission }}
+                <label class="form-check-label ms-1">{{ form.module_suivi_mission.label }}</label>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+
+      </form>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+document.addEventListener("click", function(e) {
+    if (e.target.matches("[data-bs-dismiss='modal'], .btn-close")) {
+        document.body.classList.remove("modal-open");
+
+        // Supprimer les backdrops restants
+        document.querySelectorAll(".modal-backdrop").forEach(el => el.remove());
+    }
+});
+</script>
+
+{% endblock %}

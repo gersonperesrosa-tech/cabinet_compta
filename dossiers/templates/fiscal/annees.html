@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="section">
+
+    <h1 class="mb-4">Gestion des années fiscales</h1>
+
+    <!-- Formulaire création année -->
+    <form method="POST" class="d-flex gap-2 mb-4">
+        {% csrf_token %}
+        <input type="number" name="annee" class="form-control" placeholder="Nouvelle année…" required>
+        <button type="submit" class="btn btn-primary">Ajouter</button>
+    </form>
+
+    <!-- Tableau des années -->
+    <table class="table table-bordered align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Année</th>
+                <th>Modules fiscaux</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for a in annees %}
+            <tr>
+                <td><strong>{{ a.annee }}</strong></td>
+                <td>
+                    <a href="{% url 'fiscal_modules' a.id %}"
+                       class="btn btn-sm btn-outline-primary">
+                        Voir les modules
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</section>
+
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "base_paie_client.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <!-- HEADER -->
+    <div class="text-center mb-5">
+        <h1 class="fw-bold">Bienvenue, {{ client.nom }}</h1>
+        <p class="text-muted">Vue d’ensemble de votre paie et de vos salariés.</p>
+    </div>
+
+<!-- KPIs -->
+<div class="row g-4 mb-5 justify-content-center">
+
+    <!-- Total salariés -->
+    <div class="col-md-3">
+        <div class="p-4 bg-white shadow-sm rounded text-center">
+            <h3 class="fw-bold">{{ nb_salaries }}</h3>
+            <p class="text-muted m-0">Salariés</p>
+        </div>
+    </div>
+
+    <!-- Actifs -->
+    <div class="col-md-3">
+        <div class="p-4 bg-white shadow-sm rounded text-center">
+            <h3 class="fw-bold text-success">{{ nb_actifs }}</h3>
+            <p class="text-muted m-0">Actifs</p>
+        </div>
+    </div>
+
+    <!-- Inactifs -->
+    <div class="col-md-3">
+        <div class="p-4 bg-white shadow-sm rounded text-center">
+            <h3 class="fw-bold text-danger">{{ nb_inactifs }}</h3>
+            <p class="text-muted m-0">Inactifs</p>
+        </div>
+    </div>
+
+</div>
+
+    <!-- MOIS EN COURS -->
+    <div class="bg-white shadow-sm rounded p-4 mb-5">
+
+        <h4 class="fw-bold mb-3">Mois en cours</h4>
+
+        {% if mois_en_cours %}
+            <p class="mb-1">
+                <strong>{{ mois_en_cours.mois_nom }} {{ mois_en_cours.annee }}</strong>
+            </p>
+
+            <a href="{% url 'paie:client_mois_detail' mois_en_cours.id %}"
+               class="btn btn-primary mt-2">
+                Accéder au mois
+            </a>
+
+        {% else %}
+            <p class="text-muted">Aucun mois en cours pour le moment.</p>
+        {% endif %}
+
+    </div>
+
+    <!-- DERNIERS MOIS -->
+    <div class="bg-white shadow-sm rounded p-4 mb-5">
+
+        <h4 class="fw-bold mb-3">Derniers mois</h4>
+
+        {% if derniers_mois %}
+            <ul class="list-group">
+                {% for mois in derniers_mois %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ mois.mois_nom }} {{ mois.annee }}
+                        <a href="{% url 'paie:client_mois_detail' mois.id %}" class="btn btn-sm btn-outline-primary">
+                            Ouvrir
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">Aucun mois précédent.</p>
+        {% endif %}
+
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="text-center mt-4">
+        <a href="{% url 'paie:client_liste_mois' %}" class="btn btn-primary btn-lg me-2">
+            Voir mes mois de paie
+        </a>
+
+        <a href="{% url 'paie:client_salaries' %}" class="btn btn-outline-primary btn-lg">
+            Voir mes salariés
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}

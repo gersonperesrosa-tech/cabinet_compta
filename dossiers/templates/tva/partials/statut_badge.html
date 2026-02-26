@@ -1,0 +1,11 @@
+{% if statut == "BLANC" %}
+    <span style="display:inline-block; width:14px; height:14px; border-radius:50%; background:#b91c1c;"></span>
+{% elif statut == "JAUNE" %}
+    <span style="display:inline-block; width:14px; height:14px; border-radius:50%; background:#ffde59;"></span>
+{% elif statut == "VERT_CLAIR" %}
+    <span style="display:inline-block; width:14px; height:14px; border-radius:50%; background:#c1ff72;"></span>
+{% elif statut == "VERT_FONCE" %}
+    <span style="display:inline-block; width:14px; height:14px; border-radius:50%; background:#00bf63;"></span>
+{% else %}
+    <span style="display:inline-block; width:14px; height:14px; border-radius:50%; background:transparent;"></span>
+{% endif %}

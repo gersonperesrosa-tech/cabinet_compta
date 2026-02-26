@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="section">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <h1 class="m-0">Gestion TVA – Exonérée (EXO)</h1>
+
+        <div class="d-flex align-items-center gap-3">
+
+            <!-- Recherche -->
+            <input type="text"
+                   id="searchInput"
+                   class="form-control"
+                   placeholder="Rechercher un client…"
+                   style="width: 220px; height: 38px;">
+
+            <!-- Sélecteur d'année -->
+            <form method="GET" class="m-0">
+                <select name="annee"
+                        class="form-select"
+                        style="height: 38px;"
+                        onchange="this.form.submit()">
+                    {% for a in annees %}
+                        <option value="{{ a.id }}" {% if a.id == annee.id %}selected{% endif %}>
+                            {{ a.annee }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+
+        </div>
+    </div>
+
+    <!-- TABLEAU -->
+    <table class="table table-bordered align-middle" id="tvaTable">
+        <thead class="table-light">
+            <tr>
+                <th>N°</th>
+                <th>Client</th>
+                <th>Suivi comptable</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for tca in tca_list %}
+            <tr>
+
+                <td>{{ tca.client.numero }}</td>
+                <td><strong>{{ tca.client.nom }}</strong></td>
+
+                <td>
+                    {% include "tva/partials/pastille_suivi.html" with suivi=tca.suivi %}
+                </td>
+
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</section>
+
+<!-- FILTRE DYNAMIQUE -->
+<script>
+document.getElementById("searchInput").addEventListener("keyup", function () {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll("#tvaTable tbody tr");
+
+    rows.forEach(row => {
+        const numero = row.children[0].textContent.toLowerCase();
+        const nom = row.children[1].textContent.toLowerCase();
+
+        if (numero.includes(filter) || nom.includes(filter)) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+    });
+});
+</script>
+
+{% endblock %}

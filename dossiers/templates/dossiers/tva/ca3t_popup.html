@@ -1,0 +1,137 @@
+<div class="modal fade show" style="display:block;" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <form 
+                method="post"
+                hx-post="{% url 'tva_ca3t_save' client.id annee %}"
+                hx-target="#modal-container"
+                hx-swap="outerHTML">
+
+                {% csrf_token %}
+
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        TVA CA3 Trimestrielle – {{ client.nom }}
+                    </h5>
+
+                    <button type="button" class="btn-close"
+                            onclick="document.querySelector('#modal-container').innerHTML=''">
+                    </button>
+                </div>
+
+    <!-- ANNÉE (modifiable plus tard) -->
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Année</label>
+	  <input type="text" class="form-control" value="{{ annee }}" disabled>
+    </div>
+
+
+
+                <div class="modal-body">
+
+                    <table class="table table-bordered align-middle">
+                        <thead>
+                            <tr>
+                                <th>Trimestre</th>
+                                <th>Montant</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            <!-- T1 -->
+                            <tr>
+                                <td>1er trimestre</td>
+                                <td>
+                                    <input type="text" name="montant_t1" class="form-control"
+                                           value="{{ tva.tva_1t|floatformat:2 }}">
+                                </td>
+                                <td>
+				<select name="statut_t1" class="form-select">
+				    <option value="">Sans pastille</option>
+				    <option value="JAUNE" {% if tva.statut_1t == "JAUNE" %}selected{% endif %}>Jaune</option>
+				    <option value="VERT_CLAIR" {% if tva.statut_1t == "VERT_CLAIR" %}selected{% endif %}>Vert clair</option>
+				    <option value="VERT_FONCE" {% if tva.statut_1t == "VERT_FONCE" %}selected{% endif %}>Vert foncé</option>
+				</select>
+                                </td>
+                            </tr>
+
+                            <!-- T2 -->
+                            <tr>
+                                <td>2ème trimestre</td>
+                                <td>
+                                    <input type="text" name="montant_t2" class="form-control"
+                                           value="{{ tva.tva_2t|floatformat:2 }}">
+                                </td>
+                                <td>
+				<select name="statut_t2" class="form-select">
+				    <option value="">Sans pastille</option>
+				    <option value="JAUNE" {% if tva.statut_2t == "JAUNE" %}selected{% endif %}>Jaune</option>
+				    <option value="VERT_CLAIR" {% if tva.statut_2t == "VERT_CLAIR" %}selected{% endif %}>Vert clair</option>
+				    <option value="VERT_FONCE" {% if tva.statut_2t == "VERT_FONCE" %}selected{% endif %}>Vert foncé</option>
+				</select>
+                                </td>
+                            </tr>
+
+                            <!-- T3 -->
+                            <tr>
+                                <td>3ème trimestre</td>
+                                <td>
+                                    <input type="text" name="montant_t3" class="form-control"
+                                           value="{{ tva.tva_3t|floatformat:2 }}">
+                                </td>
+                                <td>
+				<select name="statut_t3" class="form-select">
+				    <option value="">Sans pastille</option>
+				    <option value="JAUNE" {% if tva.statut_3t == "JAUNE" %}selected{% endif %}>Jaune</option>
+				    <option value="VERT_CLAIR" {% if tva.statut_3t == "VERT_CLAIR" %}selected{% endif %}>Vert clair</option>
+				    <option value="VERT_FONCE" {% if tva.statut_3t == "VERT_FONCE" %}selected{% endif %}>Vert foncé</option>
+				</select>
+                                </td>
+                            </tr>
+
+                            <!-- T4 -->
+                            <tr>
+                                <td>4ème trimestre</td>
+                                <td>
+                                    <input type="text" name="montant_t4" class="form-control"
+                                           value="{{ tva.tva_4t|floatformat:2 }}">
+                                </td>
+                                <td>
+				<select name="statut_t4" class="form-select">
+				    <option value="">Sans pastille</option>
+				    <option value="JAUNE" {% if tva.statut_4t == "JAUNE" %}selected{% endif %}>Jaune</option>
+				    <option value="VERT_CLAIR" {% if tva.statut_4t == "VERT_CLAIR" %}selected{% endif %}>Vert clair</option>
+				    <option value="VERT_FONCE" {% if tva.statut_4t == "VERT_FONCE" %}selected{% endif %}>Vert foncé</option>
+				</select>
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+
+                    <label class="form-label">Commentaires</label>
+                    <textarea name="commentaires" class="form-control" rows="3">{{ tva.commentaires }}</textarea>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary"
+                            onclick="document.querySelector('#modal-container').innerHTML=''">
+                        Fermer
+                    </button>
+
+                    <button type="submit" class="btn btn-primary">
+                        Enregistrer
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop fade show"></div>

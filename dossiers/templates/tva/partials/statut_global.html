@@ -1,0 +1,9 @@
+{% if statut == "OK" %}
+    <span class="badge bg-success">OK</span>
+{% elif statut == "KO" %}
+    <span class="badge bg-danger">KO</span>
+{% elif statut == "WAIT" %}
+    <span class="badge bg-warning text-dark">En attente</span>
+{% else %}
+    <span class="badge bg-secondary">—</span>
+{% endif %}

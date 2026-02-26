@@ -1,0 +1,25 @@
+<form id="form-suivi" data-client="{{ client_id }}">
+    {% csrf_token %}
+
+    <div class="form-group">
+        <label>Dernière mise à jour</label>
+        {{ form.date_maj_compta }}
+    </div>
+
+    <div class="form-group">
+        <label>Dernier mois traité</label>
+        {{ form.dernier_mois_traite }}
+    </div>
+
+    <div class="form-group">
+        <label>Saisi par</label>
+        {{ form.saisi_par }}
+    </div>
+
+    <div class="form-group">
+        <label>Vérifié</label>
+        {{ form.verifie }}
+    </div>
+
+    <button type="submit" class="btn-save">Enregistrer</button>
+</form>

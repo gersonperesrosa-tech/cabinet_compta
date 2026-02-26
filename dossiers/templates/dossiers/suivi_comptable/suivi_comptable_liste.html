@@ -1,0 +1,159 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Suivi comptable</title>
+
+    <!-- Police Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Icônes Material -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" />
+
+    <!-- CSS du dashboard -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+</head>
+<body>
+
+<header class="top-header">
+    <div class="header-left">
+        <img src="{% static 'img/logo.png' %}" alt="Logo" class="header-logo">
+        <span class="header-title">Expertea Pilot</span>
+    </div>
+
+    <div class="header-center">
+        <input type="text" class="header-search" placeholder="Rechercher un client…">
+    </div>
+
+    <div class="header-right">
+        <span class="welcome-text">Bienvenue, {{ user.username }}</span>
+        <div class="avatar-circle">{{ user.username|first|upper }}</div>
+    </div>
+</header>
+
+<div class="container-dashboard">
+
+    <!-- SIDEBAR GAUCHE -->
+    <div id="sidebar" class="sidebar">
+        <button id="toggleSidebar" class="toggle-btn">
+            <span class="material-symbols-rounded">menu</span>
+        </button>
+
+        <ul class="sidebar-menu">
+<li class="{% if request.path == '/dashboard/' %}active{% endif %}">
+    <a href="{% url 'dashboard' %}">
+        <span class="material-symbols-rounded">folder</span>
+        <span class="label">Dossier des Clients</span>
+    </a>
+</li>
+
+            <li class="active">
+                <a href="{% url 'suivi_comptable_liste' %}">
+                    <span class="material-symbols-rounded">receipt_long</span>
+                    <span class="label">Suivi comptable</span>
+                </a>
+           </li>
+            <li>
+                <span class="material-symbols-rounded">calculate</span>
+                <span class="label">TVA mensuelle (CA3M)</span>
+            </li>
+
+            <li>
+                <span class="material-symbols-rounded">calculate</span>
+                <span class="label">TVA trimestrielle (CA3T)</span>
+            </li>
+
+            <li>
+                <span class="material-symbols-rounded">calculate</span>
+                <span class="label">TVA annuelle (CA12)</span>
+            </li>
+
+            <li>
+                <span class="material-symbols-rounded">account_balance</span>
+                <span class="label">IS</span>
+            </li>
+        </ul>
+    </div>
+
+    <!-- CONTENU CENTRAL -->
+    <div class="main-content">
+        <h1>Suivi comptable</h1>
+
+        <table class="client-table">
+            <thead>
+                <tr>
+                    <th>Numéro Client</th>
+                    <th>Nom</th>
+                    <th>Forme juridique</th>
+                    <th>Régime TVA</th>
+                    <th>Dernière mise à jour</th>
+                    <th>Dernier mois traité</th>
+                    <th>Saisi par</th>
+                    <th>Vérifié</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for row in tableau %}
+ <tr class="ligne-client" data-client="{{ row.client.id }}">
+    <td>{{ row.client.numero }}</td>
+    <td>{{ row.client.nom }}</td>
+    <td>{{ row.client.forme_juridique }}</td>
+    <td>{{ row.client.regime_tva }}</td>
+
+    <td id="date_maj_{{ row.client.id }}">
+        {% if row.suivi and row.suivi.date_maj %}
+            {{ row.suivi.date_maj|date:"d/m/Y" }}
+        {% else %} – {% endif %}
+    </td>
+
+    <td id="mois_{{ row.client.id }}">
+        {% if row.suivi and row.suivi.dernier_mois_traite %}
+            {{ row.suivi.dernier_mois_traite }}
+        {% else %} – {% endif %}
+    </td>
+
+    <td id="saisi_{{ row.client.id }}">
+        {% if row.suivi and row.suivi.saisi_par %}
+            {{ row.suivi.saisi_par }}
+        {% else %} – {% endif %}
+    </td>
+
+    <td id="verifie_{{ row.client.id }}">
+        {% if row.suivi and row.suivi.verifie %}
+            ✔️
+        {% else %} ❌ {% endif %}
+    </td>
+</tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align:center; padding:20px;">
+                        Aucun client trouvé.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- OVERLAY -->
+<div id="overlay" class="overlay"></div>
+
+    <!-- SLIDEBAR DROIT -->
+    <div id="slidebar-droit" class="slidebar-droit">
+        <div class="slidebar-header">
+            <h2 id="slidebar-titre">Suivi comptable</h2>
+            <button id="closeSlidebar" class="slidebar-close">×</button>
+        </div>
+
+        <div id="slidebar-content" class="slidebar-content">
+            <!-- Le formulaire AJAX sera injecté ici -->
+        </div>
+    </div>
+
+</div>
+
+<script src="{% static 'js/dashboard.js' %}"></script>
+</body>
+</html>

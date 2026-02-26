@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="section">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="m-0" style="line-height: 1;">Gestion CVAE</h1>
+
+        <div class="d-flex align-items-center gap-3">
+            <input type="text"
+                   id="searchInput"
+                   class="form-control"
+                   placeholder="Rechercher un client…"
+                   style="width: 220px; height: 38px;">
+
+            <form method="GET" class="m-0">
+                <select name="annee"
+                        class="form-select py-2"
+                        style="width: 120px; height: 38px;"
+                        onchange="this.form.submit()">
+                    {% for a in annees %}
+                        <option value="{{ a.annee }}" {% if a.annee == annee.annee %}selected{% endif %}>
+                            {{ a.annee }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <table class="table table-bordered align-middle mt-4">
+        <thead class="table-light">
+            <tr>
+                <th>Client</th>
+                <th>CVAE N‑1</th>
+                <th>Acompte</th>
+                <th>Solde</th>
+                <th style="background:#e9fbe8;">Total CVAE</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for cm in cms %}
+            {% with decl=cm.cvae_declaration %}
+            <tr>
+                <td><strong>{{ cm.client.nom }}</strong></td>
+
+                <td>{{ decl.cvae_n_1|default:"—" }}</td>
+
+                <td>
+                    {{ decl.acompte_cvae|default:"—" }}
+                    {% include "partials/statut_badge.html" with statut=decl.statut_acompte_cvae %}
+                </td>
+
+                <td>
+                    {{ decl.solde_cvae|default:"—" }}
+                    {% include "partials/statut_badge.html" with statut=decl.statut_solde_cvae %}
+                </td>
+
+                <td style="background:#e9fbe8;">
+                    {{ decl.total_cvae|floatformat:2 }}
+                </td>
+
+                <td>
+                    <a href="{% url 'cvae_saisie' cm.id %}" class="btn btn-sm btn-outline-primary">
+                        Saisir CVAE
+                    </a>
+                </td>
+            </tr>
+            {% endwith %}
+        {% endfor %}
+        </tbody>
+    </table>
+
+</section>
+
+<script>
+document.getElementById("searchInput").addEventListener("keyup", function () {
+    let filter = this.value.toLowerCase();
+    let rows = document.querySelectorAll("table tbody tr");
+
+    rows.forEach(row => {
+        let clientName = row.querySelector("td strong").textContent.toLowerCase();
+        row.style.display = clientName.includes(filter) ? "" : "none";
+    });
+});
+</script>
+
+{% endblock %}

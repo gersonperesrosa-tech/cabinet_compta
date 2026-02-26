@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="section">
+
+    <!-- HEADER : Titre + Recherche + Sélecteur d'année -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <!-- Titre -->
+    <h1 class="m-0" style="line-height: 1;">Gestion TVA – Régime Mensuel (CA3M)</h1>
+
+    <!-- Recherche + Sélecteur -->
+    <div class="d-flex align-items-center gap-3">
+
+        <!-- Barre de recherche dynamique -->
+        <input type="text"
+               id="searchInput"
+               class="form-control"
+               placeholder="Rechercher un client…"
+               style="width: 220px; height: 38px;">
+
+        <!-- Sélecteur d'année -->
+        <form method="GET" class="m-0">
+            <select name="annee"
+                    class="form-select"
+                    style="height: 38px;"
+                    onchange="this.form.submit()">
+                {% for a in annees %}
+                    <option value="{{ a.id }}" {% if a.id == annee.id %}selected{% endif %}>
+                        {{ a.annee }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+<button id="resetSuiviBtn"
+        class="btn btn-outline-danger"
+        style="height: 38px;">
+    Réinitialiser le suivi comptable
+</button>
+
+    </div>
+</div>
+
+    <!-- TABLEAU TVA -->
+    <table class="table table-bordered align-middle" id="tvaTable">
+        <thead class="table-light">
+            <tr>
+                <th>N°</th>
+                <th>Client</th>
+                <th>Échéance</th>
+                <th>Jan</th>
+                <th>Fév</th>
+                <th>Mar</th>
+                <th>Avr</th>
+                <th>Mai</th>
+                <th>Juin</th>
+                <th>Juil</th>
+                <th>Août</th>
+                <th>Sep</th>
+                <th>Oct</th>
+                <th>Nov</th>
+                <th>Déc</th>
+		<th>Suivi comptable</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for tca in tca_list %}
+            <tr>
+                <td>{{ tca.client.numero }}</td>
+                <td class="client-name"><strong>{{ tca.client.nom }}</strong></td>
+                <td>{{ tca.client.jour_echeance_tva|default_if_none:"" }}</td>
+
+                {% for montant, statut in tca.declaration.get_mensuels %}
+                <td>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span>{{ montant|default:" " }}</span>
+                        {% include "tva/partials/statut_badge.html" with statut=statut %}
+                    </div>
+                </td>
+                {% endfor %}
+		<td> {% include "tva/partials/pastille_suivi.html" with suivi=tca.suivi %} </td>
+                <td>
+                    <a href="{% url 'tva_saisie_ca3m' tca.id %}"
+                       class="btn btn-sm btn-outline-primary">
+                        Saisir la TVA
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</section>
+
+<!-- SCRIPT : Filtre dynamique instantané -->
+<script>
+document.getElementById("searchInput").addEventListener("keyup", function () {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll("#tvaTable tbody tr");
+
+    rows.forEach(row => {
+        const numero = row.children[0].textContent.toLowerCase();
+        const nom = row.querySelector(".client-name").textContent.toLowerCase();
+        const echeance = row.children[2].textContent.toLowerCase();
+
+        if (
+            numero.includes(filter) ||
+            nom.includes(filter) ||
+            echeance.includes(filter)
+        ) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+    });
+});
+</script>
+
+<script>
+document.getElementById("resetSuiviBtn").addEventListener("click", function () {
+    if (!confirm("Voulez-vous vraiment réinitialiser le suivi comptable pour toute l'année ?")) {
+        return;
+    }
+
+    fetch("{% url 'reset_suivi_comptable' annee.annee %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}"
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert("Suivi comptable réinitialisé !");
+            location.reload();
+        }
+    });
+});
+</script>
+{% endblock %}

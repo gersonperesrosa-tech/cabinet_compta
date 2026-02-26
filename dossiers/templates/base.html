@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+
+    {% load static %}
+
+    <!-- CSS global -->
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+
+    <!-- Typographie Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="bg-light">
+
+<!-- ========================= -->
+<!--        HEADER             -->
+<!-- ========================= -->
+<header class="top-header">
+    <div class="header-left">
+        <img src="{% static 'img/logo.png' %}" alt="Logo" class="header-logo">
+        <span class="header-title">expertea pilot</span>
+    </div>
+
+    <div class="header-right">
+        <span class="welcome-text">Bienvenue, {{request.user.get_full_name }}</span>
+
+        <div class="avatar-circle d-flex justify-content-center align-items-center"
+             style="width:40px; height:40px; border-radius:50%; background:#1565d8; color:white; font-weight:600; margin-left:15px;">
+            {{ user.username|first|upper }}
+        </div>
+
+<a href="{% url 'logout' %}" 
+   class="btn btn-sm d-flex align-items-center"
+   style="margin-left: 15px; background:white; color:#dc3545; border-radius:12px;">
+    <i class="bi bi-box-arrow-right" style="margin-right:6px;"></i>
+    Déconnexion
+</a>
+
+    </div>
+</header>
+
+
+<div class="layout-container d-flex w-100">
+
+    <!-- COLONNE SIDEBAR FIXE -->
+    <div class="sidebar-column position-relative d-flex flex-column">
+
+        <aside id="sidebar" class="sidebar p-3">
+
+            <nav class="nav flex-column">
+
+                <!-- SECTION : Dashboard -->
+<a class="nav-link d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+   href="{% url 'user_space' %}">
+    <i class="bi bi-house-door"></i>
+    <span class="sidebar-text">Tableau de bord</span>
+</a>
+
+                <hr class="sidebar-separator my-3 opacity-25">
+
+                <!-- SECTION : Comptabilité -->
+                <div class="sidebar-section-title text-uppercase small opacity-75 mb-2">
+                    Comptabilité
+                </div>
+
+                <a class="nav-link text-white d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'liste_suivi_comptable' %}active{% endif %}"
+                   href="{% url 'liste_suivi_comptable' %}">
+                    <i class="bi bi-pencil-square"></i>
+                    <span class="sidebar-text">Suivi comptable</span>
+                </a>
+
+
+                <!-- SECTION : CLIENTS -->
+                <hr class="sidebar-separator my-3 opacity-25">
+
+                <div class="sidebar-section-title text-uppercase small opacity-75 mb-2">
+                    CLIENTS
+                </div>
+
+                <div class="nav-item">
+
+                    <a class="nav-link text-white d-flex align-items-center gap-2"
+                       data-bs-toggle="collapse"
+                       href="#menuCLIENTS"
+                       role="button"
+                       aria-expanded="false"
+                       aria-controls="menuCLIENTS">
+
+                        <i class="bi bi-folder"></i>
+                        <span class="sidebar-text">Clients</span>
+                        <i class="bi bi-chevron-down ms-auto small"></i>
+                    </a>
+
+                    <div class="collapse ps-4" id="menuCLIENTS">
+
+                        <a class="nav-link text-white d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'liste_clients' %}active{% endif %}"
+                           href="{% url 'liste_clients' %}">
+                            <span class="sidebar-text">Liste clients</span>
+                        </a>
+
+                        <a class="nav-link text-white d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'dp_gestion' %}active{% endif %}"
+                           href="{% url 'dp_gestion' %}">
+                            <span class="sidebar-text">Dossier Permanent</span>
+                        </a>
+
+
+                    </div>
+                </div>
+
+
+                <!-- SECTION : FISCAL -->
+                <hr class="sidebar-separator my-3 opacity-25">
+
+                <div class="sidebar-section-title text-uppercase small opacity-75 mb-2">
+                    FISCAL
+                </div>
+
+                <div class="nav-item">
+
+                    <a class="nav-link text-white d-flex align-items-center gap-2"
+                       data-bs-toggle="collapse"
+                       href="#menuTVA"
+                       role="button"
+                       aria-expanded="false"
+                       aria-controls="menuTVA">
+
+                        <i class="bi bi-receipt"></i>
+                        <span class="sidebar-text">Déclarations TVA</span>
+                        <i class="bi bi-chevron-down ms-auto small"></i>
+                    </a>
+
+                    <div class="collapse ps-4" id="menuTVA">
+
+                        <a class="nav-link text-white d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'tva_gestion_ca3m' %}active{% endif %}"
+                           href="{% url 'tva_gestion_ca3m' %}">
+                            <span class="sidebar-text">CA3 mensuelle</span>
+                        </a>
+
+                        <a class="nav-link text-white d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'tva_gestion_ca3t' %}active{% endif %}"
+                           href="{% url 'tva_gestion_ca3t' %}">
+                            <span class="sidebar-text">CA3 trimestrielle</span>
+                        </a>
+
+                        <a class="nav-link text-white d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'tva_gestion_ca12' %}active{% endif %}"
+                           href="{% url 'tva_gestion_ca12' %}">
+                            <span class="sidebar-text">CA12</span>
+                        </a>
+
+                        <a class="nav-link text-white d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'tva_gestion_fr' %}active{% endif %}"
+                           href="{% url 'tva_gestion_fr' %}">
+                            <span class="sidebar-text">Franchise</span>
+                        </a>
+
+                        <a class="nav-link text-white d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'tva_gestion_exo' %}active{% endif %}"
+                           href="{% url 'tva_gestion_exo' %}">
+                            <span class="sidebar-text">Exonéré</span>
+                        </a>
+
+                    </div>
+                </div>
+
+	
+		<div class="nav-item">
+		
+		    <a class="nav-link text-white d-flex align-items-center gap-2"
+		       data-bs-toggle="collapse"
+		       href="#menuFISCAL"
+		       role="button"
+		       aria-expanded="false"
+		       aria-controls="menuFISCAL">
+		
+		        <i class="bi bi-bank"></i>
+		        <span class="sidebar-text">Fiscalité</span>
+		        <i class="bi bi-chevron-down ms-auto small"></i>
+		    </a>
+		
+		    <div class="collapse ps-4" id="menuFISCAL">
+		
+		{% if last_year %}
+		<a class="nav-link text-white d-flex align-items-center gap-2
+		   {% if request.resolver_match.url_name == 'is_gestion' %}active{% endif %}"
+		   href="{% url 'is_gestion' last_year %}">
+		    <span class="sidebar-text">IS</span>
+		</a>
+		{% endif %}
+
+		{% if last_year %}
+		<a class="nav-link text-white d-flex align-items-center gap-2
+		   {% if request.resolver_match.url_name == 'cfe_gestion' or request.resolver_match.url_name == 'cfe_saisie' %}active{% endif %}"
+		   href="{% url 'cfe_gestion' last_year %}">
+		    <span class="sidebar-text">CFE</span>
+		</a>
+		{% endif %}
+
+		{% if last_year %}
+		<a class="nav-link text-white d-flex align-items-center gap-2
+		   {% if request.resolver_match.url_name == 'cvae_gestion' or request.resolver_match.url_name == 'cvae_saisie' %}active{% endif %}"
+		   href="{% url 'cvae_gestion' last_year %}">
+		    <span class="sidebar-text">CVAE</span>
+		</a>
+		{% endif %}
+
+
+		{% if last_year %}
+		<a class="nav-link text-white d-flex align-items-center gap-2
+		   {% if request.resolver_match.url_name == 'tvs_gestion' or request.resolver_match.url_name == 'tvs_saisie' %}active{% endif %}"
+		   href="{% url 'tvs_gestion' last_year %}">
+		    <span class="sidebar-text">TVS</span>
+		</a>
+		{% endif %}
+
+		{% if last_year %}
+		<a class="nav-link text-white d-flex align-items-center gap-2
+		   {% if request.resolver_match.url_name == 'desdeb_gestion' or request.resolver_match.url_name == 'desdeb_saisie' %}active{% endif %}"
+		   href="{% url 'desdeb_gestion' last_year %}">
+		    <span class="sidebar-text">DESDEB</span>
+		</a>
+		{% endif %}
+
+		{% if last_year %}
+		<a class="nav-link text-white d-flex align-items-center gap-2
+		   {% if request.resolver_match.url_name == 'dividendes_gestion' or request.resolver_match.url_name == 'dividendes_saisie' %}active{% endif %}"
+		   href="{% url 'dividendes_gestion' last_year %}">
+		    <span class="sidebar-text">Dividendes</span>
+		</a>
+		{% endif %}
+
+    </div>
+</div>
+
+
+
+		<!-- SECTION : Paie -->
+		<hr class="sidebar-separator my-3 opacity-25">
+		<div class="sidebar-section-title text-uppercase small opacity-75 mb-2">
+		    Paie
+		</div>
+		
+		<div class="nav-item">
+		
+		    <a class="nav-link text-white d-flex align-items-center gap-2"
+		       data-bs-toggle="collapse"
+		       href="#menuPAIE"
+		       role="button"
+		       aria-expanded="false"
+		       aria-controls="menuPAIE">
+		
+		        <i class="bi bi-people"></i>
+		        <span class="sidebar-text">Paie</span>
+		        <i class="bi bi-chevron-down ms-auto small"></i>
+		    </a>
+		
+		    <div class="collapse ps-4" id="menuPAIE">
+
+                <a class="nav-link text-white d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'paie:cabinet_clients_paie' %}active{% endif %}"
+                   href="{% url 'paie:cabinet_clients_paie' %}">
+                   <span class="sidebar-text">Clients paie</span>
+                </a>
+
+                <a class="nav-link text-white d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'paie:cabinet_suivi_annuel' %}active{% endif %}"
+                   href="{% url 'paie:cabinet_suivi_annuel' %}">
+                   <span class="sidebar-text">Gestion paie</span>
+                </a>
+
+
+    </div>
+    </div>
+
+<!-- SECTION : CLOTURE -->
+<hr class="sidebar-separator my-3 opacity-25">
+
+<div class="sidebar-section-title text-uppercase small opacity-75 mb-2">
+    CLOTURE
+</div>
+
+<div class="nav-item">
+
+    <a class="nav-link text-white d-flex align-items-center gap-2"
+       data-bs-toggle="collapse"
+       href="#menuCLOTURE"
+       role="button"
+       aria-expanded="false"
+       aria-controls="menuCLOTURE">
+
+        <i class="bi bi-calendar-check"></i>
+        <span class="sidebar-text">Clôture</span>
+        <i class="bi bi-chevron-down ms-auto small"></i>
+    </a>
+
+    <div class="collapse ps-4" id="menuCLOTURE">
+
+        {% if derniere_annee %}
+            <a class="nav-link text-white d-flex align-items-center gap-2
+               {% if request.resolver_match.url_name == 'cloture_clients' %}active{% endif %}"
+               href="{% url 'cloture_clients' derniere_annee.id %}">
+                <span class="sidebar-text">Clients en clôture</span>
+            </a>
+        {% else %}
+            <a class="nav-link text-white d-flex align-items-center gap-2 disabled" href="#">
+                <span class="sidebar-text">Liste des clients clôture</span>
+            </a>
+        {% endif %}
+
+
+    </div>
+</div>
+
+
+		<!-- SECTION : Gestion annuelle -->
+		<hr class="sidebar-separator my-3 opacity-25">
+		<div class="sidebar-section-title text-uppercase small opacity-75 mb-2">
+		    Gestion Annuelle
+		</div>
+		
+		<div class="nav-item">
+		
+		    <a class="nav-link text-white d-flex align-items-center gap-2"
+		       data-bs-toggle="collapse"
+		       href="#menuANNUEL"
+		       role="button"
+		       aria-expanded="false"
+		       aria-controls="menuANNUEL">
+		
+		        <i class="bi bi-journals"></i>
+		        <span class="sidebar-text">Gestion Annuelle</span>
+		        <i class="bi bi-chevron-down ms-auto small"></i>
+		    </a>
+		
+		    <div class="collapse ps-4" id="menuANNUEL">
+
+                <a class="nav-link text-white d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'tva_annees' %}active{% endif %}"
+                   href="{% url 'tva_annees' %}">
+                   <span class="sidebar-text">Modules TVA</span>
+                </a>
+
+
+                <a class="nav-link text-white d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'fiscal_annees' %}active{% endif %}"
+                   href="{% url 'fiscal_annees' %}">
+                   <span class="sidebar-text">Modules Fiscaux</span>
+                </a>
+
+        <a class="nav-link text-white d-flex align-items-center gap-2
+           {% if request.resolver_match.url_name == 'cloture_annees' %}active{% endif %}"
+           href="{% url 'cloture_annees' %}">
+            <span class="sidebar-text">Années de clôture</span>
+        </a>
+
+
+    </div>
+
+
+                <!-- SECTION : Archives -->
+                <hr class="sidebar-separator my-3 opacity-25">
+
+<a class="nav-link d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'archives_clients' %}active{% endif %}"
+   href="{% url 'archives_clients' %}">
+    <i class="bi bi-archive"></i>
+    <span class="sidebar-text">Archives</span>
+</a>
+
+            </nav>
+        </aside>
+
+    </div>
+
+    <!-- CONTENU PRINCIPAL -->
+    <main class="flex-grow-1 p-4">
+        {% block content %}
+        {% endblock %}
+    </main>
+</div>
+
+
+<!-- ========================= -->
+<!--   POPUP GLOBAL           -->
+<!-- ========================= -->
+<div class="modal fade" id="clientModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-body" id="clientModalContent"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+
+<!-- ========================= -->
+<!--   OUVERTURE POPUP AJAX   -->
+<!-- ========================= -->
+<script>
+document.addEventListener("click", function(e) {
+    const link = e.target.closest(".client-link");
+    if (!link) return;
+
+    e.preventDefault();
+
+    fetch(link.href, {
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    })
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("clientModalContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("clientModal")).show();
+    });
+});
+</script>
+
+
+<!-- ========================= -->
+<!--   SAUVEGARDE TVA CA3M    -->
+<!-- ========================= -->
+<script>
+// Récupération du CSRF dans les cookies
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + "=")) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie("csrftoken");
+
+document.querySelector('#clientModalContent')?.addEventListener("click", function(e) {
+    const btn = e.target.closest("#saveTvaBtn");
+    if (!btn) return;
+
+    e.preventDefault();
+
+    const formData = new FormData();
+
+    document.querySelectorAll("#clientModalContent input, #clientModalContent select").forEach(el => {
+        if (el.name) {
+            formData.append(el.name, el.value);
+        }
+    });
+
+    fetch(btn.dataset.saveUrl, {
+        method: "POST",
+        body: formData,
+        headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "X-CSRFToken": csrftoken,
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === "success") {
+            const modal = bootstrap.Modal.getInstance(document.getElementById("clientModal"));
+            modal.hide();
+            location.reload();
+        }
+    });
+});
+</script>
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("todoAddBtn");
+    if (!btn) return;
+
+    btn.removeAttribute("data-bs-toggle");
+    btn.removeAttribute("data-bs-target");
+});
+</script>
+
+
+{% block modals %}
+
+
+{% endblock %}
+
+
+
+
+</body>
+</html>
+

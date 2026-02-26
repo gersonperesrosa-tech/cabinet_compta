@@ -1,0 +1,11 @@
+{% if suivi %}
+    {% if suivi.saisie_terminee %}
+        <span class="badge bg-success">Terminé</span>
+    {% elif suivi.saisie_en_cours %}
+        <span class="badge bg-warning text-dark">En cours</span>
+    {% else %}
+        <span class="badge bg-secondary">—</span>
+    {% endif %}
+{% else %}
+    <span class="badge bg-secondary">—</span>
+{% endif %}

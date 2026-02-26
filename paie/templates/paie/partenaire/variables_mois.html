@@ -1,0 +1,172 @@
+{% extends "base_partenaire.html" %}
+
+{% block title %}Variables – {{ paie_mois.client.nom }}{% endblock %}
+
+{% block content %}
+<section class="section">
+
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <!-- Partie gauche : Titre -->
+    <h1 class="mb-0">
+        Variables de paie – {{ paie_mois.mois_nom_court }} {{ paie_mois.annee }}
+    </h1>
+
+    <!-- Centre : Recherche + filtres -->
+    <div class="d-flex align-items-center gap-3 flex-grow-1 justify-content-center">
+
+        <!-- Barre de recherche -->
+        <input type="text" id="searchInput" class="form-control w-50"
+               placeholder="Rechercher un salarié...">
+
+        <!-- Boutons filtre -->
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" id="filterActifs">Actifs</button>
+            <button class="btn btn-outline-secondary" id="filterTous">Tous</button>
+        </div>
+
+    </div>
+
+    <!-- Partie droite : Boutons -->
+    <div class="d-flex align-items-center gap-2">
+
+        <form method="post"
+              action="{% url 'paie:partenaire_bs_fait' paie_mois.id %}"
+              class="mb-0">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success">
+                BS fait
+            </button>
+        </form>
+
+        <form method="post"
+              action="{% url 'paie:partenaire_dsn_faite' paie_mois.id %}"
+              class="mb-0">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary">
+                DSN faite
+            </button>
+        </form>
+
+        <a href="{% url 'paie:partenaire_mois_client' paie_mois.client.id %}"
+           class="btn btn-outline-secondary">
+            ← Retour aux mois
+        </a>
+
+    </div>
+
+
+
+</div>
+        {% if paie_mois.bs_fait %}
+            <span class="badge bg-success">
+                BS fait<br>
+                <big>{{ paie_mois.date_bs_fait|date:"d/m/Y H:i" }}</big>
+            </span>
+        {% else %}
+            <span class="badge bg-secondary">BS non fait</span>
+        {% endif %}
+
+        {% if paie_mois.dsn_faite %}
+            <span class="badge bg-primary">
+                DSN faite<br>
+                <big>{{ paie_mois.date_dsn_faite|date:"d/m/Y H:i" }}</big>
+            </span>
+        {% else %}
+            <span class="badge bg-secondary">DSN non faite</span>
+        {% endif %}
+
+
+<table class="table table-hover align-middle">
+<thead>
+    <tr>
+        <th>Salarié</th>
+        <th>Heures 25%</th>
+        <th>Heures 50%</th>
+        <th>Primes</th>
+        <th>Congés début</th>
+        <th>Congés fin</th>
+        <th>Absences maladie</th>
+        <th>Autres absences</th>
+        <th>Acomptes</th>
+        <th>Autres infos</th>
+        <th>Actif</th>
+        <th class="text-end">Actions</th>
+    </tr>
+</thead>
+
+<tbody>
+    {% for ligne in lignes %}
+    <tr>
+        <td>{{ ligne.salarie.prenom }} {{ ligne.salarie.nom }}</td>
+
+        <td>{{ ligne.variables.heures_sup_25|default:"-" }}</td>
+        <td>{{ ligne.variables.heures_sup_50|default:"-" }}</td>
+        <td>{{ ligne.variables.primes|default:"-" }}</td>
+        <td>{{ ligne.variables.conges_debut|default:"-" }}</td>
+        <td>{{ ligne.variables.conges_fin|default:"-" }}</td>
+        <td>{{ ligne.variables.absences_maladie|default:"-" }}</td>
+        <td>{{ ligne.variables.absences_autres|default:"-" }}</td>
+        <td>{{ ligne.variables.acomptes|default:"-" }}</td>
+        <td>{{ ligne.variables.autres_infos|default:"-" }}</td>
+
+        <td>
+            {% if ligne.salarie.actif %}
+                <span class="badge bg-success">Actif</span>
+            {% else %}
+                <span class="badge bg-secondary">Sorti</span>
+            {% endif %}
+        </td>
+
+        <td class="text-end">
+            <a href="{% url 'paie:partenaire_detail_salarie_mois' paie_mois.id ligne.salarie.id %}"
+               class="btn btn-sm btn-outline-secondary">
+                Voir ce salarié
+            </a>
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+
+</table>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const searchInput = document.getElementById("searchInput");
+    const filterActifsBtn = document.getElementById("filterActifs");
+    const filterTousBtn = document.getElementById("filterTous");
+    const rows = document.querySelectorAll("table tbody tr");
+
+    // --- FILTRE PAR NOM + PRÉNOM ---
+    searchInput.addEventListener("keyup", function () {
+        const query = this.value.toLowerCase();
+
+        rows.forEach(row => {
+            const nomPrenom = row.querySelector("td:nth-child(1)").innerText.toLowerCase();
+            row.style.display = nomPrenom.includes(query) ? "" : "none";
+        });
+    });
+
+    // --- FILTRE ACTIFS ---
+    filterActifsBtn.addEventListener("click", function () {
+        rows.forEach(row => {
+            const actifBadge = row.querySelector("td:nth-child(11) .badge");
+            const isActif = actifBadge && actifBadge.classList.contains("bg-success");
+            row.style.display = isActif ? "" : "none";
+        });
+
+        searchInput.value = "";
+    });
+
+    // --- FILTRE TOUS ---
+    filterTousBtn.addEventListener("click", function () {
+        rows.forEach(row => row.style.display = "");
+        searchInput.value = "";
+    });
+
+});
+</script>
+
+
+{% endblock %}

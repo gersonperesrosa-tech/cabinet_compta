@@ -1,0 +1,48 @@
+<li class="list-group-item d-flex justify-content-between align-items-center">
+
+    <div class="d-flex align-items-center gap-3">
+
+        <!-- Checkbox -->
+        <a href="{% url 'todo_toggle' todo.id %}" class="text-decoration-none">
+            {% if todo.done %}
+                ✔️
+            {% else %}
+                ⬜
+            {% endif %}
+        </a>
+
+        <div>
+            <strong>{{ todo.title }}</strong>
+
+            {% if todo.description %}
+                <div class="text-muted small">{{ todo.description }}</div>
+            {% endif %}
+
+            {% if todo.due_date %}
+                <div class="small">
+                    📅 {{ todo.due_date }}
+                </div>
+            {% endif %}
+
+            <!-- Sous-tâches -->
+            {% if todo.subtasks.all %}
+                <ul class="mt-2 small">
+                    {% for sub in todo.subtasks.all %}
+                        <li>
+                            <a href="{% url 'subtask_toggle' sub.id %}">
+                                {% if sub.done %}✔️{% else %}⬜{% endif %}
+                            </a>
+                            {{ sub.title }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <a href="{% url 'todo_edit' todo.id %}" class="btn btn-sm btn-outline-secondary">Modifier</a>
+        <a href="{% url 'todo_delete' todo.id %}" class="btn btn-sm btn-outline-danger">Supprimer</a>
+    </div>
+
+</li>

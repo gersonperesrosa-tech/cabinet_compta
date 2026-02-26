@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <h3 class="mb-4">Nouvelle note personnelle</h3>
+
+    <div class="row">
+
+        <!-- ========================= -->
+        <!-- Colonne 1 : Ajouter une note -->
+        <!-- ========================= -->
+        <div class="col-md-8">
+
+            <div class="card mb-4">
+                <div class="card-header fw-bold">Créer une note</div>
+                <div class="card-body">
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="new_note" value="1">
+
+                        <label class="form-label">Titre</label>
+                        <input type="text" name="titre" class="form-control mb-3">
+
+                        <label class="form-label">Catégorie</label>
+                        <select name="categorie" class="form-control mb-3">
+                            <option value="">Aucune</option>
+                            {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.nom }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <label class="form-label">Contenu</label>
+                        <textarea name="contenu" class="form-control mb-3" rows="6"></textarea>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'user_notes' %}" class="btn btn-outline-secondary">Annuler</a>
+                            <button class="btn btn-primary">Enregistrer</button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ========================= -->
+        <!-- Colonne 2 : Ajouter une catégorie -->
+        <!-- ========================= -->
+        <div class="col-md-4">
+
+            <div class="card">
+                <div class="card-header fw-bold">Nouvelle catégorie</div>
+                <div class="card-body">
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="new_category" value="1">
+
+                        <label class="form-label">Nom de la catégorie</label>
+                        <input type="text" name="nom_categorie" class="form-control mb-3">
+
+                        <button class="btn btn-outline-primary w-100">Ajouter</button>
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

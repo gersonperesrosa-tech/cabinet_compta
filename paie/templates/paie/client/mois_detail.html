@@ -1,0 +1,58 @@
+{% extends "base_paie_client.html" %}
+
+{% block title %}Mois {{ mois.mois }}/{{ mois.annee }}{% endblock %}
+
+{% block content %}
+<section class="section">
+
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <!-- Titre -->
+    <h1 class="m-0">
+        Mois {{ mois.mois_nom }} {{ mois.annee }}
+    </h1>
+
+    <!-- Boutons à droite -->
+    <div class="d-flex align-items-center gap-2">
+
+        {% if not mois.client_valide %}
+        <a href="{% url 'paie:client_valider_mois' mois.id %}"
+           class="btn btn-success">
+            Valider le mois
+        </a>
+        {% endif %}
+
+        <a href="{% url 'paie:client_liste_mois' %}" class="btn btn-outline-secondary">
+            Retour aux mois de paie
+        </a>
+
+    </div>
+
+</div>
+
+{% if mois.client_valide %}
+    <p class="alert alert-info">
+        Ce mois est validé. Vous ne pouvez plus modifier les variables.
+    </p>
+{% endif %}
+
+<h3 class="mt-4">Salariés</h3>
+
+<ul class="list-group">
+    {% for s in salaries %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ s.prenom }} {{ s.nom }}
+
+            {% if not mois.client_valide %}
+                <a href="{% url 'paie:client_variables_salarie' mois.id s.id %}"
+                   class="btn btn-sm btn-outline-primary">
+                    Saisir les variables
+                </a>
+            {% endif %}
+        </li>
+    {% endfor %}
+</ul>
+
+
+{% endblock %}

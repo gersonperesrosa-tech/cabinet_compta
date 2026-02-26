@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<section class="section">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <h1 class="mb-0">
+        Clôture – Liste des clients ({{ annee.annee }})
+    </h1>
+
+    <div class="d-flex align-items-center gap-2">
+
+        <select id="anneeSelect" class="form-select form-select-sm" style="width: 120px;">
+            {% for a in annees %}
+                <option value="{{ a.id }}" {% if a.id == annee.id %}selected{% endif %}>
+                    {{ a.annee }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <a href="{% url 'cloture_annees' %}" class="btn btn-outline-secondary">
+            ← Retour aux années
+        </a>
+
+    </div>
+
+</div>
+<div class="mb-3">
+    <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un client (N°, nom, forme juridique)...">
+</div>
+
+
+    <table class="table table-hover align-middle">
+<thead class="table-light">
+    <tr>
+        <th>N° Client</th>
+        <th>Nom du client</th>
+        <th>Forme juridique</th>
+        <th>Révision</th>
+        <th>Plaquettes</th>
+        <th>CA12</th>
+        <th>IS / CI</th>
+        <th>CVAE</th>
+        <th>Mission</th>
+        <th>Juridique</th>
+        <th style="width: 120px;">Actions</th>
+    </tr>
+</thead>
+
+        <tbody>
+            {% for cloture in clotures %}
+            <tr>
+          
+<td>{{ cloture.client.numero }}
+</td> <td><strong>{{ cloture.client.nom }}
+</strong></td> 
+<td>{{ cloture.client.forme_juridique }}</td>
+                </td>
+
+                <!-- Révision -->
+                <td>
+                    {% include "partials/statuts_badges.html" with data=cloture.revision_statuts_count %}
+                </td>
+
+                <!-- Plaquettes -->
+                <td>
+                    {% include "partials/statuts_badges.html" with data=cloture.plaquettes_statuts_count %}
+                </td>
+
+                <!-- CA12 -->
+                <td>
+                    {% include "partials/statuts_badges.html" with data=cloture.ca12_statuts_count %}
+                </td>
+
+                <!-- IS -->
+                <td>
+                    {% include "partials/statuts_badges.html" with data=cloture.is_statuts_count %}
+                </td>
+
+                <!-- CVAE -->
+                <td>
+                    {% include "partials/statuts_badges.html" with data=cloture.cvae_statuts_count %}
+                </td>
+
+                <!-- Mission -->
+                <td>
+                    {% include "partials/statuts_badges.html" with data=cloture.mission_statuts_count %}
+                </td>
+
+                <!-- Juridique -->
+                <td>
+                    {% include "partials/statuts_badges.html" with data=cloture.juridique_statuts_count %}
+                </td>
+
+                <td class="text-center">
+                    <a href="{% url 'cloture_client_detail' cloture.id %}" class="btn btn-sm btn-outline-primary">
+                        Voir
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" class="text-center text-muted py-4">
+                    Aucun client trouvé pour cette année.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const input = document.getElementById("searchInput");
+    const rows = document.querySelectorAll("table tbody tr");
+
+    input.addEventListener("keyup", function () {
+        const filter = input.value.toLowerCase();
+
+        rows.forEach(row => {
+            const numero = row.children[0].textContent.toLowerCase();
+            const nom = row.children[1].textContent.toLowerCase();
+            const forme = row.children[2].textContent.toLowerCase();
+
+            if (
+                numero.includes(filter) ||
+                nom.includes(filter) ||
+                forme.includes(filter)
+            ) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    });
+});
+</script>
+
+<script>
+document.getElementById("anneeSelect").addEventListener("change", function () {
+    const anneeId = this.value;
+    window.location.href = "/cloture/annee/" + anneeId + "/clients/";
+});
+</script>
+
+{% endblock %}

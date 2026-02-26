@@ -1,0 +1,102 @@
+<div class="modal fade show" style="display:block;" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <form 
+                method="post"
+                hx-post="{% url 'tva_ca12_save' client.id annee %}"
+                hx-target="#modal-container"
+                hx-swap="outerHTML">
+
+                {% csrf_token %}
+
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        TVA CA12 – {{ client.nom }} ({{ annee }})
+                    </h5>
+
+                    <button type="button" class="btn-close"
+                            onclick="document.querySelector('#modal-container').innerHTML=''">
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <table class="table table-bordered align-middle">
+                        <thead>
+                            <tr>
+                                <th>Libellé</th>
+                                <th>Montant</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            <tr>
+                                <td>Montant TVA N-1</td>
+                                <td>
+                                    <input type="text" name="montant_n_1" class="form-control"
+                                           value="{{ tva.montant_n_1|default:'0.00' }}">
+                                </td>
+                                <td></td>
+                            </tr>
+
+                            <tr>
+                                <td>S1-07</td>
+                                <td>
+                                    <input type="text" name="s1_07" class="form-control"
+                                           value="{{ tva.s1_07|default:'0.00' }}">
+                                </td>
+                                <td>
+                                    <select name="statut_s1_07" class="form-select">
+                                        <option value="">Sans pastille</option>
+                                        <option value="JAUNE" {% if tva.statut_s1_07 == "JAUNE" %}selected{% endif %}>Jaune</option>
+                                        <option value="VERT_CLAIR" {% if tva.statut_s1_07 == "VERT_CLAIR" %}selected{% endif %}>Vert clair</option>
+                                        <option value="VERT_FONCE" {% if tva.statut_s1_07 == "VERT_FONCE" %}selected{% endif %}>Vert foncé</option>
+                                    </select>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>S2-12</td>
+                                <td>
+                                    <input type="text" name="s2_12" class="form-control"
+                                           value="{{ tva.s2_12|default:'0.00' }}">
+                                </td>
+                                <td>
+                                    <select name="statut_s2_12" class="form-select">
+                                        <option value="">Sans pastille</option>
+                                        <option value="JAUNE" {% if tva.statut_s2_12 == "JAUNE" %}selected{% endif %}>Jaune</option>
+                                        <option value="VERT_CLAIR" {% if tva.statut_s2_12 == "VERT_CLAIR" %}selected{% endif %}>Vert clair</option>
+                                        <option value="VERT_FONCE" {% if tva.statut_s2_12 == "VERT_FONCE" %}selected{% endif %}>Vert foncé</option>
+                                    </select>
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+
+                    <label class="form-label fw-semibold">Si TVA > 1000 €</label>
+                    <textarea name="commentaire_tva_sup_1000" class="form-control" rows="3">{{ tva.commentaire_tva_sup_1000 }}</textarea>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary"
+                            onclick="document.querySelector('#modal-container').innerHTML=''">
+                        Fermer
+                    </button>
+
+                    <button type="submit" class="btn btn-primary">
+                        Enregistrer
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop fade show"></div>

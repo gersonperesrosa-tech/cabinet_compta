@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load custom_tags %}
+
+{% block content %}
+
+<section class="section">
+
+
+<!-- HEADER -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <!-- Titre -->
+    <h1 class="m-0">Historique TVA – {{ client.nom }} ({{ annee.annee }})</h1>
+
+    <!-- Sélecteur + Retour -->
+    <div class="d-flex align-items-center gap-3">
+
+        <!-- Sélecteur d'année -->
+        <select class="form-select w-auto"
+                onchange="window.location.href=this.value;">
+            {% for a in client.annees.all %}
+                <option value="{% url 'tva_historique_client' client.id a.id %}"
+                        {% if a.id == annee.id %}selected{% endif %}>
+                    {{ a.annee }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <!-- Bouton retour -->
+        <a href="{% url 'liste_clients' %}" class="btn btn-outline-secondary">
+            Retour aux clients
+        </a>
+    </div>
+
+</div>
+
+<!-- Informations module -->
+<div class="alert alert-secondary">
+    Régime TVA : <strong>{{ tca.module.get_type_display }}</strong>
+</div>
+
+<hr>
+
+{% if regime == "CA3M" %}
+<h4 class="mb-3">Déclarations mensuelles</h4>
+
+<table class="table table-bordered align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>Mois</th>
+            <th>Montant TVA</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for mois, montant, statut in contexte_regime.mois %}
+        <tr>
+            <td>{{ mois }}</td>
+            <td>{{ montant|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if regime == "CA3T" %}
+<h4 class="mb-3">Déclarations trimestrielles</h4>
+
+<table class="table table-bordered align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>Trimestre</th>
+            <th>Montant TVA</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for trimestre, montant, statut in contexte_regime.trimestres %}
+        <tr>
+            <td>{{ trimestre }}</td>
+            <td>{{ montant|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if regime == "CA12" %}
+<h4 class="mb-3">Déclaration annuelle</h4>
+
+<table class="table table-bordered align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>Élément</th>
+            <th>Montant</th>
+        </tr>
+    </thead>
+    <tbody>
+
+        <tr>
+            <td><strong>TVA N‑1</strong></td>
+            <td>{{ contexte_regime.annuel.tva_n_1|default:"—" }}</td>
+        </tr>
+
+        <tr>
+            <td><strong>Acompte 1</strong></td>
+            <td>{{ contexte_regime.annuel.acompte_1.0|default:"—" }}</td>
+        </tr>
+
+        <tr>
+            <td><strong>Acompte 2</strong></td>
+            <td>{{ contexte_regime.annuel.acompte_2.0|default:"—" }}</td>
+        </tr>
+
+        <tr>
+            <td><strong>Solde</strong></td>
+            <td>{{ contexte_regime.annuel.solde.0|default:"—" }}</td>
+        </tr>
+
+        <tr>
+            <td><strong>Commentaire TVA > 1000</strong></td>
+            <td>{{ contexte_regime.annuel.commentaire|default:"—" }}</td>
+        </tr>
+
+    </tbody>
+</table>
+{% endif %}
+
+{% if regime == "FR" or regime == "EXO" %}
+<div class="alert alert-secondary mt-4">
+    Ce régime TVA ne nécessite pas de déclaration.
+</div>
+{% endif %}
+
+<hr>
+
+<h4 class="mt-4">Synthèse annuelle</h4>
+
+<div class="p-3 border rounded bg-light">
+    <p><strong>Total TVA déclarée :</strong> calcul à venir</p>
+    <p><strong>Total TVA payée :</strong> calcul à venir</p>
+    <p><strong>Solde annuel :</strong> calcul à venir</p>
+</div>
+
+{% endblock %}

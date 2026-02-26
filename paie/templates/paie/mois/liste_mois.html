@@ -1,0 +1,115 @@
+{% extends "base_role.html" %}
+
+{% block content %}
+
+<section class="section">
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="m-0">
+            Mois de paie – {{ client.nom }}
+        </h1>
+
+<a href="{% url 'paie:cabinet_creer_mois_suivant' client.id %}" 
+                       class="btn btn-sm btn-primary">
+                        + Créer le mois suivant
+                    </a>
+        <a href="{% url 'paie:cabinet_clients_paie' %}" class="btn btn-outline-secondary">
+            ← Retour aux clients Paie
+        </a>
+    </div>
+</td>
+
+
+                    
+                </td>
+
+
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Mois</th>
+                <th>Statut</th>
+                <th>Date validation client</th>
+                <th>Validation partenaire</th>
+                <th class="text-center">Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for m in mois_list %}
+            <tr>
+
+                <!-- Mois -->
+                <td>{{ m.mois }}/{{ m.annee }}</td>
+
+                <!-- Statut client -->
+                <td>
+                    {% if m.client_valide %}
+                        <h5><span class="badge bg-success">Validé client</span><h5>
+                    {% else %}
+                        <h5><span class="badge bg-warning text-dark">En attente</span><h5>
+                    {% endif %}
+                </td>
+
+                <!-- Date validation client -->
+                <td>
+                    {% if m.date_validation_client %}
+                        {{ m.date_validation_client|date:"d/m/Y H:i" }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+
+                <!-- Validation partenaire (BS + DSN) -->
+<td>
+    <div class="d-flex gap-2">
+
+        {% if m.bs_fait %}
+            <span class="badge bg-success text-start">
+                BS fait<br>
+                <small>{{ m.date_bs_fait|date:"d/m/Y H:i" }}</small>
+            </span>
+        {% else %}
+            <span class="badge bg-secondary">BS non fait</span>
+        {% endif %}
+
+        {% if m.dsn_faite %}
+            <span class="badge bg-primary text-start">
+                DSN faite<br>
+                <small>{{ m.date_dsn_faite|date:"d/m/Y H:i" }}</small>
+            </span>
+        {% else %}
+            <span class="badge bg-secondary">DSN non faite</span>
+        {% endif %}
+
+    </div>
+</td>
+
+                <!-- Actions -->
+                <td class="text-center">
+                    <a href="{% url 'paie:variables_paie_salaries' m.id %}"
+                       class="btn btn-sm btn-outline-primary">
+                        Ouvrir
+                    </a>
+
+
+
+    {% if m.bs_fait or m.dsn_faite or m.client_valide %}
+        <a href="{% url 'paie:devalider_mois' m.id %}"
+           class="btn btn-sm btn-outline-danger"
+           onclick="return confirm('Dévalider ce mois ? Le client pourra modifier les variables.');">
+            Dévalider
+        </a>
+    {% endif %}
+
+
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+{% endblock %}
+

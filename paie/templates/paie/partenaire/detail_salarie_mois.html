@@ -1,0 +1,125 @@
+{% extends "base_partenaire.html" %}
+
+{% block title %}Détails – {{ salarie.prenom }} {{ salarie.nom }}{% endblock %}
+
+{% block content %}
+<section class="section">
+
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <!-- Titre -->
+    <h2 class="mb-0">
+        Variables de paie – {{ salarie.prenom }} {{ salarie.nom }}
+        <small class="text-muted">({{ paie_mois.mois_nom_court }} {{ paie_mois.annee }})</small>
+    </h2>
+
+    <!-- Bouton retour -->
+    <a href="{% url 'paie:partenaire_variables_mois' paie_mois.id %}"
+       class="btn btn-outline-secondary">
+        ← Retour aux variables du mois
+    </a>
+
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+
+<h5 class="mb-3">Informations du salarié</h5>
+
+<ul class="list-group mb-4">
+
+    <li class="list-group-item">
+        <strong>Nom :</strong> {{ salarie.nom }}
+    </li>
+
+    <li class="list-group-item">
+        <strong>Prénom :</strong> {{ salarie.prenom }}
+    </li>
+
+    <li class="list-group-item">
+        <strong>Date de naissance :</strong>
+        {{ salarie.date_naissance|date:"d/m/Y"|default:"-" }}
+    </li>
+
+    <li class="list-group-item">
+        <strong>Numéro de sécurité sociale :</strong>
+        {{ salarie.numero_securite_sociale|default:"-" }}
+    </li>
+
+    <li class="list-group-item">
+        <strong>Date d'entrée :</strong>
+        {{ salarie.date_entree|date:"d/m/Y"|default:"-" }}
+    </li>
+
+    <li class="list-group-item">
+        <strong>Date de sortie :</strong>
+        {{ salarie.date_sortie|date:"d/m/Y"|default:"-" }}
+    </li>
+
+    <li class="list-group-item">
+        <strong>Actif :</strong>
+        {% if salarie.actif %}
+            <span class="badge bg-success">Actif</span>
+        {% else %}
+            <span class="badge bg-secondary">Sorti</span>
+        {% endif %}
+    </li>
+
+    <li class="list-group-item">
+        <strong>Mutuelle :</strong>
+        {{ salarie.mutuelle|default:"-" }}
+    </li>
+
+    <li class="list-group-item">
+        <strong>Salaire de base :</strong>
+        {{ salarie.salaire_base|default:"-" }}
+    </li>
+
+</ul>
+
+        <h5 class="mb-3">Variables de paie</h5>
+        <ul class="list-group">
+
+            <li class="list-group-item">
+                <strong>Heures 25% :</strong> {{ variables.heures_sup_25|default:"-" }}
+            </li>
+
+            <li class="list-group-item">
+                <strong>Heures 50% :</strong> {{ variables.heures_sup_50|default:"-" }}
+            </li>
+
+            <li class="list-group-item">
+                <strong>Primes :</strong> {{ variables.primes|default:"-" }}
+            </li>
+
+            <li class="list-group-item">
+                <strong>Congés début :</strong> {{ variables.conges_debut|default:"-" }}
+            </li>
+
+            <li class="list-group-item">
+                <strong>Congés fin :</strong> {{ variables.conges_fin|default:"-" }}
+            </li>
+
+            <li class="list-group-item">
+                <strong>Absences maladie :</strong> {{ variables.absences_maladie|default:"-" }}
+            </li>
+
+            <li class="list-group-item">
+                <strong>Autres absences :</strong> {{ variables.absences_autres|default:"-" }}
+            </li>
+
+            <li class="list-group-item">
+                <strong>Acomptes :</strong> {{ variables.acomptes|default:"-" }}
+            </li>
+
+            <li class="list-group-item">
+                <strong>Autres infos :</strong> {{ variables.autres_infos|default:"-" }}
+            </li>
+
+        </ul>
+
+    </div>
+</div>
+
+{% endblock %}

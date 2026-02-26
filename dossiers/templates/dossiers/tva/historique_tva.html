@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Historique TVA – {{ client.nom }}</h2>
+
+<table class="table table-hover align-middle mt-4">
+    <thead>
+        <tr>
+            <th>Année</th>
+            <th>Régime</th>
+            <th>Détails</th>
+            <th>Total annuel</th>
+            <th>Dernière mise à jour</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for ligne in tableau %}
+        <tr>
+            <td><strong>{{ ligne.annee }}</strong></td>
+
+            <td>
+                <span class="badge bg-primary">{{ ligne.regime }}</span>
+            </td>
+
+            <td>
+                {% if ligne.type == "CA12" %}
+                    N‑1 : {{ ligne.montants.n_1 }} €<br>
+                    S1‑07 : {{ ligne.montants.s1_07 }} €<br>
+                    S2‑12 : {{ ligne.montants.s2_12 }} €
+
+                {% elif ligne.type == "CA3T" %}
+                    T1 : {{ ligne.montants.T1 }} €<br>
+                    T2 : {{ ligne.montants.T2 }} €<br>
+                    T3 : {{ ligne.montants.T3 }} €<br>
+                    T4 : {{ ligne.montants.T4 }} €
+
+                {% elif ligne.type == "CA3M" %}
+                    {% for mois, montant in ligne.montants.items %}
+                        {{ mois }} : {{ montant }} €<br>
+                    {% endfor %}
+
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+
+            <td>
+                {% if ligne.total %}
+                    <strong>{{ ligne.total }} €</strong>
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+
+            <td>{{ ligne.updated|date:"d/m/Y H:i" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

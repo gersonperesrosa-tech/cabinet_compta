@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Clients – Module {{ module.get_type_display }} ({{ module.annee.annee }})</h2>
+
+    <a href="{% url 'tva_modules_annee' module.annee.id %}" class="btn btn-outline-secondary">
+        Retour aux modules
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+
+        <h4>Clients dans ce module</h4>
+
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Client</th>
+                    <th></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for c in clients_module %}
+                <tr>
+                    <td>{{ c.client.nom }}</td>
+
+                    <td class="d-flex gap-2">
+
+                        {% if module.type == "CA3M" %}
+                            <a href="{% url 'tva_saisie_ca3m' c.id %}"
+                               class="btn btn-sm btn-outline-success">
+                                Saisir TVA
+                            </a>
+                        {% endif %}
+
+                        <a href="{% url 'tva_clients_module_supprimer' c.id %}"
+                           class="btn btn-sm btn-outline-danger">
+                            Retirer
+                        </a>
+
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2" class="text-muted">Aucun client dans ce module.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+
+    <div class="col-md-6">
+
+        <h4>Ajouter un client</h4>
+
+        <form method="POST" action="{% url 'tva_clients_module_ajouter' module.id %}">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <select name="client_id" class="form-select" required>
+                    <option value="">Sélectionner un client…</option>
+                    {% for c in tous_les_clients %}
+                        <option value="{{ c.id }}">{{ c.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button class="btn btn-primary">Ajouter</button>
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,22 @@
+<div>
+
+    <h5 class="mb-3">Notes privées – {{ client.nom }}</h5>
+
+    <form 
+        method="POST"
+        hx-post="{% url 'client_notes' client.id %}"
+        hx-target="#notesList"
+        hx-swap="innerHTML"
+    >
+        {% csrf_token %}
+        <textarea name="contenu" class="form-control mb-3" placeholder="Ajouter une note…"></textarea>
+        <button type="submit" class="btn btn-primary w-100">Ajouter</button>
+    </form>
+
+    <hr>
+
+    <div id="notesList">
+        {% include "notes/partials/notes_list.html" %}
+    </div>
+
+</div>

@@ -1,0 +1,255 @@
+<div class="popup-container">
+
+
+    <!-- TITRE -->
+<div class="modal-header">
+    <h5 class="modal-title">Déclaration TVA Mensuelle – {{ client.nom }}</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+
+    <!-- ANNÉE (modifiable plus tard) -->
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Année</label>
+	  <input type="text" class="form-control" value="{{ annee }}" disabled>
+    </div>
+
+    <!-- TABLEAU DES MONTANTS + STATUTS -->
+    <table class="table table-bordered align-middle">
+        <thead class="table-light">
+            <tr>
+                <th style="width: 20%">Mois</th>
+                <th style="width: 40%">Montant TVA</th>
+                <th style="width: 40%">Statut</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <!-- JANVIER -->
+            <tr>
+                <td>Janvier</td>
+                <td>
+                    <input type="text" name="tva_janvier" class="form-control"
+                           value="{{ tva.tva_janvier }}">
+                </td>
+                <td>
+                    <select name="statut_janvier" class="form-select">
+                        <option value="">—</option>
+                        <option value="blanche" {% if tva.statut_janvier == "blanche" %}selected{% endif %}>Blanche</option>
+                        <option value="jaune" {% if tva.statut_janvier == "jaune" %}selected{% endif %}>Jaune</option>
+                        <option value="vert-clair" {% if tva.statut_janvier == "vert-clair" %}selected{% endif %}>Vert clair</option>
+                        <option value="vert-fonce" {% if tva.statut_janvier == "vert-fonce" %}selected{% endif %}>Vert foncé</option>
+                    </select>
+                </td>
+            </tr>
+
+            <!-- FÉVRIER -->
+            <tr>
+                <td>Février</td>
+                <td>
+                    <input type="text" name="tva_fevrier" class="form-control"
+                           value="{{ tva.tva_fevrier }}">
+                </td>
+                <td>
+                    <select name="statut_fevrier" class="form-select">
+                        <option value="">—</option>
+                        <option value="blanche" {% if tva.statut_fevrier == "blanche" %}selected{% endif %}>Blanche</option>
+                        <option value="jaune" {% if tva.statut_fevrier == "jaune" %}selected{% endif %}>Jaune</option>
+                        <option value="vert-clair" {% if tva.statut_fevrier == "vert-clair" %}selected{% endif %}>Vert clair</option>
+                        <option value="vert-fonce" {% if tva.statut_fevrier == "vert-fonce" %}selected{% endif %}>Vert foncé</option>
+                    </select>
+                </td>
+            </tr>
+
+            <!-- MARS -->
+            <tr>
+                <td>Mars</td>
+                <td>
+                    <input type="text" name="tva_mars" class="form-control"
+                           value="{{ tva.tva_mars }}">
+                </td>
+                <td>
+                    <select name="statut_mars" class="form-select">
+                        <option value="">—</option>
+                        <option value="blanche" {% if tva.statut_mars == "blanche" %}selected{% endif %}>Blanche</option>
+                        <option value="jaune" {% if tva.statut_mars == "jaune" %}selected{% endif %}>Jaune</option>
+                        <option value="vert-clair" {% if tva.statut_mars == "vert-clair" %}selected{% endif %}>Vert clair</option>
+                        <option value="vert-fonce" {% if tva.statut_mars == "vert-fonce" %}selected{% endif %}>Vert foncé</option>
+                    </select>
+                </td>
+            </tr>
+
+            <!-- AVRIL -->
+            <tr>
+                <td>Avril</td>
+                <td>
+                    <input type="text" name="tva_avril" class="form-control"
+                           value="{{ tva.tva_avril }}">
+                </td>
+                <td>
+                    <select name="statut_avril" class="form-select">
+                        <option value="">—</option>
+                        <option value="blanche" {% if tva.statut_avril == "blanche" %}selected{% endif %}>Blanche</option>
+                        <option value="jaune" {% if tva.statut_avril == "jaune" %}selected{% endif %}>Jaune</option>
+                        <option value="vert-clair" {% if tva.statut_avril == "vert-clair" %}selected{% endif %}>Vert clair</option>
+                        <option value="vert-fonce" {% if tva.statut_avril == "vert-fonce" %}selected{% endif %}>Vert foncé</option>
+                    </select>
+                </td>
+            </tr>
+
+            <!-- MAI -->
+            <tr>
+                <td>Mai</td>
+                <td>
+                    <input type="text" name="tva_mai" class="form-control"
+                           value="{{ tva.tva_mai }}">
+                </td>
+                <td>
+                    <select name="statut_mai" class="form-select">
+                        <option value="">—</option>
+                        <option value="blanche" {% if tva.statut_mai == "blanche" %}selected{% endif %}>Blanche</option>
+                        <option value="jaune" {% if tva.statut_mai == "jaune" %}selected{% endif %}>Jaune</option>
+                        <option value="vert-clair" {% if tva.statut_mai == "vert-clair" %}selected{% endif %}>Vert clair</option>
+                        <option value="vert-fonce" {% if tva.statut_mai == "vert-fonce" %}selected{% endif %}>Vert foncé</option>
+                    </select>
+                </td>
+            </tr>
+
+            <!-- JUIN -->
+            <tr>
+                <td>Juin</td>
+                <td>
+                    <input type="text" name="tva_juin" class="form-control"
+                           value="{{ tva.tva_juin }}">
+                </td>
+                <td>
+                    <select name="statut_juin" class="form-select">
+                        <option value="">—</option>
+                        <option value="blanche" {% if tva.statut_juin == "blanche" %}selected{% endif %}>Blanche</option>
+                        <option value="jaune" {% if tva.statut_juin == "jaune" %}selected{% endif %}>Jaune</option>
+                        <option value="vert-clair" {% if tva.statut_juin == "vert-clair" %}selected{% endif %}>Vert clair</option>
+                        <option value="vert-fonce" {% if tva.statut_juin == "vert-fonce" %}selected{% endif %}>Vert foncé</option>
+                    </select>
+                </td>
+            </tr>
+
+            <!-- JUILLET -->
+            <tr>
+                <td>Juillet</td>
+                <td>
+                    <input type="text" name="tva_juillet" class="form-control"
+                           value="{{ tva.tva_juillet }}">
+                </td>
+                <td>
+                    <select name="statut_juillet" class="form-select">
+                        <option value="">—</option>
+                        <option value="blanche" {% if tva.statut_juillet == "blanche" %}selected{% endif %}>Blanche</option>
+                        <option value="jaune" {% if tva.statut_juillet == "jaune" %}selected{% endif %}>Jaune</option>
+                        <option value="vert-clair" {% if tva.statut_juillet == "vert-clair" %}selected{% endif %}>Vert clair</option>
+                        <option value="vert-fonce" {% if tva.statut_juillet == "vert-fonce" %}selected{% endif %}>Vert foncé</option>
+                    </select>
+                </td>
+            </tr>
+
+            <!-- AOÛT -->
+            <tr>
+                <td>Août</td>
+                <td>
+                    <input type="text" name="tva_aout" class="form-control"
+                           value="{{ tva.tva_aout }}">
+                </td>
+                <td>
+                    <select name="statut_aout" class="form-select">
+                        <option value="">—</option>
+                        <option value="blanche" {% if tva.statut_aout == "blanche" %}selected{% endif %}>Blanche</option>
+                        <option value="jaune" {% if tva.statut_aout == "jaune" %}selected{% endif %}>Jaune</option>
+                        <option value="vert-clair" {% if tva.statut_aout == "vert-clair" %}selected{% endif %}>Vert clair</option>
+                        <option value="vert-fonce" {% if tva.statut_aout == "vert-fonce" %}selected{% endif %}>Vert foncé</option>
+                    </select>
+                </td>
+            </tr>
+
+            <!-- SEPTEMBRE -->
+            <tr>
+                <td>Septembre</td>
+                <td>
+                    <input type="text" name="tva_septembre" class="form-control"
+                           value="{{ tva.tva_septembre }}">
+                </td>
+                <td>
+                    <select name="statut_septembre" class="form-select">
+                        <option value="">—</option>
+                        <option value="blanche" {% if tva.statut_septembre == "blanche" %}selected{% endif %}>Blanche</option>
+                        <option value="jaune" {% if tva.statut_septembre == "jaune" %}selected{% endif %}>Jaune</option>
+                        <option value="vert-clair" {% if tva.statut_septembre == "vert-clair" %}selected{% endif %}>Vert clair</option>
+                        <option value="vert-fonce" {% if tva.statut_septembre == "vert-fonce" %}selected{% endif %}>Vert foncé</option>
+                    </select>
+                </td>
+            </tr>
+
+            <!-- OCTOBRE -->
+            <tr>
+                <td>Octobre</td>
+                <td>
+                    <input type="text" name="tva_octobre" class="form-control"
+                           value="{{ tva.tva_octobre }}">
+                </td>
+                <td>
+                    <select name="statut_octobre" class="form-select">
+                        <option value="">—</option>
+                        <option value="blanche" {% if tva.statut_octobre == "blanche" %}selected{% endif %}>Blanche</option>
+                        <option value="jaune" {% if tva.statut_octobre == "jaune" %}selected{% endif %}>Jaune</option>
+                        <option value="vert-clair" {% if tva.statut_octobre == "vert-clair" %}selected{% endif %}>Vert clair</option>
+                        <option value="vert-fonce" {% if tva.statut_octobre == "vert-fonce" %}selected{% endif %}>Vert foncé</option>
+                    </select>
+                </td>
+            </tr>
+
+            <!-- NOVEMBRE -->
+            <tr>
+                <td>Novembre</td>
+                <td>
+                    <input type="text" name="tva_novembre" class="form-control"
+                           value="{{ tva.tva_novembre }}">
+                </td>
+                <td>
+                    <select name="statut_novembre" class="form-select">
+                        <option value="">—</option>
+                        <option value="blanche" {% if tva.statut_novembre == "blanche" %}selected{% endif %}>Blanche</option>
+                        <option value="jaune" {% if tva.statut_novembre == "jaune" %}selected{% endif %}>Jaune</option>
+                        <option value="vert-clair" {% if tva.statut_novembre == "vert-clair" %}selected{% endif %}>Vert clair</option>
+                        <option value="vert-fonce" {% if tva.statut_novembre == "vert-fonce" %}selected{% endif %}>Vert foncé</option>
+                    </select>
+                </td>
+            </tr>
+
+            <!-- DÉCEMBRE -->
+            <tr>
+                <td>Décembre</td>
+                <td>
+                    <input type="text" name="tva_decembre" class="form-control"
+                           value="{{ tva.tva_decembre }}">
+                </td>
+                <td>
+                    <select name="statut_decembre" class="form-select">
+                        <option value="">—</option>
+                        <option value="blanche" {% if tva.statut_decembre == "blanche" %}selected{% endif %}>Blanche</option>
+                        <option value="jaune" {% if tva.statut_decembre == "jaune" %}selected{% endif %}>Jaune</option>
+                        <option value="vert-clair" {% if tva.statut_decembre == "vert-clair" %}selected{% endif %}>Vert clair</option>
+                        <option value="vert-fonce" {% if tva.statut_decembre == "vert-fonce" %}selected{% endif %}>Vert foncé</option>
+                    </select>
+                </td>
+            </tr>
+
+        </tbody>
+    </table>
+
+    <!-- BOUTON DE SAUVEGARDE -->
+<button class="btn btn-primary"
+        id="saveTvaBtn"
+        data-save-url="{% url 'tva_ca3m_save' client.id %}?annee={{ annee }}">
+    Enregistrer
+</button>
+
+
+</div>

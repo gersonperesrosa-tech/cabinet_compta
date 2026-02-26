@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="m-0">Gestion Dossier Permanent (DP)</h1>
+
+    <input type="text"
+           id="searchInput"
+           class="form-control"
+           placeholder="Rechercher un client…"
+           style="width: 220px;">
+</div>
+
+<table class="table table-bordered align-middle mt-4">
+    <thead class="table-light">
+        <tr>
+            <th>Client</th>
+            <th>Forme juridique</th>
+            <th>Dossier déontologie</th>
+            <th>Acceptation LAB</th>
+            <th>Pièce d'identité</th>
+            <th>Statut</th>
+            <th>Bail</th>
+            <th>Lettre de mission</th>
+            <th>Avenant</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+    {% for client in clients %}
+        {% with dp=client.dp %}
+        <tr>
+            <td><strong>{{ client.nom }}</strong></td>
+
+            <td>{{ client.forme_juridique|default:"—" }}</td>
+
+            <td>{{ dp.dossier_deontologie|default:"—" }}</td>
+            <td>{{ dp.acceptation_lab|default:"—" }}</td>
+            <td>{{ dp.piece_identite|default:"—" }}</td>
+            <td>{{ dp.statut|default:"—" }}</td>
+            <td>{{ dp.bail|default:"—" }}</td>
+            <td>{{ dp.lettre_mission|default:"—" }}</td>
+            <td>{{ dp.avenant|default:"—" }}</td>
+
+            <td>
+                <a href="{% url 'dp_saisie' client.id %}"
+                   class="btn btn-sm btn-outline-primary">
+                    Modifier
+                </a>
+            </td>
+        </tr>
+        {% endwith %}
+    {% endfor %}
+    </tbody>
+</table>
+
+</section>
+
+<script>
+document.getElementById("searchInput").addEventListener("keyup", function () {
+    let filter = this.value.toLowerCase();
+    let rows = document.querySelectorAll("table tbody tr");
+
+    rows.forEach(row => {
+        let name = row.querySelector("td strong").textContent.toLowerCase();
+        row.style.display = name.includes(filter) ? "" : "none";
+    });
+});
+</script>
+
+{% endblock %}

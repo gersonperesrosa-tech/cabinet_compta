@@ -1,0 +1,277 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>TVA mensuelle (CA3M)</title>
+
+    <!-- Police Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Icônes Material -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" />
+
+    <!-- CSS du dashboard -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+</head>
+<body>
+
+<header class="top-header">
+    <div class="header-left">
+        <img src="{% static 'img/logo.png' %}" alt="Logo" class="header-logo">
+        <span class="header-title">Expertea Pilot</span>
+    </div>
+
+    <div class="header-center">
+        <input type="text" class="header-search" placeholder="Rechercher un client…">
+    </div>
+
+    <div class="header-right">
+        <span class="welcome-text">Bienvenue, {{ user.username }}</span>
+        <div class="avatar-circle">{{ user.username|first|upper }}</div>
+    </div>
+</header>
+
+<div class="container-dashboard">
+
+    <!-- SIDEBAR GAUCHE -->
+    <div id="sidebar" class="sidebar">
+        <button id="toggleSidebar" class="toggle-btn">
+            <span class="material-symbols-rounded">menu</span>
+        </button>
+
+        <ul class="sidebar-menu">
+
+            <li class="{% if request.path == '/dashboard/' %}active{% endif %}">
+                <a href="{% url 'dashboard' %}">
+                    <span class="material-symbols-rounded">folder</span>
+                    <span class="label">Dossier des Clients</span>
+                </a>
+            </li>
+
+            <li class="{% if '/suivi-comptable' in request.path %}active{% endif %}">
+                <a href="{% url 'suivi_comptable_liste' %}">
+                    <span class="material-symbols-rounded">receipt_long</span>
+                    <span class="label">Suivi comptable</span>
+                </a>
+            </li>
+
+            <li class="active">
+                <a href="{% url 'tva_mensuelle_liste' %}">
+                    <span class="material-symbols-rounded">calculate</span>
+                    <span class="label">TVA mensuelle (CA3M)</span>
+                </a>
+            </li>
+
+            <li>
+                <span class="material-symbols-rounded">calculate</span>
+                <span class="label">TVA trimestrielle (CA3T)</span>
+            </li>
+
+            <li>
+                <span class="material-symbols-rounded">calculate</span>
+                <span class="label">TVA annuelle (CA12)</span>
+            </li>
+
+            <li>
+                <span class="material-symbols-rounded">account_balance</span>
+                <span class="label">IS</span>
+            </li>
+
+        </ul>
+    </div>
+
+    <!-- CONTENU CENTRAL -->
+    <div class="main-content">
+        <h1>TVA mensuelle (CA3M)</h1>
+
+        <table class="client-table">
+            <thead>
+                <tr>
+                    <th>Numéro client</th>
+                    <th>Client</th>
+                    <th>Date d'échéance TVA</th>
+                    <th>Janvier</th>
+                    <th>Février</th>
+                    <th>Mars</th>
+                    <th>Avril</th>
+                    <th>Mai</th>
+                    <th>Juin</th>
+                    <th>Juillet</th>
+                    <th>Août</th>
+                    <th>Septembre</th>
+                    <th>Octobre</th>
+                    <th>Novembre</th>
+                    <th>Décembre</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for row in tableau %}
+                <tr class="ligne-client-tva" data-client="{{ row.client.id }}">
+
+                    <td>{{ row.client.numero }}</td>
+                    <td>{{ row.client.nom }}</td>
+                    <td>{{ row.client.jour_echeance_tva|default:"–" }}</td>
+
+                    <!-- JANVIER -->
+                    <td>
+                        {% if row.tva.tva_janvier %}
+                            {{ row.tva.tva_janvier }} €
+                        {% else %}
+                            –
+                        {% endif %}
+                        <br>
+                        <span class="pastille pastille-{{ row.tva.statut_janvier|default:'BLANC' }}" data-client="{{ row.client.id }}"></span>
+                    </td>
+
+                    <!-- FÉVRIER -->
+                    <td>
+                        {% if row.tva.tva_fevrier %}
+                            {{ row.tva.tva_fevrier }} €
+                        {% else %}
+                            –
+                        {% endif %}
+                        <br>
+                        <span class="pastille pastille-{{ row.tva.statut_fevrier|default:'BLANC' }}" data-client="{{ row.client.id }}"></span>
+                    </td>
+
+                    <!-- MARS -->
+                    <td>
+                        {% if row.tva.tva_mars %}
+                            {{ row.tva.tva_mars }} €
+                        {% else %}
+                            –
+                        {% endif %}
+                        <br>
+                        <span class="pastille pastille-{{ row.tva.statut_mars|default:'BLANC' }}" data-client="{{ row.client.id }}"></span>
+                    </td>
+
+                    <!-- AVRIL -->
+                    <td>
+                        {% if row.tva.tva_avril %}
+                            {{ row.tva.tva_avril }} €
+                        {% else %}
+                            –
+                        {% endif %}
+                        <br>
+                        <span class="pastille pastille-{{ row.tva.statut_avril|default:'BLANC' }}" data-client="{{ row.client.id }}"></span>
+                    </td>
+
+                    <!-- MAI -->
+                    <td>
+                        {% if row.tva.tva_mai %}
+                            {{ row.tva.tva_mai }} €
+                        {% else %}
+                            –
+                        {% endif %}
+                        <br>
+                        <span class="pastille pastille-{{ row.tva.statut_mai|default:'BLANC' }}" data-client="{{ row.client.id }}"></span>
+                    </td>
+
+                    <!-- JUIN -->
+                    <td>
+                        {% if row.tva.tva_juin %}
+                            {{ row.tva.tva_juin }} €
+                        {% else %}
+                            –
+                        {% endif %}
+                        <br>
+                        <span class="pastille pastille-{{ row.tva.statut_juin|default:'BLANC' }}" data-client="{{ row.client.id }}"></span>
+                    </td>
+
+                    <!-- JUILLET -->
+                    <td>
+                        {% if row.tva.tva_juillet %}
+                            {{ row.tva.tva_juillet }} €
+                        {% else %}
+                            –
+                        {% endif %}
+                        <br>
+                        <span class="pastille pastille-{{ row.tva.statut_juillet|default:'BLANC' }}" data-client="{{ row.client.id }}"></span>
+                    </td>
+
+                    <!-- AOÛT -->
+                    <td>
+                        {% if row.tva.tva_aout %}
+                            {{ row.tva.tva_aout }} €
+                        {% else %}
+                            –
+                        {% endif %}
+                        <br>
+                        <span class="pastille pastille-{{ row.tva.statut_aout|default:'BLANC' }}" data-client="{{ row.client.id }}"></span>
+                    </td>
+
+                    <!-- SEPTEMBRE -->
+                    <td>
+                        {% if row.tva.tva_septembre %}
+                            {{ row.tva.tva_septembre }} €
+                        {% else %}
+                            –
+                        {% endif %}
+                        <br>
+                        <span class="pastille pastille-{{ row.tva.statut_septembre|default:'BLANC' }}" data-client="{{ row.client.id }}"></span>
+                    </td>
+
+                    <!-- OCTOBRE -->
+                    <td>
+                        {% if row.tva.tva_octobre %}
+                            {{ row.tva.tva_octobre }} €
+                        {% else %}
+                            –
+                        {% endif %}
+                        <br>
+                        <span class="pastille pastille-{{ row.tva.statut_octobre|default:'BLANC' }}" data-client="{{ row.client.id }}"></span>
+                    </td>
+
+                    <!-- NOVEMBRE -->
+                    <td>
+                        {% if row.tva.tva_novembre %}
+                            {{ row.tva.tva_novembre }} €
+                        {% else %}
+                            –
+                        {% endif %}
+                        <br>
+                        <span class="pastille pastille-{{ row.tva.statut_novembre|default:'BLANC' }}" data-client="{{ row.client.id }}"></span>
+                    </td>
+
+                    <!-- DÉCEMBRE -->
+                    <td>
+                        {% if row.tva.tva_decembre %}
+                            {{ row.tva.tva_decembre }} €
+                        {% else %}
+                            –
+                        {% endif %}
+                        <br>
+                        <span class="pastille pastille-{{ row.tva.statut_decembre|default:'BLANC' }}" data-client="{{ row.client.id }}"></span>
+                    </td>
+
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="15" style="text-align:center; padding:20px;">
+                        Aucun client CA3M trouvé.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- SLIDEBAR DROIT -->
+<div id="slidebar-droit" class="slidebar-droit">
+    <button id="closeSlidebar" class="close-slidebar">
+        <span class="material-symbols-rounded">close</span>
+    </button>
+    <div id="slidebar-content"></div>
+</div>
+
+<!-- OVERLAY -->
+<div id="overlay" class="overlay"></div>
+
+<script src="{% static 'js/dashboard.js' %}"></script>
+
+</body>
+</html>

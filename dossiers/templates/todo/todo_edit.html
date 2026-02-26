@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+
+<div class="py-4">
+
+    <h2>Modifier la tâche</h2>
+
+    <form method="POST" class="mt-4">
+        {% csrf_token %}
+
+        <label class="form-label">Titre</label>
+        <input type="text" name="title" class="form-control" value="{{ todo.title }}" required>
+
+        <label class="form-label mt-3">Description</label>
+        <textarea name="description" class="form-control">{{ todo.description }}</textarea>
+
+        <label class="form-label mt-3">Priorité</label>
+        <select name="priority" class="form-select">
+            <option value="low" {% if todo.priority == "low" %}selected{% endif %}>Faible</option>
+            <option value="normal" {% if todo.priority == "normal" %}selected{% endif %}>Normale</option>
+            <option value="high" {% if todo.priority == "high" %}selected{% endif %}>Haute</option>
+        </select>
+
+        <label class="form-label mt-3">Date d’échéance</label>
+        <input type="date" name="due_date" class="form-control" value="{{ todo.due_date|date:'Y-m-d' }}">
+
+        <label class="form-label mt-3">Rappel</label>
+        <input type="datetime-local" name="reminder_date" class="form-control"
+               value="{{ todo.reminder_date|date:'Y-m-d\\TH:i' }}">
+
+        <div class="mt-4">
+            <button class="btn btn-primary">Enregistrer</button>
+            <a href="{% url 'todo_list' %}" class="btn btn-secondary">Annuler</a>
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

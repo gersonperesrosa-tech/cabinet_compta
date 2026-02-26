@@ -1,0 +1,507 @@
+{% extends "base.html" %}
+{% load static %}
+{% load form_filters %}
+
+{% block content %}
+
+<section class="section">
+
+
+<style>
+.single-line {
+    height: 32px !important;
+    min-height: 32px !important;
+    padding-top: 3px !important;
+    padding-bottom: 3px !important;
+}
+</style>
+
+<div class="container mt-4">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <h1 class="mb-0">
+        Clôture – {{ cloture.client }} ({{ cloture.annee.annee }})
+    </h1>
+
+    <div class="d-flex gap-2">
+        <a href="{% url 'cloture_clients' cloture.annee.id %}" class="btn btn-outline-secondary">
+            ← Retour à la liste
+        </a>
+
+        <button type="submit" form="clotureForm" class="btn btn-primary">
+            Enregistrer
+        </button>
+    </div>
+
+</div>
+
+    <form method="post" id="clotureForm">
+        {% csrf_token %}
+
+        {% if form.errors %}
+        <div class="alert alert-danger">
+            {{ form.errors }}
+        </div>
+        {% endif %}
+
+        <div class="accordion" id="clotureAccordion">
+
+            <!-- ====================================================== -->
+            <!-- 1) SESSION REVISION                                    -->
+            <!-- ====================================================== -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingRevision">
+
+                    <div class="d-flex align-items-center w-100">
+                        <div class="form-check ms-3 me-3">
+                            {{ form.revision_applicable }}
+                        </div>
+
+                        <button class="accordion-button collapsed flex-grow-1" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#collapseRevision">
+                            Révision
+                        </button>
+                    </div>
+
+                </h2>
+
+                <div id="collapseRevision" class="accordion-collapse collapse" data-bs-parent="#clotureAccordion">
+                    <div class="accordion-body">
+
+                        <div class="session-block" data-applicable="revision_applicable">
+
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    {{ form.pre_revision.label_tag }}
+                                    {{ form.pre_revision|add_class:"form-control form-control-sm single-line" }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.pre_revision_statut.label_tag }}
+                                    {{ form.pre_revision_statut|add_class:"form-select form-select-sm" }}
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    {{ form.relance_pieces.label_tag }}
+                                    {{ form.relance_pieces|add_class:"form-control form-control-sm single-line" }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.relance_pieces_statut.label_tag }}
+                                    {{ form.relance_pieces_statut|add_class:"form-select form-select-sm" }}
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    {{ form.releve_decembre.label_tag }}
+                                    {{ form.releve_decembre|add_class:"form-control form-control-sm single-line" }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.releve_decembre_statut.label_tag }}
+                                    {{ form.releve_decembre_statut|add_class:"form-select form-select-sm" }}
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    {{ form.revision.label_tag }}
+                                    {{ form.revision|add_class:"form-control form-control-sm single-line" }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.revision_statut.label_tag }}
+                                    {{ form.revision_statut|add_class:"form-select form-select-sm" }}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====================================================== -->
+            <!-- 2) SESSION PLAQUETTES                                 -->
+            <!-- ====================================================== -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingPlaquettes">
+
+                    <div class="d-flex align-items-center w-100">
+                        <div class="form-check ms-3 me-3">
+                            {{ form.plaquettes_applicable }}
+                        </div>
+
+                        <button class="accordion-button collapsed flex-grow-1" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#collapsePlaquettes">
+                            Plaquettes
+                        </button>
+                    </div>
+
+                </h2>
+
+                <div id="collapsePlaquettes" class="accordion-collapse collapse" data-bs-parent="#clotureAccordion">
+                    <div class="accordion-body">
+
+                        <div class="session-block" data-applicable="plaquettes_applicable">
+
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    {{ form.plaquettes_envoi.label_tag }}
+                                    {{ form.plaquettes_envoi|add_class:"form-control form-control-sm single-line" }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.plaquettes_envoi_statut.label_tag }}
+                                    {{ form.plaquettes_envoi_statut|add_class:"form-select form-select-sm" }}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====================================================== -->
+            <!-- 3) SESSION CA12                                       -->
+            <!-- ====================================================== -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingCA12">
+
+                    <div class="d-flex align-items-center w-100">
+                        <div class="form-check ms-3 me-3">
+                            {{ form.ca12_applicable }}
+                        </div>
+
+                        <button class="accordion-button collapsed flex-grow-1" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#collapseCA12">
+                            CA12
+                        </button>
+                    </div>
+
+                </h2>
+
+                <div id="collapseCA12" class="accordion-collapse collapse" data-bs-parent="#clotureAccordion">
+                    <div class="accordion-body">
+
+                        <div class="session-block" data-applicable="ca12_applicable">
+
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    {{ form.ca12_faite.label_tag }}
+                                    {{ form.ca12_faite|add_class:"form-control form-control-sm single-line" }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.ca12_faite_statut.label_tag }}
+                                    {{ form.ca12_faite_statut|add_class:"form-select form-select-sm" }}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====================================================== -->
+            <!-- 4) SESSION IS / CI                                    -->
+            <!-- ====================================================== -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingIS">
+
+                    <div class="d-flex align-items-center w-100">
+                        <div class="form-check ms-3 me-3">
+                            {{ form.is_applicable }}
+                        </div>
+
+                        <button class="accordion-button collapsed flex-grow-1" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#collapseIS">
+                            IS / CI
+                        </button>
+                    </div>
+
+                </h2>
+
+                <div id="collapseIS" class="accordion-collapse collapse" data-bs-parent="#clotureAccordion">
+                    <div class="accordion-body">
+
+                        <div class="session-block" data-applicable="is_applicable">
+
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    {{ form.is_fait.label_tag }}
+                                    {{ form.is_fait|add_class:"form-control form-control-sm single-line" }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.is_fait_statut.label_tag }}
+                                    {{ form.is_fait_statut|add_class:"form-select form-select-sm" }}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====================================================== -->
+            <!-- 5) SESSION CVAE                                       -->
+            <!-- ====================================================== -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingCVAE">
+
+                    <div class="d-flex align-items-center w-100">
+                        <div class="form-check ms-3 me-3">
+                            {{ form.cvae_applicable }}
+                        </div>
+
+                        <button class="accordion-button collapsed flex-grow-1" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#collapseCVAE">
+                            CVAE
+                        </button>
+                    </div>
+
+                </h2>
+
+                <div id="collapseCVAE" class="accordion-collapse collapse" data-bs-parent="#clotureAccordion">
+                    <div class="accordion-body">
+
+                        <div class="session-block" data-applicable="cvae_applicable">
+
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    {{ form.cvae_1330_fait.label_tag }}
+                                    {{ form.cvae_1330_fait|add_class:"form-control form-control-sm single-line" }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.cvae_1330_fait_statut.label_tag }}
+                                    {{ form.cvae_1330_fait_statut|add_class:"form-select form-select-sm" }}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====================================================== -->
+            <!-- 6) SESSION DECLOYER                                   -->
+            <!-- ====================================================== -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingDecloyer">
+
+                    <div class="d-flex align-items-center w-100">
+                        <div class="form-check ms-3 me-3">
+                            {{ form.decloyer_applicable }}
+                        </div>
+
+                        <button class="accordion-button collapsed flex-grow-1" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#collapseDecloyer">
+                            DECLOYER
+                        </button>
+                    </div>
+
+                </h2>
+
+                <div id="collapseDecloyer" class="accordion-collapse collapse" data-bs-parent="#clotureAccordion">
+                    <div class="accordion-body">
+
+                        <div class="session-block" data-applicable="decloyer_applicable">
+
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    {{ form.decloyer_fait.label_tag }}
+                                    {{ form.decloyer_fait|add_class:"form-control form-control-sm single-line" }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.decloyer_fait_statut.label_tag }}
+                                    {{ form.decloyer_fait_statut|add_class:"form-select form-select-sm" }}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====================================================== -->
+            <!-- 7) SESSION DAS2                                       -->
+            <!-- ====================================================== -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingDAS2">
+
+                    <div class="d-flex align-items-center w-100">
+                        <div class="form-check ms-3 me-3">
+                            {{ form.das2_applicable }}
+                        </div>
+
+                        <button class="accordion-button collapsed flex-grow-1" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#collapseDAS2">
+                            DAS2
+                        </button>
+                    </div>
+
+                </h2>
+
+                <div id="collapseDAS2" class="accordion-collapse collapse" data-bs-parent="#clotureAccordion">
+                    <div class="accordion-body">
+
+                        <div class="session-block" data-applicable="das2_applicable">
+
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    {{ form.das2.label_tag }}
+                                    {{ form.das2|add_class:"form-control form-control-sm single-line" }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.das2_statut.label_tag }}
+                                    {{ form.das2_statut|add_class:"form-select form-select-sm" }}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====================================================== -->
+            <!-- 8) SESSION DRI                                        -->
+            <!-- ====================================================== -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingDRI">
+
+                    <div class="d-flex align-items-center w-100">
+                        <div class="form-check ms-3 me-3">
+                            {{ form.dri_applicable }}
+                        </div>
+
+                        <button class="accordion-button collapsed flex-grow-1" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#collapseDRI">
+                            DRI
+                        </button>
+                    </div>
+
+                </h2>
+
+                <div id="collapseDRI" class="accordion-collapse collapse" data-bs-parent="#clotureAccordion">
+                    <div class="accordion-body">
+
+                        <div class="session-block" data-applicable="dri_applicable">
+
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    {{ form.dri_fait.label_tag }}
+                                    {{ form.dri_fait|add_class:"form-control form-control-sm single-line" }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.dri_fait_statut.label_tag }}
+                                    {{ form.dri_fait_statut|add_class:"form-select form-select-sm" }}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====================================================== -->
+            <!-- 9) SESSION MISSION                                    -->
+            <!-- ====================================================== -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingMission">
+
+                    <div class="d-flex align-items-center w-100">
+                        <div class="form-check ms-3 me-3">
+                            {{ form.mission_applicable }}
+                        </div>
+
+                        <button class="accordion-button collapsed flex-grow-1" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#collapseMission">
+                            Mission
+                        </button>
+                    </div>
+
+                </h2>
+
+                <div id="collapseMission" class="accordion-collapse collapse" data-bs-parent="#clotureAccordion">
+                    <div class="accordion-body">
+
+                        <div class="session-block" data-applicable="mission_applicable">
+
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    {{ form.mission_lab.label_tag }}
+                                    {{ form.mission_lab|add_class:"form-control form-control-sm single-line" }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.mission_lab_statut.label_tag }}
+                                    {{ form.mission_lab_statut|add_class:"form-select form-select-sm" }}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====================================================== -->
+            <!-- 10) SESSION JURIDIQUE                                 -->
+            <!-- ====================================================== -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingJuridique">
+
+                    <div class="d-flex align-items-center w-100">
+                        <div class="form-check ms-3 me-3">
+                            {{ form.juridique_applicable }}
+                        </div>
+
+                        <button class="accordion-button collapsed flex-grow-1" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#collapseJuridique">
+                            Juridique
+                        </button>
+                    </div>
+
+                </h2>
+
+                <div id="collapseJuridique" class="accordion-collapse collapse" data-bs-parent="#clotureAccordion">
+                    <div class="accordion-body">
+
+                        <div class="session-block" data-applicable="juridique_applicable">
+
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    {{ form.juridique_fait.label_tag }}
+                                    {{ form.juridique_fait|add_class:"form-control form-control-sm single-line" }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.juridique_fait_statut.label_tag }}
+                                    {{ form.juridique_fait_statut|add_class:"form-select form-select-sm" }}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+
+
+    </form>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".session-block").forEach(function (block) {
+        const fieldName = block.getAttribute("data-applicable");
+        const checkbox = document.querySelector(`[name="${fieldName}"]`);
+
+        function toggle() {
+            block.style.display = checkbox.checked ? "block" : "none";
+        }
+
+        checkbox.addEventListener("change", toggle);
+        toggle();
+    });
+});
+</script>
+
+{% endblock %}

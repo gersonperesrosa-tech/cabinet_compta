@@ -1,0 +1,85 @@
+{% extends "base_partenaire.html" %}
+{% load custom_tags %}
+
+{% block content %}
+
+<section class="section">
+
+
+<!-- Accueil centré -->
+<div class="text-center mb-5">
+    <h1 class="fw-bold">Bonjour {{ request.user.get_full_name }} </h1>
+    <p class="text-muted fs-5 mt-2">
+        Heureux de vous revoir. Voici un aperçu de vos clients Paie.
+    </p>
+</div>
+
+<!-- KPIs -->
+<div class="row g-4 mb-5 justify-content-center">
+
+    <div class="col-md-4">
+        <div class="p-4 bg-white shadow-sm rounded text-center">
+            <h3 class="fw-bold">{{ kpi_ouverts }}</h3>
+            <p class="text-muted m-0">
+                Clients avec mois {{ mois }}/{{ annee }} ouvert
+            </p>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="p-4 bg-white shadow-sm rounded text-center">
+            <h3 class="fw-bold text-success">{{ kpi_faits }}</h3>
+            <p class="text-muted m-0">
+                Clients avec mois {{ mois }}/{{ annee }} terminé (BS + DSN)
+            </p>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="p-4 bg-white shadow-sm rounded text-center">
+            <h3 class="fw-bold text-warning">{{ kpi_a_faire }}</h3>
+            <p class="text-muted m-0">
+                Clients avec mois {{ mois }}/{{ annee }} à traiter
+            </p>
+        </div>
+    </div>
+
+</div>
+
+
+<!-- Liste des clients -->
+<div class="row g-4">
+
+    {% for c in clients %}
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+
+                <!-- Nom du client -->
+                <h5 class="card-title mb-3">{{ c.nom }}</h5>
+
+                <!-- Dernier mois totalement traité -->
+                <p class="mb-1 text-muted">
+                    <strong>Dernier mois traité :</strong>
+                    {% if c.dernier_mois_traite %}
+                        {{ c.dernier_mois_traite.mois }}/{{ c.dernier_mois_traite.annee }}
+                        <span class="badge bg-succes">✔</span>
+                    {% else %}
+                        <span class="text-muted">Aucun mois totalement traité</span>
+                    {% endif %}
+                </p>
+
+                <!-- Bouton détails -->
+                <a href="{% url 'paie:partenaire_mois_client' c.id %}"
+                   class="btn btn-outline-primary btn-sm">
+                    Voir détails
+                </a>
+
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+
+{% endblock %}

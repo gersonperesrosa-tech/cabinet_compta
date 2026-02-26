@@ -1,0 +1,73 @@
+{% extends "base_auth.html" %}
+
+{% block content %}
+<style>
+    .login-bg {
+        height: 100vh;
+        background-image: url('/static/img/pilot.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+
+        /* Optionnel : léger voile pour lisibilité */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+    }
+
+    .login-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.35); /* voile blanc léger */
+        backdrop-filter: blur(3px);
+    }
+
+    .login-card {
+        position: relative;
+        width: 380px;
+        background: rgba(255, 255, 255, 0.92);
+        border-radius: 14px;
+        padding: 30px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+</style>
+
+<div class="login-bg">
+    <div class="login-overlay"></div>
+
+    <div class="login-card">
+
+        <div class="text-center mb-3">
+            <img src="/static/img/logo_pilot.png" alt="Logo" style="width:300px;">
+        </div>
+
+        <h4 class="text-center mb-4">Connexion</h4>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label class="form-label">Nom d'utilisateur</label>
+                <input type="text" name="username" class="form-control" required autofocus>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Mot de passe</label>
+                <input type="password" name="password" class="form-control" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 mb-3">
+                Se connecter
+            </button>
+
+            <div class="text-center">
+                <a href="{% url 'password_reset' %}" class="text-decoration-none">
+                    Mot de passe oublié
+                </a>
+            </div>
+
+        </form>
+    </div>
+</div>
+{% endblock %}

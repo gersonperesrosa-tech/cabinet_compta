@@ -1,0 +1,88 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="section">
+
+    <!-- Titre -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">Archives des clients</h1>
+    </div>
+
+    <!-- Tableau -->
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Numéro</th>
+                    <th>Nom</th>
+                    <th>Forme juridique</th>
+                    <th>Régime d’imposition</th>
+                    <th>Régime TVA</th>
+                    <th>Périodicité</th>
+                    <th></th> <!-- colonne actions -->
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for client in clients %}
+                <tr>
+                    <td>{{ client.numero }}</td>
+
+                    <td>
+                        <a href="{% url 'fiche_client' client.id %}" class="client-link">
+                            {{ client.nom }}
+                        </a>
+                    </td>
+
+                    <td>{{ client.forme_juridique|default_if_none:"" }}</td>
+                    <td>{{ client.regime_imposition|default_if_none:"" }}</td>
+                    <td>{{ client.regime_tva|default_if_none:"" }}</td>
+                    <td>{{ client.periodicite|default_if_none:"" }}</td>
+
+                    <td>
+                        <a href="{% url 'restaurer_client' client.id %}"
+                           class="btn btn-sm btn-success text-white">
+                            Restaurer
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+
+</section>
+
+<!-- Popup fiche client -->
+<div class="modal fade" id="clientModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-body" id="clientModalContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- JS pour ouvrir la fiche client -->
+<script>
+document.querySelectorAll(".client-link").forEach(link => {
+    link.addEventListener("click", function(e) {
+        e.preventDefault();
+
+        fetch(this.href, {
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById("clientModalContent").innerHTML = html;
+
+            let modal = new bootstrap.Modal(document.getElementById("clientModal"));
+            modal.show();
+        });
+    });
+});
+</script>
+
+{% endblock %}

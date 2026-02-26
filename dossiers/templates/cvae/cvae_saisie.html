@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="section">
+
+<h1>Saisie CVAE – {{ client_module.client.nom }} ({{ client_module.annee.annee }})</h1>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <table class="table table-bordered align-middle mt-4">
+        <thead>
+            <tr>
+                <th>Élément</th>
+                <th>Montant</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <tr>
+                <td><strong>CVAE N‑1</strong></td>
+                <td>
+                    <input type="text"
+                           name="cvae_n_1"
+                           id="cvae_n_1"
+                           class="form-control"
+                           value="{{ declaration.cvae_n_1 }}">
+                </td>
+                <td></td>
+            </tr>
+
+            <tr>
+                <td><strong>Acompte CVAE (15/06)</strong></td>
+                <td>
+                    <input type="text"
+                           name="acompte_cvae"
+                           id="acompte_cvae"
+                           class="form-control"
+                           value="{{ declaration.acompte_cvae }}">
+                </td>
+                <td>
+                    <select name="statut_acompte_cvae" class="form-select">
+                        {% include "partials/statut_options.html" with selected=declaration.statut_acompte_cvae %}
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td><strong>Solde CVAE (15/09)</strong></td>
+                <td>
+                    <input type="text"
+                           name="solde_cvae"
+                           id="solde_cvae"
+                           class="form-control"
+                           value="{{ declaration.solde_cvae }}">
+                </td>
+                <td>
+                    <select name="statut_solde_cvae" class="form-select">
+                        {% include "partials/statut_options.html" with selected=declaration.statut_solde_cvae %}
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td><strong>Commentaire si CVAE > 1500 €</strong></td>
+                <td colspan="2">
+                    <textarea name="commentaire_plus_1500"
+                              class="form-control"
+                              rows="3">{{ declaration.commentaire_plus_1500 }}</textarea>
+                </td>
+            </tr>
+
+        </tbody>
+    </table>
+
+    <div class="p-3 mt-4 rounded" style="background:#f5f7fa; border:1px solid #dce1e7;">
+        <strong>Total CVAE :</strong>
+        <span id="total_cvae_display" style="font-size:1.2rem; font-weight:600;">
+            {{ total_cvae|floatformat:2 }} €
+        </span>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <a href="{% url 'fiscal_clients_module' client_module.annee.id client_module.module.id %}"
+           class="btn btn-outline-secondary">
+            Retour au Module CVAE
+        </a>
+
+        <div class="d-flex gap-2 justify-content-end">
+            <a href="{% url 'cvae_gestion' client_module.annee.id %}"
+               class="btn btn-outline-dark">
+                Retour
+            </a>
+
+            <button type="submit" class="btn btn-primary">
+                Enregistrer
+            </button>
+        </div>
+    </div>
+
+</form>
+
+</section>
+
+<script>
+function toNumber(value) {
+    if (!value) return 0;
+    return parseFloat(value.replace(",", "."));
+}
+
+function updateTotalCVAE() {
+    const acompte = toNumber(document.getElementById("acompte_cvae").value);
+    const solde = toNumber(document.getElementById("solde_cvae").value);
+    const total = acompte + solde;
+
+    document.getElementById("total_cvae_display").innerText =
+        total.toFixed(2).replace(".", ",") + " €";
+}
+
+document.getElementById("acompte_cvae").addEventListener("input", updateTotalCVAE);
+document.getElementById("solde_cvae").addEventListener("input", updateTotalCVAE);
+</script>
+
+{% endblock %}

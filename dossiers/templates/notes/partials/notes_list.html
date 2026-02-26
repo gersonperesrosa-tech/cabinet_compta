@@ -1,0 +1,8 @@
+{% for note in notes %}
+    <div class="mb-3 p-2 border rounded bg-light">
+        <div class="small text-muted">{{ note.created_at|date:"d/m/Y H:i" }}</div>
+        <div>{{ note.contenu|linebreaks }}</div>
+    </div>
+{% empty %}
+    <p class="text-muted">Aucune note pour ce client.</p>
+{% endfor %}

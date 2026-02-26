@@ -1,0 +1,85 @@
+numero_client,nom_client,forme_juridique,date_cloture,regime_tva,jour_echeance_tva,regime_imposition
+9002,Thomas Droitcourt,EIRL,31/12,Exo,,IS
+9003,Emilie Burle,LMNP,31/12,Exo,,IR
+9004,Carole Droitcourt,LMNP,31/12,Exo,,IR
+9005,Potie Emmanuel,LMNP,31/12,Exo,,IR
+9006,Imbert Pierre Henry,LMNP,31/12,Exo,,IR
+9007,Guida Bastien,LMNP,31/12,Exo,,IR
+9009,Alpha Economie Construction,EURL,31/12,CA12,21,IS
+9011,Médical Maintenance,EURL,31/12,CA3M,21,IS
+9013,Charlotte Lucas,LMNP,31/12,Exo,,IR
+9014,Thomas Bellucci,LMNP,31/12,Exo,,IR
+9016,S+ Consulting,EURL,31/12,CA3M,21,IS
+9017,Cagnol Frédéric,BNC,31/12,CA3M,16,IR
+9019,Mori Maurice,LMNP,31/12,Exo,,IR
+9020,Thomas Siroine,LMNP,31/12,Exo,,IR
+9025,Tiffanie Vartician,BNC,31/12,Exo,,IR
+9026,Pascal Maurel,BIC,31/12,CA12,19,IR
+9028,Nathalie Potet,BNC,31/12,CA12,16,Micro
+9030,Shirley Lebegue,BNC,31/12,CA3M ,16,IR
+9032,Patrick Boussard,LMNP,31/12,Exo,,IR
+9033,Nathalie Jouët-Pastré,LMNP,31/12,Exo,,IR
+9034,Vincent Thyssen,LMNP,31/12,CA12,21,IR
+9037,Laurent Millo,LMP,31/12,Exo,,IR
+9039,Thomas Bellucci,BNC,31/12,CA12,16,IR
+9042,Patrimoine Conseils,SAS,31/12,CA12,24,IS
+9043,Power Wellness,SAS,31/12,CA12,24,IS
+9045,Envolaissance,SASU,31/12,CA12,24,IS
+9046,Sab Immo Conseil,SASU,31/12,CA12,24,IS
+9047,GreBouMar,SCI,31/12,Franchise,,IR
+9049,Flavie Fernandez,EI,31/12,CA12,16,IR
+9050,Maurel Indivision,IND,31/12,Exo,,IR
+9051,Casa di Marley,SASU,31/12,CA3M,24,IS
+9052,BL immobilier,SASU,31/12,CA12,24,IS
+9053,AJV,SCI,31/12,Franchise,,IR (CRL)
+9056,AGAPI,SCI,31/12,Franchise,,IR
+9057,MG Evènements,SASU,30/09,Franchise,,IS
+9058,Schmitt Patrice,LMNP,31/12,Exo,,IR
+9060,La Cucina di Alba,SAS,31/12,CA3M,21,IS
+9061,ENOIA,SASU,31/12,CA3M,24,IS
+9062,Audition Durif,EURL,31/12,CA12,21,IS
+9064,Brun Michel,LMNP,31/12,Exo,,IR
+9065,De Chabannes La Palice Charlotte,LMP,31/12,Exo,,IR
+9066,Carole Droitcourt,BIC,31/12,CA12,16,IR
+9067,Jakub Zaleski,BNC,31/12,Exo,,IR
+9068,Candice Arnaud,BNC,31/12,CA12,16,Micro
+9073,Eclisse,SAS,31/12,CA3M,24,IS
+9074,Romero Mathilde,LMNP,31/12,Exo,,IR
+9075,Catanzaro Maurel,LMNP,31/12,Exo,,IR
+9076,Kersaudy Gaël,LMNP,31/12,Exo,,IR (CRL)
+9077,Renoult Clara,BNC,31/12,CA12,19,IR
+9078,Gourdin Lucas,BNC,31/12,Exo,,IR
+9079,SBN,SASU,31/12,CA3M,24,IS
+9080,Infinite Dreams,SAS,31/12,CA12,24,IS
+9081,Maurisse Ludovic,Micro,31/12,Franchise,,IR
+9082,Falzon Noémie,BNC,31/12,Exo,,IR
+9084,Performeur,SASU,31/12,CA12,24,IS
+9087,Ange Sacchetti,Micro,31/12,CA3M,19,IR
+9088,SCI La Sonate,SCI,31/12,Franchise,,IS
+9091,Solent Avocats,SELARL,31/12,CA3M,21,IS
+9092,Polissadiw Rani,Micro BNC,31/12,Franchise,,IR
+9093,Rhuminca,SCI,31/12,Exo,,IR
+9094,Le salon by Stef et Alex,SARL,31/12,CA3M,21,IS
+9096,Premium auto,SARL,31/12,CA3M,21,IS
+9097,Ravestein Emmanuel,BNC,31/12,CA12,16,IR
+9098,Lecompte Conseils,SASU,31/12,Franchise,,IS
+9099,Adiatec,SASU,31/12,Franchise,,IS
+9100,Haudebert Sandrine,LMNP,31/12,Exo,,IR
+9101,Martin Willi,BNC,31/12,Exo,,IR
+9102,Potie Magali,LMNP,31/12,Exo,,IR
+9103,Le Blansch Joris,BNC,31/12,CA3M,16,IR
+9104,Le temps d'une beauté,SARL,31/12,CA3M,21,IS
+9105,Pascal Gilles,BNC,31/12,Exo,,IR
+9106,Iloulara,SC,31/12,Franchise,,IR
+9107,Graphenaton Labs,SAS,31/12,CA3M,24,IS
+9108,Allietta Matthias,LMNP,31/12,Exo,,IR
+9109,Verdier Matthieu,LMNP,31/12,Exo,,IR
+9110,Pinna Teresa,BNC,31/12,Exo,,IR
+9112,ERMS,EURL,31/08,CA12,21,IS
+9113,Joubert Florence,LMNP,31/12,Exo,,IR
+9114,Paravisini Sandrine,BNC,31/12,Exo,,IR
+9116,Tine Capucine,BNC,31/12,CA12,17,IR
+9117,Magnan,SCI,31/12,Exo,,IS
+9118,Thetiot Béatrice,BNC,31/12,Franchise,,IR
+9119,Alcaraz Monique,LMNP,31/12,Exo,,IR
+9120,Ratto Didier et Laurine,LMNP,31/12,Exo,,IR

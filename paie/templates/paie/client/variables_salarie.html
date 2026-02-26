@@ -1,0 +1,35 @@
+{% extends "base_paie_client.html" %}
+
+{% block content %}
+<section class="section">
+
+<div class="container mt-4">
+
+    <h1 class="mb-3">
+        Variables – {{ salarie.prenom }} {{ salarie.nom }}
+        <br>
+        <small class="text-muted">{{ mois.mois }}/{{ mois.annee }}</small>
+    </h1>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="row g-3">
+            {% for field in form %}
+                <div class="col-md-6">
+                    <label class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                </div>
+            {% endfor %}
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3">Enregistrer</button>
+
+        <a href="{% url 'paie:client_mois_detail' mois.id %}"
+           class="btn btn-secondary mt-3">
+            Retour
+        </a>
+    </form>
+
+</div>
+{% endblock %}

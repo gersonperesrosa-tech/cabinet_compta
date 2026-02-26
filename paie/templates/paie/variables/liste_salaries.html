@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load paie_filters %}
+
+{% block content %}
+<section class="section">
+<div class="container mt-4">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="m-0">
+        Variables de paie – {{ paie_mois.mois }}/{{ paie_mois.annee }}<br>
+        <small class="text-muted">{{ paie_mois.client.nom }}</small>
+    </h1>
+
+    <div class="d-flex gap-2">
+<a href="{% url 'paie:export_pdf_variables' paie_mois.id %}"
+   class="btn btn-outline-primary">
+    Export PDF
+</a>
+
+
+
+<a href="{% url 'paie:liste_mois_client' paie_mois.client.id %}"
+   class="btn btn-outline-secondary">
+    ← Retour aux mois de paie
+</a>
+
+        {% if not paie_mois.client_valide %}
+            <a href="#"
+               class="btn btn-success"
+               onclick="document.getElementById('valider-mois-form').submit(); return false;">
+                Valider le mois
+            </a>
+
+            <form id="valider-mois-form"
+                  method="post"
+                  action="{% url 'paie:valider_mois_client' paie_mois.id %}"
+                  style="display:none;">
+                {% csrf_token %}
+            </form>
+        {% endif %}
+
+    </div>
+</div>
+    <div class="table-responsive">
+        <table class="table table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Salarié</th>
+                    <th>Heures 25%</th>
+                    <th>Heures 50%</th>
+                    <th>Primes</th>
+                    <th>Congés début</th>
+                    <th>Congés fin</th>
+                    <th>Absences maladie</th>
+                    <th>Autres absences</th>
+                    <th>Acomptes</th>
+                    <th>Autres infos</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for s in salaries %}
+                {% with vars=variables_dict|get_item:s.id %}
+                <tr>
+                    <td>{{ s.prenom }} {{ s.nom }}</td>
+
+                    <td>{{ vars.heures_sup_25|default:"-" }}</td>
+                    <td>{{ vars.heures_sup_50|default:"-" }}</td>
+                    <td>{{ vars.primes|default:"-" }}</td>
+                    <td>{{ vars.conges_debut|default:"-" }}</td>
+                    <td>{{ vars.conges_fin|default:"-" }}</td>
+                    <td>{{ vars.absences_maladie|default:"-" }}</td>
+                    <td>{{ vars.absences_autres|default:"-" }}</td>
+                    <td>{{ vars.acomptes|default:"-" }}</td>
+                    <td>{{ vars.autres_infos|default:"-" }}</td>
+
+                    <td class="text-end">
+                        <a href="{% url 'paie:cabinet_saisie_variables_salarie' paie_mois.id s.id %}"
+                        class="btn btn-sm btn-outline-primary">
+                            Saisir / Modifier
+                        </a>
+                    </td>
+                </tr>
+                {% endwith %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base_auth.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-center align-items-center" 
+     style="height:100vh; background:linear-gradient(135deg,#198754,#0d6efd);">
+
+    <div class="card shadow-lg p-4" style="width:380px; border-radius:12px;">
+
+        <h4 class="text-center mb-4" style="font-weight:500;">Créer un compte</h4>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+
+            <button type="submit" class="btn btn-primary w-100 mt-3">
+                S'inscrire
+            </button>
+        </form>
+
+        <div class="text-center mt-3">
+            <a href="{% url 'login' %}" class="text-decoration-none">
+                Déjà un compte ? Se connecter
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

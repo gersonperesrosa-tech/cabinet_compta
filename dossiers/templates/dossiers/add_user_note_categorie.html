@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <h3 class="mb-4">Nouvelle catégorie</h3>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <label class="form-label">Nom de la catégorie</label>
+        <input type="text" name="nom" class="form-control mb-3" placeholder="Ex : Personnel, Travail, Idées...">
+
+        <div class="d-flex justify-content-between">
+            <a href="{% url 'add_user_note' %}" class="btn btn-outline-secondary">Annuler</a>
+            <button class="btn btn-primary">Créer</button>
+        </div>
+    </form>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<section class="section">
+
+<div class="container mt-4">
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Années de clôture</h1>
+
+    <form method="post" action="{% url 'cloture_annee_create' %}" class="d-flex align-items-center">
+        {% csrf_token %}
+        <input type="number" name="annee" class="form-control form-control-sm me-2" 
+               placeholder="2026" required style="width: 100px;">
+        <button type="submit" class="btn btn-primary btn-sm">
+            + Créer
+        </button>
+    </form>
+</div>
+
+
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Année</th>
+                        <th>Date de création</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for annee in annees %}
+                    <tr>
+                        <td>{{ annee.annee }}</td>
+                        <td>{{ annee.date_creation|date:"d/m/Y H:i" }}</td>
+                        <td class="text-end">
+                            <a href="{% url 'cloture_clients' annee.id %}" class="btn btn-outline-primary btn-sm">
+                                Ouvrir
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center text-muted py-3">
+                            Aucune année de clôture créée.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% include 'partials/pastilles_css.html' %}
+
+
+{% block title %}TVA – CA12{% endblock %}
+
+{% block content %}
+
+<section class="section">
+<style>
+    .table-premium {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .table-premium thead {
+        background: #f8fafc;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .pastille {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        display: inline-block;
+        border: 1px solid #d1d5db;
+        margin-left: 6px;
+    }
+
+    .BLANC { background: white; }
+    .JAUNE { background: #facc15; }
+    .VERT_CLAIR { background: #86efac; }
+    .VERT_FONCE { background: #16a34a; }
+</style>
+
+
+<!-- HEADER PREMIUM -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <h1 class="mb-0">Déclarations TVA – CA12</h1>
+
+    <div class="d-flex align-items-center gap-3">
+
+        <!-- BARRE DE RECHERCHE -->
+        <div class="search-wrapper" style="width: 300px;">
+            <input type="text"
+                   id="searchInput"
+                   class="form-control"
+                   placeholder="Rechercher un client…">
+        </div>
+
+        <!-- SELECTEUR D’ANNÉE -->
+        <form method="get" class="d-flex align-items-center gap-2 mb-0">
+            <label class="fw-semibold mb-0">Année :</label>
+            <select name="annee"
+                    class="form-select"
+                    style="width: 120px;"
+                    onchange="this.form.submit()">
+                {% for a in annees %}
+                    <option value="{{ a }}" {% if a == annee %}selected{% endif %}>{{ a }}</option>
+                {% endfor %}
+            </select>
+        </form>
+
+        <!-- BOUTON AJOUTER ANNÉE -->
+        <a href="{% url 'tva_ca12_creer_annee_suivante' annee %}" class="btn btn-primary">
+            + Ajouter une année
+        </a>
+
+    </div>
+
+</div>
+
+<!-- TABLEAU CA12 -->
+<div class="card">
+    <div class="card-body">
+
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Numéro</th>
+                    <th>Client</th>
+                    <th>Échéance</th>
+                    <th>TVA N-1</th>
+                    <th>S1-07</th>
+                    <th>S2-12</th>
+                    <th>+1000 €</th>
+                </tr>
+            </thead>
+
+            <tbody id="tableBody">
+                {% for row in tableau %}
+                <tr>
+
+                    <td>{{ row.client.numero }}</td>
+
+                    <td>
+                        <a href="#"
+                           hx-get="{% url 'tva_ca12_popup' row.client.id annee %}"
+                           hx-target="#modal-container"
+                           class="text-primary fw-semibold"
+                           style="text-decoration:none;">
+                            {{ row.client.nom }}
+                        </a>
+                    </td>
+
+                    <td>{{ row.client.jour_echeance_tva }}</td>
+
+                    <td>{{ row.montant_n_1|default:"0.00" }} €</td>
+
+                    <td>
+                        {{ row.s1_07|default:"0.00" }} €
+			{% if row.statut_s1_07 %}
+			    <span class="pastille {{ row.statut_s1_07 }}"></span>
+			{% endif %}
+                    </td>
+
+                    <td>
+                        {{ row.s2_12|default:"0.00" }} €
+			{% if row.statut_s2_12 %}
+			    <span class="pastille {{ row.statut_s2_12 }}"></span>
+			{% endif %}
+                    </td>
+
+                    <td class="text-center">
+                        {% if row.commentaire_tva_sup_1000 %}
+                            <i class="bi bi-check-circle-fill text-success"></i>
+                        {% endif %}
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+</div>
+
+</section>
+
+<!-- POPUP CONTAINER -->
+<div id="modal-container"></div>
+
+<!-- SCRIPT RECHERCHE -->
+<script>
+document.getElementById("searchInput").addEventListener("input", function () {
+    const search = this.value.toLowerCase().trim();
+    const rows = document.querySelectorAll("#tableBody tr");
+
+    rows.forEach(row => {
+        const clientName = row.querySelector("td:nth-child(2)")?.innerText.toLowerCase();
+        const numero = row.querySelector("td:nth-child(1)")?.innerText.toLowerCase();
+
+        if (!search || clientName.includes(search) || numero.includes(search)) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+    });
+});
+</script>
+
+{% endblock %}

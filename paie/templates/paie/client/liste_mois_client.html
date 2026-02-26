@@ -1,0 +1,91 @@
+{% extends "base_paie_client.html" %}
+
+{% block content %}
+<section class="section">
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="m-0">
+            Mois de paie – {{ client.nom }}
+        </h1>
+
+<a href="{% url 'paie:client_creer_mois_suivant' %}" 
+   class="btn btn-primary">
+    + Créer le mois suivant
+</a>
+
+    </div>
+
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th>Mois</th>
+            <th>Statut</th>
+            <th>Validation client</th>
+            <th>Validation partenaire</th>
+            <th class="text-end">Actions</th>
+        </tr>
+    </thead>
+
+<tbody>
+    {% for m in mois_list %}
+    <tr>
+
+        <!-- Mois -->
+        <td>{{ m.mois_nom_court }} {{ m.annee }}</td>
+
+        <!-- Statut client -->
+        <td>
+            {% if m.client_valide %}
+                <h5><span class="badge bg-success">Validé client</span><h5>
+            {% else %}
+                <h5><span class="badge bg-warning text-dark">En attente</span><h5>
+            {% endif %}
+        </td>
+
+        <!-- Validation client -->
+        <td>
+            {% if m.date_validation_client %}
+                {{ m.date_validation_client|date:"d/m/Y H:i" }}
+            {% else %}
+                <span class="text-muted">-</span>
+            {% endif %}
+        </td>
+
+        <!-- Validation partenaire -->
+        <td>
+            {% if m.bs_fait %}
+            <span class="badge bg-success text-start">
+                BS fait<br>
+                <big>{{ m.date_bs_fait|date:"d/m/Y H:i" }}</big>
+            </span>
+            {% else %}
+                <span class="badge bg-secondary">BS non fait</span>
+            {% endif %}
+
+            {% if m.dsn_faite %}
+            <span class="badge bg-primary text-start">
+                DSN faite<br>
+                <big>{{ m.date_dsn_faite|date:"d/m/Y H:i" }}</big>
+            </span>
+            {% else %}
+                <span class="badge bg-secondary ms-1">DSN non faite</span>
+            {% endif %}
+        </td>
+
+        <!-- Actions -->
+        <td class="text-end">
+            <a href="{% url 'paie:client_mois_detail' m.id %}"
+               class="btn btn-sm btn-outline-secondary">
+                Ouvrir
+            </a>
+        </td>
+
+    </tr>
+    {% endfor %}
+</tbody>
+</table>
+
+</div>
+{% endblock %}

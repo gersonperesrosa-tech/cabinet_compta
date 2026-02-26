@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="py-4">
+
+    <h2>Nouvelle tâche</h2>
+
+    <form method="POST" class="mt-4">
+        {% csrf_token %}
+
+        <label class="form-label">Titre</label>
+        <input type="text" name="title" class="form-control" required>
+
+        <label class="form-label mt-3">Description</label>
+        <textarea name="description" class="form-control"></textarea>
+
+        <label class="form-label mt-3">Priorité</label>
+        <select name="priority" class="form-select">
+            <option value="low">Faible</option>
+            <option value="normal" selected>Normale</option>
+            <option value="high">Haute</option>
+        </select>
+
+        <label class="form-label mt-3">Date d’échéance</label>
+        <input type="date" name="due_date" class="form-control">
+
+        <label class="form-label mt-3">Rappel</label>
+        <input type="datetime-local" name="reminder_date" class="form-control">
+
+        <div class="mt-4">
+            <button class="btn btn-primary">Créer</button>
+            <a href="{% url 'todo_list' %}" class="btn btn-secondary">Annuler</a>
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

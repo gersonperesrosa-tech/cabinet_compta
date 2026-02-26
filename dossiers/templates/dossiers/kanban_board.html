@@ -1,0 +1,588 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="section">
+
+
+<div class="py-4">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <!-- Zone gauche : titre -->
+    <h2 class="m-0">ActionBoard</h2>
+
+    <!-- Zone droite : retour + actions -->
+    <div class="d-flex align-items-center gap-2">
+
+        <a href="{% url 'user_space' %}" class="btn btn-outline-secondary">
+            ← Retour au tableau de bord
+        </a>
+
+        <button class="btn btn-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#addColumnModal">
+            + Ajouter une colonne
+        </button>
+
+        <button class="btn btn-secondary"
+                data-bs-toggle="modal"
+                data-bs-target="#addTagModal">
+            + Ajouter un tag
+        </button>
+
+    </div>
+
+</div>
+
+
+<div class="mb-4">
+    <input type="text"
+           id="kanbanSearch"
+           class="form-control"
+           placeholder="Rechercher une carte...">
+</div>
+
+
+    <!-- Kanban -->
+<div class="d-flex gap-4 kanban-row" style="white-space: nowrap;">
+
+        {% for column in columns %}
+
+        <div class="kanban-column p-3 rounded d-flex flex-column"
+             style="background: {{ column.color }}; min-width: 300px;"
+             draggable="true"
+             data-column-id="{{ column.id }}">
+
+<!-- Titre colonne -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+
+    <!-- Dropdown à gauche -->
+    <div class="dropdown me-2">
+        <button class="btn btn-sm btn-light dropdown-toggle" data-bs-toggle="dropdown"></button>
+        <ul class="dropdown-menu">
+            <li>
+                <a class="dropdown-item"
+                   data-bs-toggle="modal"
+                   data-bs-target="#renameColumnModal"
+                   onclick="prepareRenameModal({{ column.id }}, '{{ column.title }}')">
+                    Renommer
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item"
+                   data-bs-toggle="modal"
+                   data-bs-target="#editColumnColorModal"
+                   onclick="prepareColorModal({{ column.id }}, '{{ column.color }}')">
+                    Changer la couleur
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item text-danger"
+                   href="{% url 'delete_kanban_column' column.id %}">
+                    Supprimer
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Titre à droite -->
+    <h5 class="m-0">{{ column.title }}</h5>
+</div>
+
+            <!-- Cartes -->
+            <div class="kanban-cards flex-grow-1" data-column-id="{{ column.id }}">
+                {% for card in cards %}
+                    {% if card.column.id == column.id %}
+
+                    <div class="kanban-card p-3 mb-3 bg-white rounded shadow-sm"
+                         draggable="true"
+                         data-card-id="{{ card.id }}"
+                         data-column-id="{{ column.id }}">
+
+                        <div class="fw-bold">{{ card.title }}</div>
+
+                        <div class="text-muted small mb-2">
+                            {{ card.created_at|date:"d/m/Y" }}
+                        </div>
+
+                        <div class="mb-2">
+                            {% for tag in card.kanbancardtag_set.all %}
+                                <span class="badge"
+                                      style="background: {{ tag.tag.color }};">
+                                    {{ tag.tag.name }}
+                                </span>
+                            {% endfor %}
+                        </div>
+
+                        <div class="text-end">
+                            <a href="{% url 'edit_kanban_card' card.id %}"
+                               class="btn btn-sm btn-outline-secondary">Modifier</a>
+
+                            <a href="{% url 'delete_kanban_card' card.id %}"
+                               class="btn btn-sm btn-outline-danger">Supprimer</a>
+
+                            <button class="btn btn-sm btn-outline-primary"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#manageTagsModal{{ card.id }}">
+                                Tags
+                            </button>
+                        </div>
+
+                    </div>
+
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- Ajouter une carte -->
+<button class="btn btn-sm btn-light w-100 mt-2"
+        data-bs-toggle="modal"
+        data-bs-target="#addCardModal"
+        onclick="prepareAddCardModal({{ column.id }})">
+    + Ajouter une carte
+</button>
+
+
+
+        </div> <!-- fin colonne -->
+
+        {% endfor %}
+
+    </div> <!-- fin du conteneur du kanban -->
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    /* ============================
+       DRAG & DROP COLONNES
+    ============================ */
+
+    let draggedColumn = null;
+
+    document.querySelectorAll(".kanban-column").forEach(col => {
+
+        col.addEventListener("dragstart", function (e) {
+
+            // Si on clique sur une carte → ne pas déplacer la colonne
+            if (e.target.closest(".kanban-card")) {
+                e.preventDefault();
+                return;
+            }
+
+            draggedColumn = this;
+            this.style.opacity = "0.4";
+            e.dataTransfer.effectAllowed = "move";
+        });
+
+        col.addEventListener("dragend", function () {
+            this.style.opacity = "1";
+            draggedColumn = null;
+        });
+
+        col.addEventListener("dragover", function (e) {
+            e.preventDefault();
+        });
+
+        col.addEventListener("drop", function (e) {
+            e.preventDefault();
+
+            if (!draggedColumn || draggedColumn === this) return;
+
+            const parent = this.parentNode;
+            const draggedPos = Array.from(parent.children).indexOf(draggedColumn);
+            const targetPos = Array.from(parent.children).indexOf(this);
+
+            if (draggedPos < targetPos) {
+                parent.insertBefore(draggedColumn, this.nextSibling);
+            } else {
+                parent.insertBefore(draggedColumn, this);
+            }
+
+            saveColumnOrder();
+        });
+
+    });
+
+    function saveColumnOrder() {
+        const order = [];
+        document.querySelectorAll(".kanban-column").forEach((col, index) => {
+            order.push({
+                id: col.dataset.columnId,
+                position: index
+            });
+        });
+
+        fetch("{% url 'move_kanban_column' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify(order)
+        });
+    }
+
+
+
+    /* ============================
+       DRAG & DROP CARTES
+    ============================ */
+
+    let draggedCard = null;
+
+    document.querySelectorAll(".kanban-card").forEach(card => {
+
+        card.addEventListener("dragstart", function (e) {
+            e.stopPropagation(); // ne pas déclencher le drag des colonnes
+            draggedCard = this;
+            this.style.opacity = "0.4";
+            e.dataTransfer.effectAllowed = "move";
+            e.dataTransfer.setData("text/plain", this.dataset.cardId || "");
+        });
+
+        card.addEventListener("dragend", function () {
+            this.style.opacity = "1";
+            draggedCard = null;
+        });
+
+    });
+
+    document.querySelectorAll(".kanban-cards").forEach(column => {
+
+        column.addEventListener("dragover", function (e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+        });
+
+        column.addEventListener("drop", function (e) {
+            e.preventDefault();
+
+            if (!draggedCard) return;
+
+            this.appendChild(draggedCard);
+
+            saveCardOrder(this);
+        });
+
+    });
+
+    function saveCardOrder(columnElement) {
+
+        const columnId = columnElement.dataset.columnId;
+        const cards = columnElement.querySelectorAll(".kanban-card");
+
+        cards.forEach((card, index) => {
+            const cardId = card.dataset.cardId;
+
+            fetch("{% url 'move_kanban_card' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify({
+                    card_id: cardId,
+                    column_id: columnId,
+                    position: index
+                })
+            });
+        });
+    }
+
+});
+</script>
+
+
+<script>
+function assignTag(cardId, tagId) {
+    fetch("{% url 'assign_tag_to_card' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify({
+            card_id: cardId,
+            tag_id: tagId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "ok") {
+            location.reload();
+        }
+    });
+}
+
+function removeTag(cardId, tagId) {
+    fetch("{% url 'remove_tag_from_card' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify({
+            card_id: cardId,
+            tag_id: tagId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "ok") {
+            location.reload();
+        }
+    });
+}
+</script>
+
+
+<script>
+document.getElementById("kanbanSearch").addEventListener("input", function () {
+    const query = this.value.toLowerCase().trim();
+
+    // Toutes les cartes
+    const cards = document.querySelectorAll(".kanban-card");
+
+    cards.forEach(card => {
+        const title = card.querySelector(".fw-bold")?.textContent.toLowerCase() || "";
+        const description = card.querySelector(".card-description")?.textContent.toLowerCase() || "";
+
+        // Récupérer les tags affichés sur la carte
+        const tagElements = card.querySelectorAll(".badge");
+        const tagTexts = Array.from(tagElements).map(t => t.textContent.toLowerCase());
+
+        // Condition : correspondance titre OU description OU tag
+        const match =
+            title.includes(query) ||
+            description.includes(query) ||
+            tagTexts.some(tag => tag.includes(query));
+
+        // Afficher / masquer
+        card.style.display = match ? "" : "none";
+    });
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    // 1) Ferme tous les modals Bootstrap encore actifs
+    document.querySelectorAll(".modal.show").forEach(modal => {
+        const instance = bootstrap.Modal.getInstance(modal);
+        if (instance) instance.hide();
+    });
+
+    // 2) Supprime tous les backdrops fantômes
+    document.querySelectorAll(".modal-backdrop").forEach(el => el.remove());
+
+    // 3) Réinitialise complètement le body
+    document.body.classList.remove("modal-open");
+    document.body.style.overflow = "auto";
+    document.body.style.paddingRight = "0px";
+
+});
+</script>
+<script>
+function prepareColorModal(columnId, currentColor) {
+    // Remplir les champs du formulaire
+    document.getElementById("columnId").value = columnId;
+    document.getElementById("columnColor").value = currentColor;
+
+    // Mettre à jour l'URL du formulaire
+    const form = document.getElementById("editColumnColorForm");
+    form.action = `/kanban/colonnes/${columnId}/couleur/`;
+}
+</script>
+
+<script>
+function prepareRenameModal(columnId, currentTitle) {
+    document.getElementById("renameColumnTitle").value = currentTitle;
+
+    const form = document.getElementById("renameColumnForm");
+    form.action = `/kanban/colonnes/${columnId}/renommer/`;
+}
+</script>
+
+<script>
+function prepareAddCardModal(columnId) {
+    document.getElementById("addCardColumnId").value = columnId;
+
+    const form = document.getElementById("addCardForm");
+    form.action = `/kanban/cartes/ajouter/`;
+}
+</script>
+
+{% endblock content %}
+
+{% block modals %}
+<div class="modal fade" id="addCardModal">
+    <div class="modal-dialog">
+        <form method="POST" id="addCardForm" class="modal-content">
+            {% csrf_token %}
+            <input type="hidden" name="column_id" id="addCardColumnId">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Nouvelle carte</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <label class="form-label">Titre</label>
+                <input type="text" name="title" class="form-control mb-3">
+
+                <label class="form-label">Description</label>
+                <textarea name="description" class="form-control" rows="4"></textarea>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button class="btn btn-primary">Créer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<div class="modal fade" id="renameColumnModal">
+    <div class="modal-dialog">
+        <form method="POST" id="renameColumnForm" class="modal-content">
+            {% csrf_token %}
+            <div class="modal-header">
+                <h5 class="modal-title">Renommer la colonne</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" name="title" id="renameColumnTitle" class="form-control">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button class="btn btn-primary">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="editColumnColorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Changer la couleur</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form method="POST" id="editColumnColorForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <label for="columnColor" class="form-label">Couleur</label>
+                    <input type="color" id="columnColor" name="color" class="form-control form-control-color">
+                    <input type="hidden" id="columnId" name="column_id">
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<!-- Modal ajouter colonne -->
+<div class="modal fade" id="addColumnModal">
+    <div class="modal-dialog">
+        <form method="POST" action="{% url 'add_kanban_column' %}" class="modal-content">
+            {% csrf_token %}
+            <div class="modal-header">
+                <h5 class="modal-title">Nouvelle colonne</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label">Titre</label>
+                <input type="text" name="title" class="form-control mb-3">
+
+                <label class="form-label">Couleur</label>
+                <input type="color" name="color" class="form-control form-control-color">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button class="btn btn-primary">Créer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal ajouter tag -->
+<div class="modal fade" id="addTagModal">
+    <div class="modal-dialog">
+        <form method="POST" action="{% url 'add_kanban_tag' %}" class="modal-content">
+            {% csrf_token %}
+            <div class="modal-header">
+                <h5 class="modal-title">Nouveau tag</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <label class="form-label">Nom du tag</label>
+                <input type="text" name="name" class="form-control mb-3">
+
+                <label class="form-label">Couleur</label>
+                <input type="color" name="color" class="form-control form-control-color">
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button class="btn btn-primary">Créer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modals TAGS pour chaque carte -->
+{% for card in cards %}
+<div class="modal fade" id="manageTagsModal{{ card.id }}">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Tags de la carte : {{ card.title }}</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                {% for tag in tags %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge" style="background: {{ tag.color }};">&nbsp;&nbsp;</span>
+                            {{ tag.name }}
+                        </div>
+
+                        <div>
+                            {% if tag in card.tags %}
+                                <button class="btn btn-sm btn-danger"
+                                        onclick="removeTag({{ card.id }}, {{ tag.id }})">
+                                    Retirer
+                                </button>
+                            {% else %}
+                                <button class="btn btn-sm btn-primary"
+                                        onclick="assignTag({{ card.id }}, {{ tag.id }})">
+                                    Ajouter
+                                </button>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                {% endfor %}
+
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock modals %}

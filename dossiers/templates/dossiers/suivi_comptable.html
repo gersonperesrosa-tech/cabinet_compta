@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Suivi comptable – {{ client.nom }}{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <!-- TITRE + Sélecteur d'année -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">Suivi comptable – {{ client.nom }}</h3>
+
+        <form method="get" class="d-flex align-items-center">
+            <label class="me-2">Année :</label>
+            <select class="form-select" onchange="window.location.href=this.value;">
+                {% for a in annees_disponibles %}
+                    <option value="{% url 'suivi_comptable' client.id a %}"
+                        {% if a == annee %}selected{% endif %}>
+                        {{ a }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
+    <!-- INFORMATIONS CLIENT -->
+    <div class="card mb-4">
+        <div class="card-header fw-semibold">
+            Informations du client
+        </div>
+        <div class="card-body">
+
+            <div class="row mb-2">
+                <div class="col-md-4"><strong>Numéro :</strong> {{ client.numero }}</div>
+                <div class="col-md-4"><strong>Nom :</strong> {{ client.nom }}</div>
+                <div class="col-md-4"><strong>Périodicité :</strong> {{ client.periodicite }}</div>
+            </div>
+
+            <div class="row mb-2">
+                <div class="col-md-4"><strong>Forme juridique :</strong> {{ client.forme_juridique }}</div>
+                <div class="col-md-4"><strong>Date de clôture :</strong> {{ client.date_cloture }}</div>
+                <div class="col-md-4"><strong>Régime TVA :</strong> {{ client.regime_tva }}</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- FORMULAIRE DE SUIVI COMPTABLE -->
+    <div class="card">
+        <div class="card-header fw-semibold">
+            Mise à jour comptable – {{ annee }}
+        </div>
+
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Date de mise à jour</label>
+                        {{ form.date_maj_compta }}
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Dernier mois saisi</label>
+                        {{ form.dernier_mois_traite }}
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Saisi par</label>
+                        {{ form.saisi_par }}
+                    </div>
+                </div>
+
+                <div class="form-check mb-3">
+                    {{ form.verifie }}
+                    <label class="form-check-label ms-1">Vérification effectuée</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    Enregistrer
+                </button>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

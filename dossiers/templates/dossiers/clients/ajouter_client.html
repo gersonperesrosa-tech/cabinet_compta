@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<section class="section">
+
+<form method="post" id="clientForm">
+    {% csrf_token %}
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="m-0">Créer un nouveau client</h3>
+
+        <a href="{% url 'liste_clients' %}" class="btn btn-secondary">
+            Retour à la liste
+        </a>
+    </div>
+
+    <style>
+        .page-container {
+            padding: 10px 5px 80px;
+        }
+
+        .form-section {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+
+        .form-section h5 {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            color: #374151;
+            border-left: 4px solid #0d6efd;
+            padding-left: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px 20px;
+        }
+
+        .page-footer-fixed {
+            position: sticky;
+            bottom: 0;
+            background: #ffffff;
+            padding: 15px;
+            border-top: 1px solid #e5e7eb;
+            text-align: right;
+            box-shadow: 0 -2px 6px rgba(0,0,0,0.05);
+        }
+    </style>
+
+<div class="page-container">
+
+    <div class="row">
+
+        <!-- COLONNE GAUCHE -->
+        <div class="col-lg-7 col-md-12">
+
+            <!-- SECTION 1 : Informations générales -->
+            <div class="form-section">
+                <h5>Informations générales</h5>
+
+                <div class="form-grid">
+                    <div>
+                        <label class="form-label">Numéro interne</label>
+                        {{ form.numero }}
+                    </div>
+
+                    <div style="grid-column: span 2;">
+                        <label class="form-label">Nom du client</label>
+                        {{ form.nom }}
+                    </div>
+
+                    <div>
+                        <label class="form-label">Forme juridique</label>
+                        {{ form.forme_juridique }}
+                    </div>
+
+                    <div>
+                        <label class="form-label">Régime d’imposition</label>
+                        {{ form.regime_imposition }}
+                    </div>
+
+                    <div>
+                        <label class="form-label">Date de clôture</label>
+                        {{ form.date_cloture }}
+                    </div>
+
+                    <div>
+                        <label class="form-label">Périodicité de saisie</label>
+                        {{ form.periodicite }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2 : TVA -->
+            <div class="form-section">
+                <h5>TVA</h5>
+
+                <div class="form-grid">
+                    <div>
+                        <label class="form-label">Régime TVA</label>
+                        {{ form.regime_tva }}
+                    </div>
+
+                    <div>
+                        <label class="form-label">Jour d’échéance TVA</label>
+                        {{ form.jour_echeance_tva }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3 : Notes internes -->
+            <div class="form-section">
+                <h5>Notes internes</h5>
+                {{ form.commentaires }}
+            </div>
+
+        </div>
+
+        <!-- COLONNE DROITE -->
+        <div class="col-lg-5 col-md-12">
+
+            <!-- SECTION 4 : Modules activés -->
+            <div class="form-section">
+                <h5>Modules activés</h5>
+
+                <div class="form-grid">
+                    <label class="form-label">{{ form.module_saisie }} Saisie comptable</label>
+                    <label class="form-label">{{ form.module_paie }} Module Paie</label>
+                </div>
+            </div>
+
+            <!-- SECTION 5 : Archivage -->
+            <div class="form-section">
+                <h5>Archivage</h5>
+                <label class="form-label">{{ form.archive }} Archivé</label>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+    <!-- FOOTER FIXE -->
+    <div class="page-footer-fixed">
+        <button type="submit" class="btn btn-primary px-4">Créer</button>
+    </div>
+
+</form>
+
+</section>
+
+{% endblock %}

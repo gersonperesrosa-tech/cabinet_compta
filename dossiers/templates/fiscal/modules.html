@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2 class="mb-4">
+        Modules fiscaux – Année {{ annee.annee }}
+    </h2>
+
+    {% if modules %}
+        <div class="list-group">
+
+            {% for module in modules %}
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+
+                    <div>
+                        <strong>{{ module.nom }}</strong>
+                    </div>
+
+                    <div>
+                        <a href="{% url 'fiscal_clients_module' annee.id module.id %}" 
+                           class="btn btn-primary btn-sm">
+                            Gérer les clients
+                        </a>
+                    </div>
+
+                </div>
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+        <p class="text-muted">Aucun module fiscal n’a été trouvé pour cette année.</p>
+    {% endif %}
+
+    <div class="mt-4">
+        <a href="{% url 'fiscal_annees' %}" class="btn btn-secondary">
+            Retour aux années fiscales
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}

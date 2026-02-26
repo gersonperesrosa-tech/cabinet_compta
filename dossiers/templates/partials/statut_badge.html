@@ -1,0 +1,10 @@
+{% if statut == "BLANC" %}
+    <span class="badge" style="background:#ffffff; color:#000;"></span>
+{% elif statut == "JAUNE" %}
+    <span class="badge" style="background:#fff3cd; color:#856404;">A envoyer</span>
+{% elif statut == "VERT_CLAIR" %}
+    <span class="badge" style="background:#c8f7c5; color:#2e7d32;">Télétransmis</span>
+{% elif statut == "VERT_FONCE" %}
+    <span class="badge" style="background:#2e7d32; color:#white;">Accepté</span>
+{% endif %}
+

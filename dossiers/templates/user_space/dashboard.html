@@ -1,0 +1,408 @@
+{% extends "base.html" %}
+{% block content %}
+
+
+    <!-- HEADER -->
+
+    <!-- HEADER -->
+    <div class="text-center mb-5">
+        <h1 class="fw-bold">Bienvenue, {{request.user.get_full_name }}</h1>
+        <p class="text-muted">Vue d’ensemble de votre cabinet.</p>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row g-4">
+
+            <!-- ========================= -->
+            <!-- COLONNE GAUCHE (60%) -->
+            <!-- ========================= -->
+            <div class="col-lg-8">
+
+<!-- SUPER-CADRANT COMPTABILITÉ -->
+<div class="card shadow-sm mb-4">
+
+    <!-- Titre global -->
+<div class="card-header d-flex align-items-center"
+     style="background-color:white; border-bottom:3px solid #198754; font-size:1.30rem;">
+    <i class="bi bi-calculator text-success me-2"></i>
+    Comptabilité
+</div>
+
+    <div class="card-body">
+
+        <div class="row g-4">
+
+            <!-- ========================= -->
+            <!-- COLONNE 1 : Saisie comptable -->
+            <!-- ========================= -->
+            <div class="col-lg-6">
+
+                <div class="border rounded p-3 h-100">
+
+                    <!-- KPIs -->
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <div class="fw-bold h5 mb-0">{{ kpi_total_clients }}</div>
+                            <div class="text-muted small">Clients mensuels</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="fw-bold h5 mb-0 text-success">{{ kpi_terminees }}</div>
+                            <div class="text-muted small">Terminée</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="fw-bold h5 mb-0 text-warning">{{ kpi_en_cours }}</div>
+                            <div class="text-muted small">En cours</div>
+                        </div>
+                    </div>
+
+                    <!-- Donut -->
+                    <div class="row align-items-center">
+                        <div class="col-6 text-center">
+                            <canvas id="comptaDonut" style="max-width:190px; max-height:190px;"></canvas>
+                        </div>
+                        <div class="col-6 text-center">
+                            <div class="display-6 fw-bold">{{ kpi_pourcentage_terminees }}%</div>
+                            <div class="text-muted small">Saisie terminée</div>
+                            <div class="mt-2 small text-muted">
+                                Non commencée : {{ kpi_non_commencees }}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ========================= -->
+            <!-- COLONNE 2 : TVA CA3M -->
+            <!-- ========================= -->
+            <div class="col-lg-6">
+
+                <div class="border rounded p-3 h-100">
+
+                    <!-- KPIs -->
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <div class="fw-bold h5 mb-0">{{ total_ca3m }}</div>
+                            <div class="text-muted small">Clients CA3M</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="fw-bold h5 mb-0 text-success">{{ ca3m_terminees }}</div>
+                            <div class="text-muted small">Terminée</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="fw-bold h5 mb-0 text-warning">{{ ca3m_en_cours }}</div>
+                            <div class="text-muted small">En cours</div>
+                        </div>
+                    </div>
+
+                    <!-- Donut -->
+                    <div class="row align-items-center">
+                        <div class="col-6 text-center">
+                            <canvas id="ca3mDonut" style="max-width:190px; max-height:190px;"></canvas>
+                        </div>
+                        <div class="col-6 text-center">
+                            <div class="display-6 fw-bold">{{ ca3m_pourcentage_terminees }}%</div>
+                            <div class="text-muted small">CA3M terminée</div>
+                            <div class="mt-2 small text-muted">
+                                Non commencée : {{ ca3m_non_commencees }}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+
+<!-- CADRANT TVA -->
+<div class="card shadow-sm mb-4">
+<div class="card-header d-flex align-items-center"
+     style="background-color:white; border-bottom:3px solid #0dcaf0; font-size:1.30rem;">
+    <i class="bi bi-receipt text-info me-2"></i>
+    TVA – CA3 Mensuelle
+</div>
+
+    <div class="card-body">
+
+        <!-- KPIs -->
+        <div class="row text-center mb-3">
+            <div class="col-2">
+                <div class="fw-bold h5 mb-0">{{ total_ca3m }}</div>
+                <div class="text-muted small">Clients</div>
+            </div>
+            <div class="col-2">
+                <div class="fw-bold h5 mb-0 text-success">{{ tva_acceptes }}</div>
+                <div class="text-muted small">Accepté</div>
+            </div>
+            <div class="col-2">
+                <div class="fw-bold h5 mb-0 text-primary">{{ tva_teletransmis }}</div>
+                <div class="text-muted small">Télétransmis</div>
+            </div>
+            <div class="col-2">
+                <div class="fw-bold h5 mb-0 text-warning">{{ tva_a_envoyer }}</div>
+                <div class="text-muted small">À envoyer</div>
+            </div>
+            <div class="col-2">
+                <div class="fw-bold h5 mb-0 text-muted">{{ tva_sans_pastille }}</div>
+                <div class="text-muted small">Non commencé</div>
+            </div>
+            <div class="col-2">
+                <div class="fw-bold h5 mb-0 text-danger">{{ tva_rejetes }}</div>
+                <div class="text-muted small">Rejeté</div>
+            </div>
+        </div>
+
+        <!-- Donut -->
+        <div class="row align-items-center">
+            <div class="col-md-6 text-center">
+                <canvas id="tvaDonut" style="max-width:190px; max-height:190px;"></canvas>
+            </div>
+            <div class="col-md-6 text-center">
+                <div class="fw-bold display-6">{{ pct_acceptes }}%</div>
+                <div class="text-muted small">Accepté</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</div>
+
+
+            <!-- ========================= -->
+            <!-- COLONNE DROITE (40%) -->
+            <!-- ========================= -->
+            <div class="col-lg-4">
+
+                <!-- Rappels du jour -->
+ <div class="card shadow-sm border-warning mb-4">
+    <div class="card-header bg-warning fw-bold text-dark">
+        🔔 Rappels du jour
+    </div>
+
+    <div class="card-body" style="max-height: 200px; overflow-y: auto;">
+
+        {% if reminders_today %}
+            <ul class="list-group list-group-flush">
+                {% for todo in reminders_today %}
+                <li class="list-group-item small">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="{% url 'todo_toggle' todo.id %}" class="text-decoration-none">
+                            {% if todo.done %}✔️{% else %}⬜{% endif %}
+                        </a>
+                        <div>
+                            <div class="fw-bold">{{ todo.title }}</div>
+                            <div class="text-muted small">⏰ {{ todo.reminder_date|date:"H:i" }}</div>
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="text-muted small text-center">
+                Aucun rappel pour aujourd’hui
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+
+
+                <!-- Mes tâches -->
+                <div class="card shadow-sm mb-4">
+<div class="card-header d-flex justify-content-between align-items-center"
+     style="background-color:white; border-bottom:3px solid #fd7e14; font-size:1.30rem;">
+    
+    <div class="d-flex align-items-center">
+        <i class="bi bi-list-check text-warning me-2"></i>
+        Mes tâches
+    </div>
+
+    <div class="d-flex gap-2">
+        <a href="{% url 'todo_list' %}" class="btn btn-sm btn-outline-warning">
+            Voir tout
+        </a>
+        <a href="{% url 'todo_add' %}" class="btn btn-sm btn-warning text-white">
+            + Nouvelle tâche
+        </a>
+    </div>
+</div>
+                    <div class="card-body" style="max-height: 200px; overflow-y: auto;">
+                        {% if last_todos %}
+                        <ul class="list-group list-group-flush">
+                            {% for todo in last_todos %}
+                            <li class="list-group-item small">
+                                <div class="d-flex align-items-center gap-3">
+                                    <a href="{% url 'todo_toggle' todo.id %}" class="text-decoration-none">
+                                        {% if todo.done %}✔️{% else %}⬜{% endif %}
+                                    </a>
+                                    <div>
+                                        <div class="fw-bold">{{ todo.title }}</div>
+                                        {% if todo.due_date %}
+                                        <div class="text-muted small">📅 {{ todo.due_date|date:"d/m/Y" }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <em class="text-muted">Aucune tâche…</em>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Mes notes personnelles -->
+                <div class="card shadow-sm mb-4">
+<div class="card-header d-flex justify-content-between align-items-center"
+     style="background-color:white; border-bottom:3px solid #6f42c1; font-size:1.30rem;">
+    
+    <div class="d-flex align-items-center">
+        <i class="bi bi-journal-text" style="color:#6f42c1; margin-right:8px;"></i>
+        Mes notes personnelles
+    </div>
+
+    <div class="d-flex gap-2">
+        <a href="{% url 'user_notes' %}" class="btn btn-sm btn-outline-purple"
+           style="border-color:#6f42c1; color:#6f42c1;">
+            Voir tout
+        </a>
+        <a href="{% url 'add_user_note' %}" class="btn btn-sm text-white"
+           style="background-color:#6f42c1;">
+            + Nouvelle note
+        </a>
+    </div>
+</div>
+                    <div class="card-body" style="max-height: 200px; overflow-y: auto;">
+                        {% if last_notes %}
+                        <ul class="list-group list-group-flush">
+                            {% for note in last_notes %}
+                            <li class="list-group-item small">
+                                <div class="fw-bold">{{ note.titre|default:"Sans titre" }}</div>
+                                <div class="text-muted small">{{ note.created_at|date:"d/m/Y H:i" }}</div>
+                                <div class="mt-1">{{ note.contenu|truncatechars:120 }}</div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <em class="text-muted">Aucune note…</em>
+                        {% endif %}
+                    </div>
+                    <div class="card-body text-center">
+                        <a href="{% url 'kanban_board' %}" class="btn text-white w-100"
+           style="background-color:#283593">
+                            Ouvrir mon Action Board
+                        </a>
+                    </div>
+
+            </div>
+
+        </div>
+    </div>
+
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const ctx = document.getElementById('comptaDonut');
+        if (!ctx) return;
+
+        const terminees = {{ kpi_terminees|default:0 }};
+        const reste = {{ kpi_total_clients|default:0 }} - terminees;
+
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Terminée', 'Restant'],
+                datasets: [{
+                    data: [terminees, Math.max(reste, 0)],
+                    backgroundColor: ['#28a745', '#e9ecef'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+                cutout: '75%'
+            }
+        });
+    });
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const ctx = document.getElementById('ca3mDonut');
+    if (!ctx) return;
+
+    const terminees = {{ ca3m_terminees|default:0 }};
+    const total = {{ total_ca3m|default:0 }};
+    const reste = Math.max(total - terminees, 0);
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Terminée', 'Restant'],
+            datasets: [{
+                data: [terminees, reste],
+                backgroundColor: ['#0d6efd', '#e9ecef'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { position: 'bottom' }
+            },
+            cutout: '75%'
+        }
+    });
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const ctx = document.getElementById('tvaDonut');
+    if (!ctx) return;
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Accepté', 'Télétransmis', 'À envoyer', 'Sans pastille', 'Rejeté'],
+            datasets: [{
+                data: [
+                    {{ tva_acceptes }},
+                    {{ tva_teletransmis }},
+                    {{ tva_a_envoyer }},
+                    {{ tva_sans_pastille }},
+                    {{ tva_rejetes }}
+                ],
+                backgroundColor: [
+                    '#198754',  // vert foncé
+                    '#0d6efd',  // bleu
+                    '#ffc107',  // jaune
+                    '#ced4da',  // gris
+                    '#dc3545'   // rouge
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { position: 'bottom' }
+            },
+            cutout: '70%'
+        }
+    });
+});
+</script>
+
+
+{% endblock %}

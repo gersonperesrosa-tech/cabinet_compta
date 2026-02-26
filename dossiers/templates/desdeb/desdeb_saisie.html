@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section">
+
+<h1>Saisie DESDEB – {{ client_module.client.nom }} ({{ client_module.annee.annee }})</h1>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <table class="table table-bordered align-middle mt-4">
+        <thead>
+            <tr>
+                <th>Mois</th>
+                <th>Référence</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <tr>
+                <td><strong>Responsable</strong></td>
+                <td colspan="2">
+                    <input type="text" name="responsable" class="form-control"
+                           value="{{ declaration.responsable }}">
+                </td>
+            </tr>
+
+            <tr>
+                <td><strong>Retour client</strong></td>
+                <td colspan="2">
+                    <input type="text" name="retour_client" class="form-control"
+                           value="{{ declaration.retour_client }}">
+                </td>
+            </tr>
+
+            {% for mois, data in mois_data.items %}
+            <tr>
+                <td><strong>{{ data.label }}</strong></td>
+
+                <td>
+                    <input type="text"
+                           name="ref_{{ mois }}"
+                           class="form-control"
+                           value="{{ data.ref }}">
+                </td>
+
+                <td>
+                    <select name="statut_{{ mois }}" class="form-select">
+                        {% include "partials/statut_options.html" with selected=data.statut %}
+                    </select>
+                </td>
+            </tr>
+            {% endfor %}
+
+        </tbody>
+    </table>
+
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{% url 'fiscal_clients_module' client_module.annee.id client_module.module.id %}"
+           class="btn btn-outline-secondary">Retour</a>
+
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+    </div>
+
+</form>
+
+</section>
+
+{% endblock %}

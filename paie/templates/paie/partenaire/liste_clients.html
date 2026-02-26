@@ -1,0 +1,86 @@
+{% extends "base_partenaire.html" %}
+
+{% block title %}Liste des clients{% endblock %}
+
+{% block content %}
+<section class="section">
+
+<h1 class="mb-4">Liste des clients</h1>
+
+<!-- Barre de recherche -->
+<div class="d-flex justify-content-center mb-4">
+    <input type="text" id="searchInput" class="form-control w-50"
+           placeholder="Rechercher un client...">
+</div>
+
+{% if clients %}
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Forme juridique</th>
+            <th>Dernier mois traité</th>
+            <th>Salariés actifs</th>
+            <th class="text-end">Actions</th>
+        </tr>
+    </thead>
+
+<tbody>
+    {% for c in clients %}
+    <tr>
+        <td>{{ c.nom }}</td>
+        <td>{{ c.forme_juridique|default:"-" }}</td>
+
+        <td>
+            {% if c.dernier_mois_traite %}
+                {{ c.dernier_mois_traite.mois_nom_court }} {{ c.dernier_mois_traite.annee }} <span class="badge text-bg-success">Ok</span> 
+            {% else %}
+                <span class="text-muted">Aucun</span>
+            {% endif %}
+        </td>
+
+        <td>
+            <span class="badge bg-primary">{{ c.nb_actifs }}</span>
+        </td>
+
+        <td class="text-end">
+            <a href="{% url 'paie:partenaire_mois_client' c.id %}"
+               class="btn btn-outline-primary btn-sm">
+                Ouvrir
+            </a>
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+</table>
+
+{% else %}
+<p class="text-muted">Aucun client trouvé.</p>
+{% endif %}
+
+</section>
+
+<!-- Script JS -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const searchInput = document.getElementById("searchInput");
+    const rows = document.querySelectorAll("table tbody tr");
+
+    // --- Recherche dynamique (Nom + Forme juridique) ---
+    searchInput.addEventListener("keyup", function () {
+        const query = this.value.toLowerCase();
+
+        rows.forEach(row => {
+            const nom = row.querySelector("td:nth-child(1)").innerText.toLowerCase();
+            const forme = row.querySelector("td:nth-child(2)").innerText.toLowerCase();
+
+            const match = nom.includes(query) || forme.includes(query);
+            row.style.display = match ? "" : "none";
+        });
+    });
+
+});
+</script>
+
+{% endblock %}

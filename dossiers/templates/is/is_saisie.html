@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="section">
+
+<h1>Saisie IS – {{ client_module.client.nom }} ({{ client_module.annee.annee }})</h1>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <table class="table table-bordered align-middle mt-4">
+        <thead>
+            <tr>
+                <th>Élément</th>
+                <th>Montant</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <tr>
+                <td><strong>IS N‑2</strong></td>
+                <td><input type="text" name="is_n_2" class="form-control" value="{{ declaration.is_n_2 }}"></td>
+                <td></td>
+            </tr>
+
+            <tr>
+                <td><strong>IS N‑1</strong></td>
+                <td><input type="text" name="is_n_1" class="form-control" value="{{ declaration.is_n_1 }}"></td>
+                <td></td>
+            </tr>
+
+{% for ac in acompte_values %}
+<tr>
+    <td><strong>Acompte IS {{ ac.numero }}</strong></td>
+
+    <td>
+        <input type="text"
+               name="acompte_{{ ac.numero }}"
+	       id="acompte_{{ ac.numero }}"
+               class="form-control"
+               value="{{ ac.montant }}">
+    </td>
+
+    <td>
+        <select name="statut_acompte_{{ ac.numero }}" class="form-select">
+	{% include "partials/statut_options.html" with selected=ac.statut %}
+        </select>
+    </td>
+</tr>
+{% endfor %}
+
+            <tr>
+                <td><strong>Solde IS</strong></td>
+                <td><input type="text" 
+		name="solde" 
+		id="solde"
+		class="form-control" 
+		value="{{ declaration.solde }}"></td>
+                <td>
+                    <select name="statut_solde" class="form-select">
+	{% include "partials/statut_options.html" with selected=declaration.statut_solde %}
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td><strong>Commentaire si IS > 3000 €</strong></td>
+                <td colspan="2">
+                    <textarea name="commentaire_plus_3000" class="form-control" rows="3">
+                        {{ declaration.commentaire_plus_3000 }}
+                    </textarea>
+                </td>
+            </tr>
+
+        </tbody>
+    </table>
+
+    <div class="p-3 mt-4 rounded" style="background:#f5f7fa; border:1px solid #dce1e7;">
+        <strong>Total IS :</strong>
+        <span id="total_is_display" style="font-size:1.2rem; font-weight:600;">
+            {{ total_is|floatformat:2 }} €
+        </span>
+    </div>
+
+<!-- BOUTONS BAS DE PAGE -->
+<div class="d-flex justify-content-between align-items-center mt-4">
+
+    <!-- Bouton gauche : Retour au Module IS -->
+    <a href="{% url 'fiscal_clients_module' client_module.annee.id client_module.module.id %}"
+       class="btn btn-outline-secondary">
+        Retour au Module IS
+    </a>
+
+    <div class="d-flex gap-2 justify-content-end">
+
+        <!-- Bouton centre : Retour à la gestion IS -->
+        <a href="{% url 'is_gestion' client_module.annee.id %}"
+           class="btn btn-outline-dark">
+            Retour
+        </a>
+
+        <!-- Bouton droite : Enregistrer -->
+        <button type="submit" class="btn btn-primary">
+            Enregistrer
+        </button>
+
+    </div>
+
+</div>
+
+</form>
+<script>
+function toNumber(value) {
+    if (!value) return 0;
+    return parseFloat(value.replace(",", "."));
+}
+
+function updateTotalIS() {
+    // Total des acomptes
+    let total_acomptes = 0;
+    document.querySelectorAll("input[id^='acompte_']").forEach(input => {
+        total_acomptes += toNumber(input.value);
+    });
+
+    // Solde IS
+    const solde = toNumber(document.getElementById("solde").value);
+
+    // Total IS = acomptes + solde
+    const total_is = total_acomptes + solde;
+
+    document.getElementById("total_is_display").innerText =
+        total_is.toFixed(2).replace(".", ",") + " €";
+}
+
+// Mise à jour en temps réel
+document.getElementById("solde").addEventListener("input", updateTotalIS);
+document.querySelectorAll("input[id^='acompte_']").forEach(input => {
+    input.addEventListener("input", updateTotalIS);
+});
+</script>
+
+
+</section>
+
+{% endblock %}

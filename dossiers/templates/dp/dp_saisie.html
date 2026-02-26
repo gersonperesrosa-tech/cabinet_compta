@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section">
+
+<h1>Dossier Permanent – {{ client.nom }}</h1>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <table class="table table-bordered align-middle mt-4">
+
+        <tr>
+            <th>Dossier déontologie</th>
+            <td>
+                <input type="text" name="dossier_deontologie" class="form-control"
+                       value="{{ declaration.dossier_deontologie }}">
+            </td>
+        </tr>
+
+        <tr>
+            <th>Acceptation LAB</th>
+            <td>
+                <input type="text" name="acceptation_lab" class="form-control"
+                       value="{{ declaration.acceptation_lab }}">
+            </td>
+        </tr>
+
+        <tr>
+            <th>Pièce d'identité</th>
+            <td>
+                <input type="text" name="piece_identite" class="form-control"
+                       value="{{ declaration.piece_identite }}">
+            </td>
+        </tr>
+
+        <tr>
+            <th>Statut</th>
+            <td>
+                <input type="text" name="statut" class="form-control"
+                       value="{{ declaration.statut }}">
+            </td>
+        </tr>
+
+        <tr>
+            <th>Bail</th>
+            <td>
+                <input type="text" name="bail" class="form-control"
+                       value="{{ declaration.bail }}">
+            </td>
+        </tr>
+
+        <tr>
+            <th>Lettre de mission</th>
+            <td>
+                <input type="text" name="lettre_mission" class="form-control"
+                       value="{{ declaration.lettre_mission }}">
+            </td>
+        </tr>
+
+        <tr>
+            <th>Avenant</th>
+            <td>
+                <input type="text" name="avenant" class="form-control"
+                       value="{{ declaration.avenant }}">
+            </td>
+        </tr>
+
+    </table>
+
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{% url 'dp_gestion' %}" class="btn btn-outline-secondary">
+            Retour
+        </a>
+
+        <button type="submit" class="btn btn-primary">
+            Enregistrer
+        </button>
+    </div>
+
+</form>
+
+</section>
+
+{% endblock %}

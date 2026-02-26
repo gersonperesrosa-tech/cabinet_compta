@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}TVA – CA3 Mensuelle{% endblock %}
+
+{% block content %}
+
+<section class="section">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <!-- TITRE EN H1 (même style visuel que H2 si tu veux) -->
+    <h1 class="mb-0">Déclarations TVA – CA3 Mensuelle</h1>
+
+    <!-- BLOC DROITE : recherche + année + bouton -->
+    <div class="d-flex align-items-center gap-3">
+
+    <!-- BARRE DE RECHERCHE -->
+	<div class="search-wrapper" style="width: 300px;">
+	   <input type="text"
+           id="searchInput"
+           class="form-control"
+           placeholder="Rechercher un client…">
+</div>
+
+        <!-- SÉLECTEUR D’ANNÉE -->
+        <form method="get" class="d-flex align-items-center gap-2 mb-0">
+            <label class="fw-semibold mb-0">Année :</label>
+            <select name="annee"
+                    class="form-select"
+                    style="width: 120px;"
+                    onchange="this.form.submit()">
+                {% for a in annees %}
+                    <option value="{{ a }}" {% if a == annee %}selected{% endif %}>{{ a }}</option>
+                {% endfor %}
+            </select>
+        </form>
+
+        <!-- BOUTON AJOUTER ANNÉE -->
+        <a href="{% url 'tva_ca3m_creer_annee_suivante' annee %}" class="btn btn-primary">
+            + Ajouter une année
+        </a>
+
+    </div>
+
+</div>
+
+
+<script>
+    // Remplir le select dynamiquement (évite les bugs d’alignement)
+    const select = document.querySelector("select[name='annee']");
+    const hidden = document.getElementById("anneeHidden");
+
+    {% for a in annees %}
+        const opt = document.createElement("option");
+        opt.value = "{{ a }}";
+        opt.textContent = "{{ a }}";
+        if ("{{ a }}" == "{{ annee }}") opt.selected = true;
+        select.appendChild(opt);
+    {% endfor %}
+
+    select.addEventListener("change", () => {
+        hidden.value = select.value;
+        document.getElementById("anneeForm").submit();
+    });
+</script>
+
+
+
+    <!-- TABLEAU -->
+    <div class="table-responsive">
+        <table class="table">
+            <thead class="table-dark">
+                <tr>
+                    <th>Numéro</th>
+                    <th>Client</th>
+                    <th>Échéance</th>
+                    <th>Janv.</th>
+                    <th>Févr.</th>
+                    <th>Mars</th>
+                    <th>Avr.</th>
+                    <th>Mai</th>
+                    <th>Juin</th>
+                    <th>Juil.</th>
+                    <th>Août</th>
+                    <th>Sept.</th>
+                    <th>Oct.</th>
+                    <th>Nov.</th>
+                    <th>Déc.</th>
+                </tr>
+            </thead>
+
+<tbody id="tvaTableBody">
+    {% for item in tableau %}
+    <tr>
+
+        <!-- Numéro -->
+        <td>{{ item.client.numero }}</td>
+
+        <!-- Nom du client -->
+        <td>
+            <a href="{% url 'tva_ca3m_formulaire' item.client.id %}?annee={{ annee }}"
+               class="client-link">
+                {{ item.client.nom }}
+            </a>
+        </td>
+
+        <!-- Échéance -->
+        <td>{{ item.client.jour_echeance_tva }}</td>
+
+        <!-- JANVIER -->
+        <td class="text-end">
+            {{ item.tva.tva_janvier|default_if_none:""|floatformat:2 }}
+            {% if item.tva.statut_janvier|default_if_none:"" != "" and item.tva.statut_janvier != "blanc" %}
+                <span class="pastille {{ item.tva.statut_janvier }}"></span>
+            {% endif %}
+        </td>
+
+        <!-- FÉVRIER -->
+        <td class="text-end">
+            {{ item.tva.tva_fevrier|default_if_none:""|floatformat:2 }}
+            {% if item.tva.statut_fevrier|default_if_none:"" != "" and item.tva.statut_fevrier != "blanc" %}
+                <span class="pastille {{ item.tva.statut_fevrier }}"></span>
+            {% endif %}
+        </td>
+
+        <!-- MARS -->
+        <td class="text-end">
+            {{ item.tva.tva_mars|default_if_none:""|floatformat:2 }}
+            {% if item.tva.statut_mars|default_if_none:"" != "" and item.tva.statut_mars != "blanc" %}
+                <span class="pastille {{ item.tva.statut_mars }}"></span>
+            {% endif %}
+        </td>
+
+        <!-- AVRIL -->
+        <td class="text-end">
+            {{ item.tva.tva_avril|default_if_none:""|floatformat:2 }}
+            {% if item.tva.statut_avril|default_if_none:"" != "" and item.tva.statut_avril != "blanc" %}
+                <span class="pastille {{ item.tva.statut_avril }}"></span>
+            {% endif %}
+        </td>
+
+        <!-- MAI -->
+        <td class="text-end">
+            {{ item.tva.tva_mai|default_if_none:""|floatformat:2 }}
+            {% if item.tva.statut_mai|default_if_none:"" != "" and item.tva.statut_mai != "blanc" %}
+                <span class="pastille {{ item.tva.statut_mai }}"></span>
+            {% endif %}
+        </td>
+
+        <!-- JUIN -->
+        <td class="text-end">
+            {{ item.tva.tva_juin|default_if_none:""|floatformat:2 }}
+            {% if item.tva.statut_juin|default_if_none:"" != "" and item.tva.statut_juin != "blanc" %}
+                <span class="pastille {{ item.tva.statut_juin }}"></span>
+            {% endif %}
+        </td>
+
+        <!-- JUILLET -->
+        <td class="text-end">
+            {{ item.tva.tva_juillet|default_if_none:""|floatformat:2 }}
+            {% if item.tva.statut_juillet|default_if_none:"" != "" and item.tva.statut_juillet != "blanc" %}
+                <span class="pastille {{ item.tva.statut_juillet }}"></span>
+            {% endif %}
+        </td>
+
+        <!-- AOÛT -->
+        <td class="text-end">
+            {{ item.tva.tva_aout|default_if_none:""|floatformat:2 }}
+            {% if item.tva.statut_aout|default_if_none:"" != "" and item.tva.statut_aout != "blanc" %}
+                <span class="pastille {{ item.tva.statut_aout }}"></span>
+            {% endif %}
+        </td>
+
+        <!-- SEPTEMBRE -->
+        <td class="text-end">
+            {{ item.tva.tva_septembre|default_if_none:""|floatformat:2 }}
+            {% if item.tva.statut_septembre|default_if_none:"" != "" and item.tva.statut_septembre != "blanc" %}
+                <span class="pastille {{ item.tva.statut_septembre }}"></span>
+            {% endif %}
+        </td>
+
+        <!-- OCTOBRE -->
+        <td class="text-end">
+            {{ item.tva.tva_octobre|default_if_none:""|floatformat:2 }}
+            {% if item.tva.statut_octobre|default_if_none:"" != "" and item.tva.statut_octobre != "blanc" %}
+                <span class="pastille {{ item.tva.statut_octobre }}"></span>
+            {% endif %}
+        </td>
+
+        <!-- NOVEMBRE -->
+        <td class="text-end">
+            {{ item.tva.tva_novembre|default_if_none:""|floatformat:2 }}
+            {% if item.tva.statut_novembre|default_if_none:"" != "" and item.tva.statut_novembre != "blanc" %}
+                <span class="pastille {{ item.tva.statut_novembre }}"></span>
+            {% endif %}
+        </td>
+
+        <!-- DÉCEMBRE -->
+        <td class="text-end">
+            {{ item.tva.tva_decembre|default_if_none:""|floatformat:2 }}
+            {% if item.tva.statut_decembre|default_if_none:"" != "" and item.tva.statut_decembre != "blanc" %}
+                <span class="pastille {{ item.tva.statut_decembre }}"></span>
+            {% endif %}
+        </td>
+
+    </tr>
+    {% endfor %}
+</tbody>
+
+
+
+        </table>
+    </div>
+
+</div>
+
+<script>
+document.getElementById("searchInput").addEventListener("input", function () {
+    const search = this.value.toLowerCase().trim();
+    const rows = document.querySelectorAll("#tvaTableBody tr");
+
+    rows.forEach(row => {
+        const clientName = row.querySelector("td:nth-child(2)")?.innerText.toLowerCase();
+        const match = clientName.includes(search);
+        row.style.display = match ? "" : "none";
+    });
+});
+</script>
+
+
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+    .section {
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+</style>
+
+<div style="max-width: 900px; margin: auto;">
+
+    <h2 class="mb-4">Fiche client – {{ client.nom }}</h2>
+
+    <!-- Informations générales -->
+    <div class="section">
+        <h4 class="fw-bold mb-3">Informations générales</h4>
+
+        <p><strong>Numéro :</strong> {{ client.numero }}</p>
+        <p><strong>Nom :</strong> {{ client.nom }}</p>
+        <p><strong>Forme juridique :</strong> {{ client.forme_juridique }}</p>
+        <p><strong>Régime d’imposition :</strong> {{ client.regime_imposition }}</p>
+        <p><strong>Date de clôture :</strong> {{ client.date_cloture }}</p>
+    </div>
+
+    <!-- TVA -->
+    <div class="section">
+        <h4 class="fw-bold mb-3">TVA</h4>
+
+        <p><strong>Régime TVA :</strong> {{ client.regime_tva }}</p>
+        <p><strong>Périodicité :</strong> {{ client.periodicite }}</p>
+        <p><strong>Jour d’échéance :</strong> {{ client.jour_echeance_tva }}</p>
+    </div>
+
+    <!-- Autres informations -->
+    <div class="section">
+        <h4 class="fw-bold mb-3">Autres informations</h4>
+
+        <p><strong>Commentaires :</strong> {{ client.commentaires }}</p>
+        <p><strong>Archivé :</strong> {{ client.archive }}</p>
+    </div>
+
+    <!-- Boutons -->
+    <div class="mt-3">
+        <a href="{% url 'suivi_comptable' client.id %}" class="btn btn-primary">Suivi comptable</a>
+        <a href="{% url 'tva' client.id %}" class="btn btn-secondary">TVA</a>
+        <a href="{% url 'is' client.id %}" class="btn btn-secondary">IS</a>
+        <a href="{% url 'liste_clients' %}" class="btn btn-outline-dark">Retour à la liste</a>
+    </div>
+
+</div>
+
+{% endblock %}

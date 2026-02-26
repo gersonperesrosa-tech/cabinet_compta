@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section">
+
+<h1>Saisie TVS – {{ client_module.client.nom }} ({{ client_module.annee.annee }})</h1>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <table class="table table-bordered align-middle mt-4">
+        <thead>
+            <tr>
+                <th>Élément</th>
+                <th>Valeur</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <tr>
+                <td><strong>TVS N‑1</strong></td>
+                <td>
+                    <input type="text" name="tvs_n_1" class="form-control"
+                           value="{{ declaration.tvs_n_1 }}">
+                </td>
+                <td></td>
+            </tr>
+
+            <tr>
+                <td><strong>Véhicule</strong></td>
+                <td>
+                    <input type="checkbox" name="vehicule"
+                           {% if declaration.vehicule %}checked{% endif %}>
+                </td>
+                <td></td>
+            </tr>
+
+            <tr>
+                <td><strong>Soumis à TVS en N</strong></td>
+                <td>
+                    <input type="checkbox" name="soumis_tvs_n"
+                           {% if declaration.soumis_tvs_n %}checked{% endif %}>
+                </td>
+                <td></td>
+            </tr>
+
+            <tr>
+                <td><strong>Formulaire</strong></td>
+                <td>
+                    <input type="text" name="formulaire" class="form-control"
+                           value="{{ declaration.formulaire }}">
+                </td>
+                <td></td>
+            </tr>
+
+            <tr>
+                <td><strong>Montant</strong></td>
+                <td>
+                    <input type="text" name="montant" id="montant"
+                           class="form-control"
+                           value="{{ declaration.montant }}">
+                </td>
+                <td>
+                    <select name="statut_tvs" class="form-select">
+                        {% include "partials/statut_options.html" with selected=declaration.statut_tvs %}
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td><strong>Informations véhicule</strong></td>
+                <td colspan="2">
+                    <input type="text" name="info_vehicule" class="form-control"
+                           value="{{ declaration.info_vehicule }}">
+                </td>
+            </tr>
+
+            <tr>
+                <td><strong>Date d'achat</strong></td>
+                <td colspan="2">
+                    <input type="date" name="date_achat" class="form-control"
+                           value="{{ declaration.date_achat|date:'Y-m-d' }}">
+                </td>
+            </tr>
+
+            <tr>
+                <td><strong>Date de cession</strong></td>
+                <td colspan="2">
+                    <input type="date" name="date_cession" class="form-control"
+                           value="{{ declaration.date_cession|date:'Y-m-d' }}">
+                </td>
+            </tr>
+
+        </tbody>
+    </table>
+
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{% url 'fiscal_clients_module' client_module.annee.id client_module.module.id %}"
+           class="btn btn-outline-secondary">Retour</a>
+
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+    </div>
+
+</form>
+
+</section>
+
+{% endblock %}

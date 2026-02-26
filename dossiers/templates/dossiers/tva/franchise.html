@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Clients en franchise de TVA{% endblock %}
+
+{% block content %}
+
+<section class="section">
+
+    <!-- HEADER PREMIUM -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <h1 class="mb-0">Clients en franchise de TVA</h1>
+
+        <div class="d-flex align-items-center gap-3">
+
+            <!-- BARRE DE RECHERCHE -->
+            <div class="search-wrapper" style="width: 300px;">
+                <input type="text"
+                       id="searchInput"
+                       class="form-control"
+                       placeholder="Rechercher un client…">
+            </div>
+
+            <!-- SELECTEUR D’ANNÉE -->
+            <form method="get" class="d-flex align-items-center gap-2 mb-0">
+                <label class="fw-semibold mb-0">Année :</label>
+                <select name="annee"
+                        class="form-select"
+                        style="width: 120px;"
+                        onchange="this.form.submit()">
+                    {% for a in annees %}
+                        <option value="{{ a }}" {% if a == annee %}selected{% endif %}>{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- TABLEAU -->
+    <div class="card">
+        <div class="card-body">
+
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Numéro</th>
+                        <th>Client</th>
+                    </tr>
+                </thead>
+
+                <tbody id="tableBody">
+                    {% for client in clients %}
+                    <tr>
+                        <td>{{ client.numero }}</td>
+                        <td>{{ client.nom }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
+</section>
+
+<!-- SCRIPT RECHERCHE -->
+<script>
+document.getElementById("searchInput").addEventListener("input", function () {
+    const search = this.value.toLowerCase().trim();
+    const rows = document.querySelectorAll("#tableBody tr");
+
+    rows.forEach(row => {
+        const name = row.querySelector("td:nth-child(2)")?.innerText.toLowerCase();
+        const numero = row.querySelector("td:nth-child(1)")?.innerText.toLowerCase();
+
+        if (!search || name.includes(search) || numero.includes(search)) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+    });
+});
+</script>
+
+{% endblock %}
