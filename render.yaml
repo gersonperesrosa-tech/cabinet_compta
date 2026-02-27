@@ -2,6 +2,6 @@ services:
   - type: web
     name: cabinet_compta
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python manage.py migrate && gunicorn cabinet_compta.wsgi:application
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: python manage.py migrate && python manage.py createsuperuser --noinput && gunicorn cabinet_compta.wsgi:application
     rootDir: .
