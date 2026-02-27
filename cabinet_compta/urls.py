@@ -1,14 +1,14 @@
 from django.contrib import admin
 from django.urls import path, include
-from dossiers import views as dossiers_views
+from dossiers.views import CustomLoginView  # <-- importe ta vue
 
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # Page d'accueil (évite le 404 sur /)
-    path('', dossiers_views.home, name='home'),
+    # Page d'accueil = page de login
+    path('', CustomLoginView.as_view(), name='login'),
 
-    # Routes des apps
-    path('', include('dossiers.urls')),
+    # Routes existantes
+    path('dossiers/', include('dossiers.urls')),
     path('paie/', include('paie.urls')),
 ]
