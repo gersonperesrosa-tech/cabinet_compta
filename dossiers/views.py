@@ -5,11 +5,15 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.admin.views.decorators import staff_member_required
+from django.http import HttpResponse
 
 from .models import Client, SuiviComptable, TVA, IS
 from .forms import ClientForm, SuiviComptableForm, TVAForm, ISForm, ClotureClientForm
 from .models import TVAAnnee, TVAModule, TVAClientAnnee, TVADeclaration, TVSDeclaration, DESDEBDeclaration, DividendesDeclaration, DPDeclaration, NoteTag, NoteCategorie, ClientNote, KanbanColumn, KanbanCard, KanbanTag, KanbanCardTag, ClotureAnnee, ClotureClient
 
+
+def home(request):
+    return HttpResponse("Bienvenue ! Le site fonctionne.")
 
 
 # ----------------------------------------------------
