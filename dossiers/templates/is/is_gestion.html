@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block content %}
 
@@ -37,7 +38,10 @@
     <table class="table table-bordered align-middle mt-4">
         <thead class="table-light">
             <tr>
-                <th>Client</th>
+                <th data-sort="numero">N° <span class="sort-icon">⬍</span></th>
+                <th data-sort="nom">Client <span class="sort-icon">⬍</span></th>
+                <th data-sort="cloture">Date de clôture <span class="sort-icon">⬍</span></th>
+
                 <th>IS N‑2</th>
                 <th>IS N‑1</th>
                 <th>A1</th>
@@ -45,108 +49,70 @@
                 <th>A3</th>
                 <th>A4</th>
                 <th>Solde</th>
+
                 <th style="background:#e9fbe8;">Total IS</th>
-                <th>Actions</th>
             </tr>
         </thead>
 
         <tbody>
         {% for cm in cms %}
             <tr>
-                <td><strong>{{ cm.client.nom }}</strong></td>
 
+                <!-- N° -->
+                <td>{{ cm.client.numero }}</td>
+
+                <!-- NOM DU CLIENT → LIEN VERS LA SAISIE -->
+                <td>
+                    <a href="{% url 'is_saisie' cm.id %}"
+                       class="text-decoration-none fw-semibold">
+                        {{ cm.client.nom }}
+                    </a>
+                </td>
+
+                <!-- DATE DE CLÔTURE -->
+                <td>{{ cm.client.date_cloture|default:"—" }}</td>
+
+                <!-- IS N-2 -->
                 <td>{{ cm.declaration.is_n_2|default:"—" }}</td>
+
+                <!-- IS N-1 -->
                 <td>{{ cm.declaration.is_n_1|default:"—" }}</td>
 
                 <!-- ACOMPTE 1 -->
                 <td>
                     {{ cm.declaration.acompte_1|default:"—" }}
-                    {% with statut=cm.declaration.statut_acompte_1 %}
-                        {% if statut == "BLANC" %}
-                            <span class="badge" style="background:#ffffff; color:#000;">Blanc</span>
-                        {% elif statut == "JAUNE" %}
-                            <span class="badge" style="background:#fff3cd; color:#856404;">A envoyer</span>
-                        {% elif statut == "VERT_CLAIR" %}
-                            <span class="badge" style="background:#c8f7c5; color:#2e7d32;">Télétransmis</span>
-                        {% elif statut == "VERT_FONCE" %}
-                            <span class="badge" style="background:#2e7d32; color:white;">Accepté</span>
-                        {% endif %}
-                    {% endwith %}
+                    {% include "partials/statut_badge.html" with statut=cm.declaration.statut_acompte_1 %}
                 </td>
 
                 <!-- ACOMPTE 2 -->
                 <td>
                     {{ cm.declaration.acompte_2|default:"—" }}
-                    {% with statut=cm.declaration.statut_acompte_2 %}
-                        {% if statut == "BLANC" %}
-                            <span class="badge" style="background:#ffffff; color:#000;">Blanc</span>
-                        {% elif statut == "JAUNE" %}
-                            <span class="badge" style="background:#fff3cd; color:#856404;">A envoyer</span>
-                        {% elif statut == "VERT_CLAIR" %}
-                            <span class="badge" style="background:#c8f7c5; color:#2e7d32;">Télétransmis</span>
-                        {% elif statut == "VERT_FONCE" %}
-                            <span class="badge" style="background:#2e7d32; color:white;">Accepté</span>
-                        {% endif %}
-                    {% endwith %}
+                    {% include "partials/statut_badge.html" with statut=cm.declaration.statut_acompte_2 %}
                 </td>
 
                 <!-- ACOMPTE 3 -->
                 <td>
                     {{ cm.declaration.acompte_3|default:"—" }}
-                    {% with statut=cm.declaration.statut_acompte_3 %}
-                        {% if statut == "BLANC" %}
-                            <span class="badge" style="background:#ffffff; color:#000;">Blanc</span>
-                        {% elif statut == "JAUNE" %}
-                            <span class="badge" style="background:#fff3cd; color:#856404;">A envoyer</span>
-                        {% elif statut == "VERT_CLAIR" %}
-                            <span class="badge" style="background:#c8f7c5; color:#2e7d32;">Télétransmis</span>
-                        {% elif statut == "VERT_FONCE" %}
-                            <span class="badge" style="background:#2e7d32; color:white;">Accepté</span>
-                        {% endif %}
-                    {% endwith %}
+                    {% include "partials/statut_badge.html" with statut=cm.declaration.statut_acompte_3 %}
                 </td>
 
                 <!-- ACOMPTE 4 -->
                 <td>
                     {{ cm.declaration.acompte_4|default:"—" }}
-                    {% with statut=cm.declaration.statut_acompte_4 %}
-                        {% if statut == "BLANC" %}
-                            <span class="badge" style="background:#ffffff; color:#000;">Blanc</span>
-                        {% elif statut == "JAUNE" %}
-                            <span class="badge" style="background:#fff3cd; color:#856404;">A envoyer</span>
-                        {% elif statut == "VERT_CLAIR" %}
-                            <span class="badge" style="background:#c8f7c5; color:#2e7d32;">Télétransmis</span>
-                        {% elif statut == "VERT_FONCE" %}
-                            <span class="badge" style="background:#2e7d32; color:white;">Accepté</span>
-                        {% endif %}
-                    {% endwith %}
+                    {% include "partials/statut_badge.html" with statut=cm.declaration.statut_acompte_4 %}
                 </td>
 
                 <!-- SOLDE -->
                 <td>
                     {{ cm.declaration.solde|default:"—" }}
-                    {% with statut=cm.declaration.statut_solde %}
-                        {% if statut == "BLANC" %}
-                            <span class="badge" style="background:#ffffff; color:#000;">Blanc</span>
-                        {% elif statut == "JAUNE" %}
-                            <span class="badge" style="background:#fff3cd; color:#856404;">A envoyer</span>
-                        {% elif statut == "VERT_CLAIR" %}
-                            <span class="badge" style="background:#c8f7c5; color:#2e7d32;">Télétransmis</span>
-                        {% elif statut == "VERT_FONCE" %}
-                            <span class="badge" style="background:#2e7d32; color:white;">Accepté</span>
-                        {% endif %}
-                    {% endwith %}
+                    {% include "partials/statut_badge.html" with statut=cm.declaration.statut_solde %}
                 </td>
 
+                <!-- TOTAL IS -->
                 <td style="background:#e9fbe8;">
                     {{ cm.total_is|floatformat:2 }}
                 </td>
 
-                <td>
-                    <a href="{% url 'is_saisie' cm.id %}" class="btn btn-sm btn-outline-primary">
-                        Saisir IS
-                    </a>
-                </td>
             </tr>
         {% endfor %}
         </tbody>
@@ -154,13 +120,14 @@
 
 </section>
 
+<!-- Filtre dynamique JS -->
 <script>
 document.getElementById("searchInput").addEventListener("keyup", function () {
     let filter = this.value.toLowerCase();
     let rows = document.querySelectorAll("table tbody tr");
 
     rows.forEach(row => {
-        let clientName = row.querySelector("td strong").textContent.toLowerCase();
+        let clientName = row.querySelector("td a").textContent.toLowerCase();
         row.style.display = clientName.includes(filter) ? "" : "none";
     });
 });

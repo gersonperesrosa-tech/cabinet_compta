@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load custom_filters %}
 {% block content %}
 
 <section class="section">
@@ -8,12 +8,15 @@
         <h1 class="m-0" style="line-height: 1;">Gestion CVAE</h1>
 
         <div class="d-flex align-items-center gap-3">
+
+            <!-- Recherche dynamique -->
             <input type="text"
                    id="searchInput"
                    class="form-control"
                    placeholder="Rechercher un client…"
                    style="width: 220px; height: 38px;">
 
+            <!-- Sélecteur d'année -->
             <form method="GET" class="m-0">
                 <select name="annee"
                         class="form-select py-2"
@@ -26,18 +29,21 @@
                     {% endfor %}
                 </select>
             </form>
+
         </div>
     </div>
 
     <table class="table table-bordered align-middle mt-4">
         <thead class="table-light">
             <tr>
-                <th>Client</th>
+                <th data-sort="numero">N° <span class="sort-icon">⬍</span></th>
+                <th data-sort="nom">Client <span class="sort-icon">⬍</span></th>
+
                 <th>CVAE N‑1</th>
                 <th>Acompte</th>
                 <th>Solde</th>
+
                 <th style="background:#e9fbe8;">Total CVAE</th>
-                <th>Actions</th>
             </tr>
         </thead>
 
@@ -45,29 +51,38 @@
         {% for cm in cms %}
             {% with decl=cm.cvae_declaration %}
             <tr>
-                <td><strong>{{ cm.client.nom }}</strong></td>
 
+                <!-- N° client -->
+                <td>{{ cm.client.numero }}</td>
+
+                <!-- NOM DU CLIENT → LIEN VERS LA SAISIE -->
+                <td>
+                    <a href="{% url 'cvae_saisie' cm.id %}"
+                       class="text-decoration-none fw-semibold">
+                        {{ cm.client.nom }}
+                    </a>
+                </td>
+
+                <!-- CVAE N-1 -->
                 <td>{{ decl.cvae_n_1|default:"—" }}</td>
 
+                <!-- Acompte -->
                 <td>
                     {{ decl.acompte_cvae|default:"—" }}
                     {% include "partials/statut_badge.html" with statut=decl.statut_acompte_cvae %}
                 </td>
 
+                <!-- Solde -->
                 <td>
                     {{ decl.solde_cvae|default:"—" }}
                     {% include "partials/statut_badge.html" with statut=decl.statut_solde_cvae %}
                 </td>
 
+                <!-- Total CVAE -->
                 <td style="background:#e9fbe8;">
                     {{ decl.total_cvae|floatformat:2 }}
                 </td>
 
-                <td>
-                    <a href="{% url 'cvae_saisie' cm.id %}" class="btn btn-sm btn-outline-primary">
-                        Saisir CVAE
-                    </a>
-                </td>
             </tr>
             {% endwith %}
         {% endfor %}
@@ -76,13 +91,14 @@
 
 </section>
 
+<!-- Filtre dynamique JS -->
 <script>
 document.getElementById("searchInput").addEventListener("keyup", function () {
     let filter = this.value.toLowerCase();
     let rows = document.querySelectorAll("table tbody tr");
 
     rows.forEach(row => {
-        let clientName = row.querySelector("td strong").textContent.toLowerCase();
+        let clientName = row.querySelector("td a").textContent.toLowerCase();
         row.style.display = clientName.includes(filter) ? "" : "none";
     });
 });

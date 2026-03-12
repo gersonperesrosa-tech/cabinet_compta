@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 {% load custom_tags %}
 
 {% block content %}
@@ -27,7 +28,7 @@
                 <td>Janvier</td>
                 <td>
                     <input type="text" name="tva_janvier" class="form-control"
-                           value="{{ declaration.tva_janvier }}">
+                           value="{{ declaration.tva_janvier|empty_dash }}">
                 </td>
                 <td>
                     <select name="statut_janvier" class="form-select">
@@ -46,7 +47,7 @@
                 <td>Février</td>
                 <td>
                     <input type="text" name="tva_fevrier" class="form-control"
-                           value="{{ declaration.tva_fevrier }}">
+                           value="{{ declaration.tva_fevrier|empty_dash }}">
                 </td>
                 <td>
                     <select name="statut_fevrier" class="form-select">
@@ -65,7 +66,7 @@
                 <td>Mars</td>
                 <td>
                     <input type="text" name="tva_mars" class="form-control"
-                           value="{{ declaration.tva_mars }}">
+                           value="{{ declaration.tva_mars|empty_dash }}">
                 </td>
                 <td>
                     <select name="statut_mars" class="form-select">
@@ -84,7 +85,7 @@
                 <td>Avril</td>
                 <td>
                     <input type="text" name="tva_avril" class="form-control"
-                           value="{{ declaration.tva_avril }}">
+                           value="{{ declaration.tva_avril|empty_dash }}">
                 </td>
                 <td>
                     <select name="statut_avril" class="form-select">
@@ -103,7 +104,7 @@
                 <td>Mai</td>
                 <td>
                     <input type="text" name="tva_mai" class="form-control"
-                           value="{{ declaration.tva_mai }}">
+                           value="{{ declaration.tva_mai|empty_dash }}">
                 </td>
                 <td>
                     <select name="statut_mai" class="form-select">
@@ -122,7 +123,7 @@
                 <td>Juin</td>
                 <td>
                     <input type="text" name="tva_juin" class="form-control"
-                           value="{{ declaration.tva_juin }}">
+                           value="{{ declaration.tva_juin|empty_dash }}">
                 </td>
                 <td>
                     <select name="statut_juin" class="form-select">
@@ -141,7 +142,7 @@
                 <td>Juillet</td>
                 <td>
                     <input type="text" name="tva_juillet" class="form-control"
-                           value="{{ declaration.tva_juillet }}">
+                           value="{{ declaration.tva_juillet|empty_dash }}">
                 </td>
                 <td>
                     <select name="statut_juillet" class="form-select">
@@ -160,7 +161,7 @@
                 <td>Août</td>
                 <td>
                     <input type="text" name="tva_aout" class="form-control"
-                           value="{{ declaration.tva_aout }}">
+                           value="{{ declaration.tva_aout|empty_dash }}">
                 </td>
                 <td>
                     <select name="statut_aout" class="form-select">
@@ -179,7 +180,7 @@
                 <td>Septembre</td>
                 <td>
                     <input type="text" name="tva_septembre" class="form-control"
-                           value="{{ declaration.tva_septembre }}">
+                           value="{{ declaration.tva_septembre|empty_dash }}">
                 </td>
                 <td>
                     <select name="statut_septembre" class="form-select">
@@ -198,7 +199,7 @@
                 <td>Octobre</td>
                 <td>
                     <input type="text" name="tva_octobre" class="form-control"
-                           value="{{ declaration.tva_octobre }}">
+                           value="{{ declaration.tva_octobre|empty_dash }}">
                 </td>
                 <td>
                     <select name="statut_octobre" class="form-select">
@@ -217,7 +218,7 @@
                 <td>Novembre</td>
                 <td>
                     <input type="text" name="tva_novembre" class="form-control"
-                           value="{{ declaration.tva_novembre }}">
+                           value="{{ declaration.tva_novembre|empty_dash }}">
                 </td>
                 <td>
                     <select name="statut_novembre" class="form-select">
@@ -236,7 +237,7 @@
                 <td>Décembre</td>
                 <td>
                     <input type="text" name="tva_decembre" class="form-control"
-                           value="{{ declaration.tva_decembre }}">
+                           value="{{ declaration.tva_decembre|empty_dash }}">
                 </td>
                 <td>
                     <select name="statut_decembre" class="form-select">
@@ -263,11 +264,7 @@
 
     <div class="d-flex gap-2">
 
-        {# --- Bouton centre : Retour à la gestion TVA mensuelle --- #}
-        <a href="{% url 'tva_gestion_ca3m' %}?annee={{ tca.annee.id }}"
-           class="btn btn-outline-dark">
-            Retour
-        </a>
+
 
         {# --- Bouton droite : Enregistrer --- #}
         <button type="submit" class="btn btn-primary">

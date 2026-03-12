@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 {% block content %}
 
 <section class="section">
@@ -19,22 +20,29 @@
 
         <tbody>
 
+            <!-- Responsable -->
             <tr>
                 <td><strong>Responsable</strong></td>
                 <td colspan="2">
-                    <input type="text" name="responsable" class="form-control"
-                           value="{{ declaration.responsable }}">
+                    <input type="text"
+                           name="responsable"
+                           class="form-control"
+                           value="{{ declaration.responsable|empty_dash }}">
                 </td>
             </tr>
 
+            <!-- Retour client -->
             <tr>
                 <td><strong>Retour client</strong></td>
                 <td colspan="2">
-                    <input type="text" name="retour_client" class="form-control"
-                           value="{{ declaration.retour_client }}">
+                    <input type="text"
+                           name="retour_client"
+                           class="form-control"
+                           value="{{ declaration.retour_client|empty_dash }}">
                 </td>
             </tr>
 
+            <!-- Boucle sur les mois -->
             {% for mois, data in mois_data.items %}
             <tr>
                 <td><strong>{{ data.label }}</strong></td>
@@ -43,7 +51,7 @@
                     <input type="text"
                            name="ref_{{ mois }}"
                            class="form-control"
-                           value="{{ data.ref }}">
+                           value="{{ data.ref|empty_dash }}">
                 </td>
 
                 <td>
@@ -57,11 +65,16 @@
         </tbody>
     </table>
 
+    <!-- Boutons bas de page -->
     <div class="d-flex justify-content-between mt-4">
         <a href="{% url 'fiscal_clients_module' client_module.annee.id client_module.module.id %}"
-           class="btn btn-outline-secondary">Retour</a>
+           class="btn btn-outline-secondary">
+            Module annuel DESDEB
+        </a>
 
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <button type="submit" class="btn btn-primary">
+            Enregistrer
+        </button>
     </div>
 
 </form>

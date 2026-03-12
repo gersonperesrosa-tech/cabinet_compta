@@ -47,6 +47,21 @@ section {
 }
 
 
+/* Supprime les lignes verticales des tableaux */
+.no-vertical-lines td,
+.no-vertical-lines th {
+    border-left: none !important;
+    border-right: none !important;
+}
+
+/* Option premium : lignes horizontales plus douces */
+.no-vertical-lines td,
+.no-vertical-lines th {
+    border-top: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+
 
 
 /* ------------------------------
@@ -900,6 +915,15 @@ svg:hover {
     stroke: var(--blue-primary);
 }
 
+.sort-icon {
+    font-size: 0.75rem;
+    opacity: 0.5;
+    margin-left: 4px;
+    user-select: none;
+}
+th:hover .sort-icon {
+    opacity: 1;
+}
 
 /* ------------------------------
    SIDEBAR RÉTRACTABLE
@@ -1367,3 +1391,4 @@ main {
     letter-spacing: 0.5px;
     font-size: 1.6rem;
 }
+

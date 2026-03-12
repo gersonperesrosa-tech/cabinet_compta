@@ -1,9 +1,11 @@
 # Python
 __pycache__/
 *.py[cod]
+
+# SQLite (local only)
 *.sqlite3
 
-# Django
+# Django static & media
 staticfiles/
 media/
 
@@ -13,3 +15,9 @@ media/
 # Environment
 .env
 .venv/
+
+# Local settings (ne jamais envoyer sur Render)
+settings_local.py
+
+# Node / JS (si jamais tu ajoutes du JS buildé)
+node_modules/

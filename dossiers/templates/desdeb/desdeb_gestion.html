@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 {% block content %}
 
 <section class="section">
@@ -7,12 +8,20 @@
     <h1 class="m-0">Gestion DESDEB</h1>
 
     <div class="d-flex align-items-center gap-3">
-        <input type="text" id="searchInput" class="form-control"
-               placeholder="Rechercher un client…" style="width:220px;">
 
+        <!-- Recherche dynamique -->
+        <input type="text"
+               id="searchInput"
+               class="form-control"
+               placeholder="Rechercher un client…"
+               style="width:220px;">
+
+        <!-- Sélecteur d'année -->
         <form method="GET" class="m-0">
-            <select name="annee" class="form-select py-2"
-                    style="width:120px;" onchange="this.form.submit()">
+            <select name="annee"
+                    class="form-select py-2"
+                    style="width:120px;"
+                    onchange="this.form.submit()">
                 {% for a in annees %}
                     <option value="{{ a.annee }}" {% if a.annee == annee.annee %}selected{% endif %}>
                         {{ a.annee }}
@@ -20,21 +29,22 @@
                 {% endfor %}
             </select>
         </form>
+
     </div>
 </div>
 
 <table class="table table-bordered align-middle mt-4">
     <thead class="table-light">
         <tr>
-            <th>Client</th>
+            <th data-sort="numero">N° <span class="sort-icon">⬍</span></th>
+            <th data-sort="nom">Client <span class="sort-icon">⬍</span></th>
+
             <th>Responsable</th>
             <th>Retour client</th>
 
             {% for mois, label in mois_labels.items %}
                 <th>{{ label }}</th>
             {% endfor %}
-
-            <th>Actions</th>
         </tr>
     </thead>
 
@@ -42,11 +52,25 @@
     {% for cm in cms %}
         {% with decl=cm.desdeclaration %}
         <tr>
-            <td><strong>{{ cm.client.nom }}</strong></td>
 
+            <!-- N° client -->
+            <td>{{ cm.client.numero }}</td>
+
+            <!-- NOM DU CLIENT → LIEN VERS LA SAISIE -->
+            <td>
+                <a href="{% url 'desdeb_saisie' cm.id %}"
+                   class="text-decoration-none fw-semibold">
+                    {{ cm.client.nom }}
+                </a>
+            </td>
+
+            <!-- Responsable -->
             <td>{{ decl.responsable|default:"—" }}</td>
+
+            <!-- Retour client -->
             <td>{{ decl.retour_client|default:"—" }}</td>
 
+            <!-- Colonnes mensuelles -->
             {% for mois, data in cm.mois_data.items %}
                 <td>
                     {{ data.ref|default:"—" }}
@@ -54,11 +78,6 @@
                 </td>
             {% endfor %}
 
-            <td>
-                <a href="{% url 'desdeb_saisie' cm.id %}" class="btn btn-sm btn-outline-primary">
-                    Saisir DESDEB
-                </a>
-            </td>
         </tr>
         {% endwith %}
     {% endfor %}
@@ -67,13 +86,14 @@
 
 </section>
 
+<!-- Filtre dynamique JS -->
 <script>
 document.getElementById("searchInput").addEventListener("keyup", function () {
     let filter = this.value.toLowerCase();
     let rows = document.querySelectorAll("table tbody tr");
 
     rows.forEach(row => {
-        let name = row.querySelector("td strong").textContent.toLowerCase();
+        let name = row.querySelector("td a").textContent.toLowerCase();
         row.style.display = name.includes(filter) ? "" : "none";
     });
 });

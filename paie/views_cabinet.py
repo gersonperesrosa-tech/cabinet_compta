@@ -25,7 +25,9 @@ from .forms import SalarieForm
 @login_required
 def liste_salaries_client(request, client_id):
     client = get_object_or_404(Client, id=client_id)
-    salaries = client.salaries.all()
+
+    # Tri alphabétique sur le nom du salarié
+    salaries = client.salaries.all().order_by("nom")
 
     return render(request, "paie/salaries/liste.html", {
         "client": client,
@@ -87,7 +89,7 @@ def supprimer_salarie(request, salarie_id):
 @login_required
 def variables_paie_salaries(request, paie_mois_id):
     paie_mois = get_object_or_404(PaieMois, id=paie_mois_id)
-    salaries = Salarie.objects.filter(client=paie_mois.client)
+    salaries = Salarie.objects.filter(client=paie_mois.client).order_by("nom")
 
     # On récupère les variables existantes pour chaque salarié
     variables_dict = {
@@ -107,23 +109,34 @@ def saisie_variables_salarie(request, paie_mois_id, salarie_id):
     paie_mois = get_object_or_404(PaieMois, id=paie_mois_id)
     salarie = get_object_or_404(Salarie, id=salarie_id)
 
+    # On récupère ou crée les variables
     variables, created = VariablePaie.objects.get_or_create(
         paie_mois=paie_mois,
         salarie=salarie
     )
 
     if request.method == "POST":
-        form = VariablePaieForm(request.POST, instance=variables)
-        if form.is_valid():
-            form.save()
-            return redirect("paie:variables_paie_salaries", paie_mois_id=paie_mois.id)
-    else:
-        form = VariablePaieForm(instance=variables)
+        # Récupération manuelle des champs
+        variables.heures_sup_25 = request.POST.get("heures_sup_25", "")
+        variables.heures_sup_50 = request.POST.get("heures_sup_50", "")
+        variables.primes = request.POST.get("primes", "")
+        variables.conges_debut = request.POST.get("conges_debut", "")
+        variables.conges_fin = request.POST.get("conges_fin", "")
+        variables.absences_maladie = request.POST.get("absences_maladie", "")
+        variables.absences_autres = request.POST.get("absences_autres", "")
+        variables.acomptes = request.POST.get("acomptes", "")
+        variables.autres_infos = request.POST.get("autres_infos", "")
 
+        # Sauvegarde (gère l’invalidation automatiquement)
+        variables.save()
+
+        return redirect("paie:variables_paie_salaries", paie_mois_id=paie_mois.id)
+
+    # GET → on envoie l’objet au template pour pré-remplir les champs
     return render(request, "paie/variables/saisie.html", {
         "paie_mois": paie_mois,
         "salarie": salarie,
-        "form": form,
+        "variables": variables,
     })
 
 
@@ -282,12 +295,22 @@ def creer_mois_suivant(request, client_id):
     return redirect("paie:liste_mois_client", client_id=client.id)
 
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from django.utils import timezone
+
+from paie.models import PaieMois
+from dossiers.models import NotificationPaie
+
+
 @login_required
 def valider_mois_client(request, paie_mois_id):
     paie_mois = get_object_or_404(PaieMois, id=paie_mois_id)
 
     if request.method == "POST":
-        # 1. Valider le mois
+
+        # 1. Valider le mois actuel
         paie_mois.client_valide = True
         paie_mois.date_validation_client = timezone.now()
         paie_mois.save()
@@ -306,7 +329,19 @@ def valider_mois_client(request, paie_mois_id):
             mois=mois
         )
 
-        messages.success(request, "Mois validé. Le mois suivant a été créé automatiquement.")
+        # 4. Création automatique de la notification
+        NotificationPaie.objects.create(
+            client=paie_mois.client,
+            paie_mois=paie_mois,
+            lu_cabinet=False,
+            lu_partenaire=False
+        )
+
+        messages.success(
+            request,
+            "Mois validé. Le mois suivant a été créé automatiquement et une notification a été envoyée au cabinet."
+        )
+
         return redirect("paie:variables_paie_salaries", paie_mois_id=paie_mois.id)
 
     return redirect("paie:variables_paie_salaries", paie_mois_id=paie_mois.id)
@@ -347,27 +382,3 @@ def liste_mois_client(request, client_id):
 
 from django.template.loader import get_template
 from django.http import HttpResponse
-
-@login_required
-def export_pdf_variables(request, paie_mois_id):
-    paie_mois = get_object_or_404(PaieMois, id=paie_mois_id)
-    variables = VariablePaie.objects.filter(paie_mois=paie_mois).select_related("salarie")
-
-    template_path = "paie/pdf/variables_paie_pdf.html"
-    context = {
-        "paie_mois": paie_mois,
-        "variables": variables,
-    }
-
-    template = get_template(template_path)
-    html = template.render(context)
-
-    response = HttpResponse(content_type="application/pdf")
-    response["Content-Disposition"] = f"attachment; filename=variables_paie_{paie_mois.mois}_{paie_mois.annee}.pdf"
-
-    pisa_status = pisa.CreatePDF(html, dest=response)
-
-    if pisa_status.err:
-        return HttpResponse("Erreur lors de la génération du PDF", status=500)
-
-    return response

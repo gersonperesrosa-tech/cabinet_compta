@@ -1,7 +1,9 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from paie.models import PaieMois, Salarie, VariablePaie
+from dossiers.models import NotificationPaie
 from paie.forms import VariablePaieForm
+
 
 
 
@@ -70,12 +72,12 @@ def liste_salaries(request):
 
     # ADMIN → accès total
     if request.user.groups.filter(name="Utilisateur").exists():
-        salaries = Salarie.objects.all()
+        salaries = Salarie.objects.all().order_by("nom")
         return render(request, "paie/client/salaries.html", {"salaries": salaries})
 
     # CLIENT → accès limité
     client = request.user.client
-    salaries = Salarie.objects.filter(client=client)
+    salaries = Salarie.objects.filter(client=client).order_by("nom")
 
     return render(request, "paie/client/salaries.html", {"salaries": salaries})
 
@@ -100,24 +102,31 @@ def variables_salarie(request, mois_id, salarie_id):
     if mois.client_valide:
         return render(request, "paie/client/mois_verrouille.html", {"mois": mois})
 
+    # Récupération ou création des variables
     variables, created = VariablePaie.objects.get_or_create(
         paie_mois=mois,
         salarie=salarie
     )
 
+    # POST → mise à jour manuelle
     if request.method == "POST":
-        form = VariablePaieForm(request.POST, instance=variables)
-        if form.is_valid():
-            form.save()
-            return redirect("paie:client_mois_detail", mois_id=mois.id)
+        variables.heures_sup_25 = request.POST.get("heures_sup_25", "")
+        variables.conges_debut = request.POST.get("conges_debut", "")
+        variables.absences_maladie = request.POST.get("absences_maladie", "")
+        variables.absences_autres = request.POST.get("absences_autres", "")
+        variables.primes = request.POST.get("primes", "")
+        variables.acomptes = request.POST.get("acomptes", "")
+        variables.autres_infos = request.POST.get("autres_infos", "")
 
-    else:
-        form = VariablePaieForm(instance=variables)
+        variables.save()
 
+        return redirect("paie:client_mois_detail", mois_id=mois.id)
+
+    # GET → on envoie les données au template
     return render(request, "paie/client/variables_salarie.html", {
-        "form": form,
         "mois": mois,
         "salarie": salarie,
+        "variables": variables,   # ← ESSENTIEL
     })
 
 # ----------------------------------------------------
@@ -136,6 +145,15 @@ def valider_mois(request, mois_id):
         mois.client_valide = True
         mois.date_validation_client = timezone.now()
         mois.save()
+
+        # 🔔 Notification pour le cabinet
+        NotificationPaie.objects.create(
+            client=mois.client,
+            paie_mois=mois,
+            lu_cabinet=False,
+            lu_partenaire=False
+        )
+
         return redirect("paie:client_mois_detail", mois_id=mois.id)
 
     # CLIENT → accès limité
@@ -145,6 +163,14 @@ def valider_mois(request, mois_id):
     mois.client_valide = True
     mois.date_validation_client = timezone.now()
     mois.save()
+
+    # 🔔 Notification pour le cabinet
+    NotificationPaie.objects.create(
+        client=mois.client,
+        paie_mois=mois,
+        lu_cabinet=False,
+        lu_partenaire=False
+    )
 
     return redirect("paie:client_mois_detail", mois_id=mois.id)
 
@@ -184,20 +210,24 @@ def mois_detail(request, mois_id):
     # ADMIN → accès total
     if request.user.groups.filter(name="Utilisateur").exists():
         mois = get_object_or_404(PaieMois, id=mois_id)
-        salaries = Salarie.objects.filter(client=mois.client)
-        return render(request, "paie/client/mois_detail.html", {
-            "mois": mois,
-            "salaries": salaries,
-        })
+        salaries = Salarie.objects.filter(client=mois.client).order_by("nom")
 
-    # CLIENT → accès limité
-    client = request.user.client
-    mois = get_object_or_404(PaieMois, id=mois_id, client=client)
-    salaries = Salarie.objects.filter(client=client)
+    else:
+        # CLIENT → accès limité
+        client = request.user.client
+        mois = get_object_or_404(PaieMois, id=mois_id, client=client)
+        salaries = Salarie.objects.filter(client=client).order_by("nom")
+
+    # Récupération de toutes les variables du mois
+    variables = VariablePaie.objects.filter(paie_mois=mois)
+
+    # Dictionnaire : { salarie_id : VariablePaie }
+    variables_dict = {v.salarie_id: v for v in variables}
 
     return render(request, "paie/client/mois_detail.html", {
         "mois": mois,
         "salaries": salaries,
+        "variables_dict": variables_dict,
     })
 
 

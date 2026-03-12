@@ -17,6 +17,7 @@
 <table class="table table-hover align-middle">
     <thead>
         <tr>
+            <th>N°</th>
             <th>Nom</th>
             <th>Forme juridique</th>
             <th>Dernier mois traité</th>
@@ -28,6 +29,7 @@
 <tbody>
     {% for c in clients %}
     <tr>
+        <td>{{ c.numero }}</td>
         <td>{{ c.nom }}</td>
         <td>{{ c.forme_juridique|default:"-" }}</td>
 

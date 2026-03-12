@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block content %}
 
@@ -20,24 +21,27 @@
 
         <tbody>
 
+            <!-- CFE N-1 -->
             <tr>
                 <td><strong>CFE N‑1</strong></td>
                 <td>
                     <input type="text"
+                           name="cfe_n_1"
                            class="form-control"
-                           value="{{ declaration.cfe_n_1 }}"
+                           value="{{ declaration.cfe_n_1|empty_dash }}">
                 </td>
                 <td></td>
             </tr>
 
+            <!-- Acompte CFE -->
             <tr>
                 <td><strong>Acompte CFE (15/06)</strong></td>
                 <td>
                     <input type="text"
                            name="acompte_cfe"
-			   id="acompte_cfe"
+                           id="acompte_cfe"
                            class="form-control"
-                           value="{{ declaration.acompte_cfe }}">
+                           value="{{ declaration.acompte_cfe|empty_dash }}">
                 </td>
                 <td>
                     <select name="statut_acompte" class="form-select">
@@ -46,14 +50,15 @@
                 </td>
             </tr>
 
+            <!-- Solde CFE -->
             <tr>
                 <td><strong>Solde CFE</strong></td>
                 <td>
                     <input type="text"
                            name="solde_cfe"
-			   id="solde_cfe"
+                           id="solde_cfe"
                            class="form-control"
-                           value="{{ declaration.solde_cfe }}">
+                           value="{{ declaration.solde_cfe|empty_dash }}">
                 </td>
                 <td>
                     <select name="statut_solde" class="form-select">
@@ -62,35 +67,38 @@
                 </td>
             </tr>
 
+            <!-- Mode de paiement -->
             <tr>
                 <td><strong>Mode de paiement</strong></td>
                 <td>
                     <input type="text"
                            name="mode_paiement"
                            class="form-control"
-                           value="{{ declaration.mode_paiement }}">
+                           value="{{ declaration.mode_paiement|empty_dash }}">
                 </td>
                 <td></td>
             </tr>
 
+            <!-- Dégrèvement -->
             <tr>
                 <td><strong>Dégrèvement</strong></td>
                 <td>
                     <input type="text"
                            name="degrevement"
                            class="form-control"
-                           value="{{ declaration.degrevement }}">
+                           value="{{ declaration.degrevement|empty_dash }}">
                 </td>
                 <td></td>
             </tr>
 
+            <!-- Formulaire 1447C -->
             <tr>
                 <td><strong>Formulaire 1447C</strong></td>
                 <td>
                     <input type="text"
                            name="formulaire_1447c"
                            class="form-control"
-                           value="{{ declaration.formulaire_1447c }}">
+                           value="{{ declaration.formulaire_1447c|empty_dash }}">
                 </td>
                 <td>
                     <select name="statut_1447c" class="form-select">
@@ -99,18 +107,20 @@
                 </td>
             </tr>
 
+            <!-- Commentaire -->
             <tr>
                 <td><strong>Commentaire si CFE > 3000 €</strong></td>
                 <td colspan="2">
                     <textarea name="commentaire_plus_3000"
                               class="form-control"
-                              rows="3">{{ declaration.commentaire_plus_3000 }}</textarea>
+                              rows="3">{{ declaration.commentaire_plus_3000|empty_dash }}</textarea>
                 </td>
             </tr>
 
         </tbody>
     </table>
 
+    <!-- Total CFE -->
     <div class="p-3 mt-4 rounded" style="background:#f5f7fa; border:1px solid #dce1e7;">
         <strong>Total CFE :</strong>
         <span id="total_cfe_display" style="font-size:1.2rem; font-weight:600;">
@@ -118,28 +128,18 @@
         </span>
     </div>
 
-    <!-- BOUTONS BAS DE PAGE -->
+    <!-- Boutons -->
     <div class="d-flex justify-content-between align-items-center mt-4">
 
-        <!-- Bouton gauche : Retour au Module CFE -->
         <a href="{% url 'fiscal_clients_module' client_module.annee.id client_module.module.id %}"
            class="btn btn-outline-secondary">
-            Retour au Module CFE
+            Module annuel CFE
         </a>
 
         <div class="d-flex gap-2 justify-content-end">
-
-            <!-- Bouton centre : Retour à la gestion CFE -->
-            <a href="{% url 'cfe_gestion' client_module.annee.id %}"
-               class="btn btn-outline-dark">
-                Retour
-            </a>
-
-            <!-- Bouton droite : Enregistrer -->
             <button type="submit" class="btn btn-primary">
                 Enregistrer
             </button>
-
         </div>
 
     </div>
@@ -162,11 +162,9 @@ function updateTotalCFE() {
         total.toFixed(2).replace(".", ",") + " €";
 }
 
-// Mise à jour en temps réel
 document.getElementById("acompte_cfe").addEventListener("input", updateTotalCFE);
 document.getElementById("solde_cfe").addEventListener("input", updateTotalCFE);
 </script>
-
 
 </section>
 

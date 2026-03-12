@@ -39,9 +39,9 @@
     <table class="table table-bordered align-middle" id="tvaTable">
         <thead class="table-light">
             <tr>
-                <th>N°</th>
-                <th>Client</th>
-                <th>CA actuel</th>
+                <th data-sort="numero">N° <span class="sort-icon">⬍</span></th>
+                <th data-sort="nom">Client <span class="sort-icon">⬍</span></th>
+                <th data-sort="ca">CA actuel <span class="sort-icon">⬍</span></th>
                 <th>Suivi comptable</th>
             </tr>
         </thead>
@@ -50,17 +50,22 @@
             {% for tca in tca_list %}
             <tr>
 
+                <!-- N° client -->
                 <td>{{ tca.client.numero }}</td>
-                <td><strong>{{ tca.client.nom }}</strong></td>
-<td>
-    {% if tca.suivi and tca.suivi.ca_actuel %}
-        {{ tca.suivi.ca_actuel }}
-    {% else %}
-        —
-    {% endif %}
-</td>
-               
-		 <!-- Pastille suivi comptable -->
+
+                <!-- Nom du client -->
+                <td class="client-name"><strong>{{ tca.client.nom }}</strong></td>
+
+                <!-- CA actuel -->
+                <td>
+                    {% if tca.suivi and tca.suivi.ca_actuel %}
+                        {{ tca.suivi.ca_actuel }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+
+                <!-- Pastille suivi comptable -->
                 <td>
                     {% include "tva/partials/pastille_suivi.html" with suivi=tca.suivi %}
                 </td>
@@ -81,8 +86,13 @@ document.getElementById("searchInput").addEventListener("keyup", function () {
     rows.forEach(row => {
         const numero = row.children[0].textContent.toLowerCase();
         const nom = row.children[1].textContent.toLowerCase();
+        const ca = row.children[2].textContent.toLowerCase();
 
-        if (numero.includes(filter) || nom.includes(filter)) {
+        if (
+            numero.includes(filter) ||
+            nom.includes(filter) ||
+            ca.includes(filter)
+        ) {
             row.style.display = "";
         } else {
             row.style.display = "none";

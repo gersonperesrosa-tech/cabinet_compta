@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 {% load custom_tags %}
 
 {% block content %}
@@ -26,7 +27,7 @@
                 <td><strong>T1</strong> (Janv–Fév–Mars)</td>
                 <td>
                     <input type="text" name="ca3t_t1" class="form-control"
-                           value="{{ declaration.ca3t_t1 }}">
+                           value="{{ declaration.ca3t_t1|empty_dash }}">
                 </td>
                 <td>
                     <select name="statut_t1" class="form-select">
@@ -45,7 +46,7 @@
                 <td><strong>T2</strong> (Avr–Mai–Juin)</td>
                 <td>
                     <input type="text" name="ca3t_t2" class="form-control"
-                           value="{{ declaration.ca3t_t2 }}">
+                           value="{{ declaration.ca3t_t2|empty_dash }}">
                 </td>
                 <td>
                     <select name="statut_t2" class="form-select">
@@ -64,7 +65,7 @@
                 <td><strong>T3</strong> (Juil–Août–Sept)</td>
                 <td>
                     <input type="text" name="ca3t_t3" class="form-control"
-                           value="{{ declaration.ca3t_t3 }}">
+                           value="{{ declaration.ca3t_t3|empty_dash }}">
                 </td>
                 <td>
                     <select name="statut_t3" class="form-select">
@@ -83,7 +84,7 @@
                 <td><strong>T4</strong> (Oct–Nov–Déc)</td>
                 <td>
                     <input type="text" name="ca3t_t4" class="form-control"
-                           value="{{ declaration.ca3t_t4 }}">
+                           value="{{ declaration.ca3t_t4|empty_dash }}">
                 </td>
                 <td>
                     <select name="statut_t4" class="form-select">
@@ -111,11 +112,7 @@
 
         <div class="d-flex gap-2">
 
-            <!-- Bouton centre : Retour à la gestion CA3T -->
-            <a href="{% url 'tva_gestion_ca3t' %}?annee={{ tca.annee.id }}"
-               class="btn btn-outline-dark">
-                Retour
-            </a>
+
 
             <!-- Bouton droite : Enregistrer -->
             <button type="submit" class="btn btn-primary">

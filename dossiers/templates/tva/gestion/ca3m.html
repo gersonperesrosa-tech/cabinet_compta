@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load custom_filters %}
 {% block content %}
 
 <section class="section">
@@ -33,11 +33,12 @@
                 {% endfor %}
             </select>
         </form>
-<button id="resetSuiviBtn"
-        class="btn btn-outline-danger"
-        style="height: 38px;">
-    Réinitialiser le suivi comptable
-</button>
+
+        <button id="resetSuiviBtn"
+                class="btn btn-outline-danger"
+                style="height: 38px;">
+            Réinitialiser le suivi comptable
+        </button>
 
     </div>
 </div>
@@ -46,9 +47,10 @@
     <table class="table table-bordered align-middle" id="tvaTable">
         <thead class="table-light">
             <tr>
-                <th>N°</th>
-                <th>Client</th>
-                <th>Échéance</th>
+                <th data-sort="numero">N° <span class="sort-icon">⬍</span></th>
+                <th data-sort="nom">Client <span class="sort-icon">⬍</span></th>
+                <th data-sort="echeance">Échéance <span class="sort-icon">⬍</span></th>
+
                 <th>Jan</th>
                 <th>Fév</th>
                 <th>Mar</th>
@@ -61,18 +63,30 @@
                 <th>Oct</th>
                 <th>Nov</th>
                 <th>Déc</th>
-		<th>Suivi comptable</th>
-                <th>Actions</th>
+
+                <th data-sort="suivi">Suivi comptable <span class="sort-icon">⬍</span></th>
             </tr>
         </thead>
 
         <tbody>
             {% for tca in tca_list %}
             <tr>
+
+                <!-- N° client -->
                 <td>{{ tca.client.numero }}</td>
-                <td class="client-name"><strong>{{ tca.client.nom }}</strong></td>
+
+                <!-- NOM DU CLIENT → LIEN VERS LA SAISIE -->
+                <td class="client-name">
+                    <a href="{% url 'tva_saisie_ca3m' tca.id %}"
+                       class="text-decoration-none fw-semibold">
+                        {{ tca.client.nom }}
+                    </a>
+                </td>
+
+                <!-- Échéance -->
                 <td>{{ tca.client.jour_echeance_tva|default_if_none:"" }}</td>
 
+                <!-- Colonnes mensuelles -->
                 {% for montant, statut in tca.declaration.get_mensuels %}
                 <td>
                     <div class="d-flex align-items-center justify-content-between">
@@ -81,13 +95,12 @@
                     </div>
                 </td>
                 {% endfor %}
-		<td> {% include "tva/partials/pastille_suivi.html" with suivi=tca.suivi %} </td>
+
+                <!-- Suivi comptable -->
                 <td>
-                    <a href="{% url 'tva_saisie_ca3m' tca.id %}"
-                       class="btn btn-sm btn-outline-primary">
-                        Saisir la TVA
-                    </a>
+                    {% include "tva/partials/pastille_suivi.html" with suivi=tca.suivi %}
                 </td>
+
             </tr>
             {% endfor %}
         </tbody>
@@ -140,4 +153,5 @@ document.getElementById("resetSuiviBtn").addEventListener("click", function () {
     });
 });
 </script>
+
 {% endblock %}

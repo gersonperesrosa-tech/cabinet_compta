@@ -46,23 +46,20 @@
     <table class="table table-bordered align-middle" id="tvaTable">
         <thead class="table-light">
             <tr>
-                <th>N°</th>
-                <th>Client</th>
-                <th>Échéance</th>
+                <th data-sort="numero">N° <span class="sort-icon">⬍</span></th>
+                <th data-sort="nom">Client <span class="sort-icon">⬍</span></th>
+                <th data-sort="echeance">Échéance <span class="sort-icon">⬍</span></th>
 
-                <!-- TVA N-1 colorée -->
                 <th style="background:#e8f1ff;">TVA N‑1</th>
 
                 <th>Acompte 1</th>
                 <th>Acompte 2</th>
                 <th>Solde en N+1</th>
 
-                <!-- Total TVA année coloré -->
                 <th style="background:#e9fbe8;">Total TVA année</th>
 
                 <th>Si >1000€</th>
-                <th>Suivi comptable</th>
-                <th>Actions</th>
+                <th data-sort="suivi">Suivi comptable <span class="sort-icon">⬍</span></th>
             </tr>
         </thead>
 
@@ -70,8 +67,18 @@
             {% for tca in tca_list %}
             <tr>
 
+                <!-- N° client -->
                 <td>{{ tca.client.numero }}</td>
-                <td class="client-name"><strong>{{ tca.client.nom }}</strong></td>
+
+                <!-- NOM DU CLIENT → LIEN VERS LA SAISIE -->
+                <td class="client-name">
+                    <a href="{% url 'tva_saisie_ca12' tca.id %}"
+                       class="text-decoration-none fw-semibold">
+                        {{ tca.client.nom }}
+                    </a>
+                </td>
+
+                <!-- Échéance -->
                 <td>{{ tca.client.jour_echeance_tva|default_if_none:"" }}</td>
 
                 <!-- TVA N-1 -->
@@ -124,14 +131,6 @@
                 <!-- Suivi comptable -->
                 <td>
                     {% include "tva/partials/pastille_suivi.html" with suivi=tca.suivi %}
-                </td>
-
-                <!-- Actions -->
-                <td>
-                    <a href="{% url 'tva_saisie_ca12' tca.id %}"
-                       class="btn btn-sm btn-outline-primary">
-                        Saisir TVA annuelle
-                    </a>
                 </td>
 
             </tr>

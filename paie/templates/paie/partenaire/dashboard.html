@@ -5,12 +5,11 @@
 
 <section class="section">
 
-
-<!-- Accueil centré -->
+<!-- Accueil -->
 <div class="text-center mb-5">
-    <h1 class="fw-bold">Bonjour {{ request.user.get_full_name }} </h1>
+    <h1 class="fw-bold">Bonjour {{ request.user.get_full_name }}</h1>
     <p class="text-muted fs-5 mt-2">
-        Heureux de vous revoir. Voici un aperçu de vos clients Paie.
+        Voici un aperçu de votre activité Paie.
     </p>
 </div>
 
@@ -30,7 +29,7 @@
         <div class="p-4 bg-white shadow-sm rounded text-center">
             <h3 class="fw-bold text-success">{{ kpi_faits }}</h3>
             <p class="text-muted m-0">
-                Clients avec mois {{ mois }}/{{ annee }} terminé (BS + DSN)
+                Clients avec mois {{ mois }}/{{ annee }} terminé
             </p>
         </div>
     </div>
@@ -46,40 +45,47 @@
 
 </div>
 
+<!-- 🔔 Notifications -->
+<h3 class="fw-bold mb-4">Notifications des clients</h3>
 
-<!-- Liste des clients -->
-<div class="row g-4">
+{% if notifications %}
+    <div class="list-group shadow-sm">
 
-    {% for c in clients %}
-    <div class="col-md-3">
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
+        {% for notif in notifications %}
+        <div class="list-group-item d-flex justify-content-between align-items-center">
 
-                <!-- Nom du client -->
-                <h5 class="card-title mb-3">{{ c.nom }}</h5>
+            <!-- Texte -->
+            <div>
+                <strong>{{ notif.client.nom }}</strong><br>
+                <span class="text-muted">
+                    Le client {{ notif.client.nom }} a validé un mois de paie
+                    ({{ notif.paie_mois.mois }}/{{ notif.paie_mois.annee }})
+                </span>
+            </div>
 
-                <!-- Dernier mois totalement traité -->
-                <p class="mb-1 text-muted">
-                    <strong>Dernier mois traité :</strong>
-                    {% if c.dernier_mois_traite %}
-                        {{ c.dernier_mois_traite.mois }}/{{ c.dernier_mois_traite.annee }}
-                        <span class="badge bg-succes">✔</span>
-                    {% else %}
-                        <span class="text-muted">Aucun mois totalement traité</span>
-                    {% endif %}
-                </p>
+            <!-- Date + bouton -->
+            <div class="d-flex align-items-center gap-3">
 
-                <!-- Bouton détails -->
-                <a href="{% url 'paie:partenaire_mois_client' c.id %}"
-                   class="btn btn-outline-primary btn-sm">
-                    Voir détails
+                <span class="text-muted small">
+                    {{ notif.date|date:"d/m/Y H:i" }}
+                </span>
+
+                <a href="{% url 'paie:notification_lue' notif.id %}"
+                   class="btn btn-sm btn-outline-success">
+                    ✓ Lu
                 </a>
 
             </div>
-        </div>
-    </div>
-    {% endfor %}
 
-</div>
+        </div>
+        {% endfor %}
+
+    </div>
+
+{% else %}
+    <p class="text-muted">Aucune notification pour le moment.</p>
+{% endif %}
+
+</section>
 
 {% endblock %}

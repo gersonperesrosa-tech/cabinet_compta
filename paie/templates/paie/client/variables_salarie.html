@@ -1,35 +1,98 @@
-{% extends "base_paie_client.html" %}
+{% extends "base.html" %}
 
 {% block content %}
 <section class="section">
+<div class="container-fluid mt-4">
 
-<div class="container mt-4">
-
-    <h1 class="mb-3">
-        Variables – {{ salarie.prenom }} {{ salarie.nom }}
-        <br>
-        <small class="text-muted">{{ mois.mois }}/{{ mois.annee }}</small>
-    </h1>
-
-    <form method="post">
-        {% csrf_token %}
-
-        <div class="row g-3">
-            {% for field in form %}
-                <div class="col-md-6">
-                    <label class="form-label">{{ field.label }}</label>
-                    {{ field }}
-                </div>
-            {% endfor %}
+    <!-- TITRE -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="m-0">
+                Variables – {{ salarie.prenom }} {{ salarie.nom }}
+            </h1>
+            <big class="text-muted">
+                Mois : {{ mois.mois }}/{{ mois.annee }}
+            </big>
         </div>
 
-        <button type="submit" class="btn btn-primary mt-3">Enregistrer</button>
-
         <a href="{% url 'paie:client_mois_detail' mois.id %}"
-           class="btn btn-secondary mt-3">
-            Retour
+           class="btn btn-outline-secondary">
+            ← Retour
         </a>
+    </div>
+
+    <!-- FORMULAIRE -->
+    <form method="post" class="card shadow-sm p-4">
+        {% csrf_token %}
+
+<div class="row">
+    <div class="col-md-6">
+        <h5 class="mb-3 text-primary">Heures supplémentaires</h5>
+</div>
+    <div class="col-md-6">
+        <h5 class="mb-3 text-primary">Congés</h5>
+</div>
+</div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <label class="form-label">Notez les dates et les heures supplémentaires</label>
+		<textarea name="heures_sup_25" class="form-control" rows="3">{{ variables.heures_sup_25 }}</textarea>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Notez les dates des congés du 1er au dernier jour inclus</label>
+		<textarea name="conges_debut" class="form-control" rows="3">{{ variables.conges_debut }}</textarea>
+            </div>
+
+        </div>
+
+
+<h5 class="mb-3 text-primary">Absences</h5>
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <label class="form-label">Absences maladie</label>
+        <textarea name="absences_maladie" class="form-control" rows="3">{{ variables.absences_maladie }}</textarea>
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Autres absences</label>
+        <textarea name="absences_autres" class="form-control" rows="3">{{ variables.absences_autres }}</textarea>
+    </div>
+</div>
+
+<h5 class="mb-3 text-primary">Autres éléments</h5>
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <label class="form-label">Primes</label>
+        <textarea name="primes" class="form-control" rows="3">{{ variables.primes }}</textarea>
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Acomptes</label>
+        <textarea name="acomptes" class="form-control" rows="3">{{ variables.acomptes }}</textarea>
+    </div>
+
+    <div class="col-12">
+        <label class="form-label">Autres informations</label>
+        <textarea name="autres_infos" class="form-control" rows="4">{{ variables.autres_infos }}</textarea>
+    </div>
+</div>
+
+        <!-- BOUTONS -->
+        <div class="d-flex justify-content-end gap-2 mt-4">
+            <a href="{% url 'paie:client_mois_detail' mois.id %}"
+               class="btn btn-secondary">
+                Annuler
+            </a>
+
+            <button type="submit" class="btn btn-primary">
+                Enregistrer
+            </button>
+        </div>
+
     </form>
 
 </div>
+</section>
 {% endblock %}

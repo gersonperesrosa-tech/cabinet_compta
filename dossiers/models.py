@@ -7,10 +7,9 @@ class Client(models.Model):
 
     # --- Choices ---
     REGIME_IMPOSITION_CHOICES = [
-        ('IS', 'IS'),
-        ('IR', 'IR'),
-        ("RS", "Réel simplifié"),
-        ("RN", "Réel normal"),
+        ("IS_RS", "IS – Régime simplifié"),
+        ("IS_RN", "IS – Régime normal"),
+        ("IR", "IR"),
         ("MICRO", "Micro"),
         ("IR_CRL", "IR (CRL)"),
     ]
@@ -1278,3 +1277,27 @@ class ClotureClient(models.Model):
     class Meta:
         unique_together = ("annee", "client")
         ordering = ["annee", "client"]
+
+
+# -------------------------------
+#   NOTIFICATIONS PAIE AU DASHBOARD
+# -------------------------------
+
+from django.db import models
+from paie.models import PaieMois  # si PaieMois est bien dans app paie
+
+
+class NotificationPaie(models.Model):
+    client = models.ForeignKey("dossiers.Client", on_delete=models.CASCADE)
+    paie_mois = models.ForeignKey(PaieMois, on_delete=models.CASCADE)
+    date = models.DateTimeField(auto_now_add=True)
+
+    # Statuts séparés
+    lu_cabinet = models.BooleanField(default=False)
+    lu_partenaire = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-date"]
+
+    def __str__(self):
+        return f"Le client {self.client.nom} a validé un mois de paie"

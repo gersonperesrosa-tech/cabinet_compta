@@ -27,97 +27,128 @@
 
 <h5 class="mb-3">Informations du salarié</h5>
 
-<ul class="list-group mb-4">
+<div class="row g-3 mb-4">
 
-    <li class="list-group-item">
-        <strong>Nom :</strong> {{ salarie.nom }}
-    </li>
+    <div class="col-md-4">
+        <div class="list-group-item p-3 border rounded">
+            <strong>Nom :</strong> {{ salarie.nom }}
+        </div>
+    </div>
 
-    <li class="list-group-item">
-        <strong>Prénom :</strong> {{ salarie.prenom }}
-    </li>
+    <div class="col-md-4">
+        <div class="list-group-item p-3 border rounded">
+            <strong>Prénom :</strong> {{ salarie.prenom }}
+        </div>
+    </div>
 
-    <li class="list-group-item">
-        <strong>Date de naissance :</strong>
-        {{ salarie.date_naissance|date:"d/m/Y"|default:"-" }}
-    </li>
+    <div class="col-md-4">
+        <div class="list-group-item p-3 border rounded">
+            <strong>Date de naissance :</strong>
+            {{ salarie.date_naissance|date:"d/m/Y"|default:"-" }}
+        </div>
+    </div>
 
-    <li class="list-group-item">
-        <strong>Numéro de sécurité sociale :</strong>
-        {{ salarie.numero_securite_sociale|default:"-" }}
-    </li>
+    <div class="col-md-4">
+        <div class="list-group-item p-3 border rounded">
+            <strong>Numéro de sécurité sociale :</strong>
+            {{ salarie.numero_securite_sociale|default:"-" }}
+        </div>
+    </div>
 
-    <li class="list-group-item">
-        <strong>Date d'entrée :</strong>
-        {{ salarie.date_entree|date:"d/m/Y"|default:"-" }}
-    </li>
+    <div class="col-md-4">
+        <div class="list-group-item p-3 border rounded">
+            <strong>Date d'entrée :</strong>
+            {{ salarie.date_entree|date:"d/m/Y"|default:"-" }}
+        </div>
+    </div>
 
-    <li class="list-group-item">
-        <strong>Date de sortie :</strong>
-        {{ salarie.date_sortie|date:"d/m/Y"|default:"-" }}
-    </li>
+    <div class="col-md-4">
+        <div class="list-group-item p-3 border rounded">
+            <strong>Date de sortie :</strong>
+            {{ salarie.date_sortie|date:"d/m/Y"|default:"-" }}
+        </div>
+    </div>
 
-    <li class="list-group-item">
-        <strong>Actif :</strong>
-        {% if salarie.actif %}
-            <span class="badge bg-success">Actif</span>
-        {% else %}
-            <span class="badge bg-secondary">Sorti</span>
-        {% endif %}
-    </li>
+    <div class="col-md-4">
+        <div class="list-group-item p-3 border rounded">
+            <strong>Actif :</strong>
+            {% if salarie.actif %}
+                <span class="badge bg-success">Actif</span>
+            {% else %}
+                <span class="badge bg-secondary">Sorti</span>
+            {% endif %}
+        </div>
+    </div>
 
-    <li class="list-group-item">
-        <strong>Mutuelle :</strong>
-        {{ salarie.mutuelle|default:"-" }}
-    </li>
+    <div class="col-md-4">
+        <div class="list-group-item p-3 border rounded">
+            <strong>Mutuelle :</strong>
+            {{ salarie.mutuelle|default:"-" }}
+        </div>
+    </div>
 
-    <li class="list-group-item">
-        <strong>Salaire de base :</strong>
-        {{ salarie.salaire_base|default:"-" }}
-    </li>
+    <div class="col-md-4">
+        <div class="list-group-item p-3 border rounded">
+            <strong>Salaire de base :</strong>
+            {{ salarie.salaire_base|default:"-" }}
+        </div>
+    </div>
 
-</ul>
+</div>
 
         <h5 class="mb-3">Variables de paie</h5>
-        <ul class="list-group">
+<div class="row g-3">
 
-            <li class="list-group-item">
-                <strong>Heures 25% :</strong> {{ variables.heures_sup_25|default:"-" }}
-            </li>
+    <div class="col-md-6">
+        <div class="list-group-item p-3 border rounded" style="min-height: 90px;">
+            <strong>Heures Supplémentaires :</strong><br>
+            <span class="text-muted">{{ variables.heures_sup_25|default:"-" }}</span>
+        </div>
+    </div>
 
-            <li class="list-group-item">
-                <strong>Heures 50% :</strong> {{ variables.heures_sup_50|default:"-" }}
-            </li>
+    <div class="col-md-6">
+        <div class="list-group-item p-3 border rounded" style="min-height: 90px;">
+            <strong>Congés :</strong><br>
+            <span class="text-muted">{{ variables.conges_debut|default:"-" }}</span>
+        </div>
+    </div>
 
-            <li class="list-group-item">
-                <strong>Primes :</strong> {{ variables.primes|default:"-" }}
-            </li>
+    <div class="col-md-6">
+        <div class="list-group-item p-3 border rounded" style="min-height: 90px;">
+            <strong>Absences maladie :</strong><br>
+            <span class="text-muted">{{ variables.absences_maladie|default:"-" }}</span>
+        </div>
+    </div>
 
-            <li class="list-group-item">
-                <strong>Congés début :</strong> {{ variables.conges_debut|default:"-" }}
-            </li>
+    <div class="col-md-6">
+        <div class="list-group-item p-3 border rounded" style="min-height: 90px;">
+            <strong>Autres absences :</strong><br>
+            <span class="text-muted">{{ variables.absences_autres|default:"-" }}</span>
+        </div>
+    </div>
 
-            <li class="list-group-item">
-                <strong>Congés fin :</strong> {{ variables.conges_fin|default:"-" }}
-            </li>
+    <div class="col-md-6">
+        <div class="list-group-item p-3 border rounded" style="min-height: 90px;">
+            <strong>Primes :</strong><br>
+            <span class="text-muted">{{ variables.primes|default:"-" }}</span>
+        </div>
+    </div>
 
-            <li class="list-group-item">
-                <strong>Absences maladie :</strong> {{ variables.absences_maladie|default:"-" }}
-            </li>
+    <div class="col-md-6">
+        <div class="list-group-item p-3 border rounded" style="min-height: 90px;">
+            <strong>Acomptes :</strong><br>
+            <span class="text-muted">{{ variables.acomptes|default:"-" }}</span>
+        </div>
+    </div>
 
-            <li class="list-group-item">
-                <strong>Autres absences :</strong> {{ variables.absences_autres|default:"-" }}
-            </li>
+    <div class="col-md-6">
+        <div class="list-group-item p-3 border rounded" style="min-height: 90px;">
+            <strong>Autres infos :</strong><br>
+            <span class="text-muted">{{ variables.autres_infos|default:"-" }}</span>
+        </div>
+    </div>
 
-            <li class="list-group-item">
-                <strong>Acomptes :</strong> {{ variables.acomptes|default:"-" }}
-            </li>
-
-            <li class="list-group-item">
-                <strong>Autres infos :</strong> {{ variables.autres_infos|default:"-" }}
-            </li>
-
-        </ul>
+</div>
 
     </div>
 </div>

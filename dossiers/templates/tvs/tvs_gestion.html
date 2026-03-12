@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 {% block content %}
 
 <section class="section">
@@ -7,12 +8,20 @@
     <h1 class="m-0">Gestion TVS</h1>
 
     <div class="d-flex align-items-center gap-3">
-        <input type="text" id="searchInput" class="form-control"
-               placeholder="Rechercher un client…" style="width:220px;">
 
+        <!-- Recherche dynamique -->
+        <input type="text"
+               id="searchInput"
+               class="form-control"
+               placeholder="Rechercher un client…"
+               style="width:220px;">
+
+        <!-- Sélecteur d'année -->
         <form method="GET" class="m-0">
-            <select name="annee" class="form-select py-2"
-                    style="width:120px;" onchange="this.form.submit()">
+            <select name="annee"
+                    class="form-select py-2"
+                    style="width:120px;"
+                    onchange="this.form.submit()">
                 {% for a in annees %}
                     <option value="{{ a.annee }}" {% if a.annee == annee.annee %}selected{% endif %}>
                         {{ a.annee }}
@@ -20,17 +29,25 @@
                 {% endfor %}
             </select>
         </form>
+
     </div>
 </div>
 
 <table class="table table-bordered align-middle mt-4">
     <thead class="table-light">
         <tr>
-            <th>Client</th>
+            <th data-sort="numero">N° <span class="sort-icon">⬍</span></th>
+            <th data-sort="nom">Client <span class="sort-icon">⬍</span></th>
+
             <th>TVS N‑1</th>
+
+            <th data-sort="vehicule">Véhicule <span class="sort-icon">⬍</span></th>
+
+            <th data-sort="soumis_tva">Soumis à TVA en N <span class="sort-icon">⬍</span></th>
+
+            <th>Formulaire</th>
+
             <th>Montant</th>
-            <th>Statut</th>
-            <th>Actions</th>
         </tr>
     </thead>
 
@@ -38,21 +55,48 @@
     {% for cm in cms %}
         {% with decl=cm.tvs_declaration %}
         <tr>
-            <td><strong>{{ cm.client.nom }}</strong></td>
 
+            <!-- N° client -->
+            <td>{{ cm.client.numero }}</td>
+
+            <!-- NOM DU CLIENT → LIEN VERS LA SAISIE -->
+            <td>
+                <a href="{% url 'tvs_saisie' cm.id %}"
+                   class="text-decoration-none fw-semibold">
+                    {{ cm.client.nom }}
+                </a>
+            </td>
+
+            <!-- TVS N-1 -->
             <td>{{ decl.tvs_n_1|default:"—" }}</td>
 
-            <td>{{ decl.montant|default:"—" }}</td>
+<!-- Véhicule (icône ✔️/❌) -->
+<td>
+    {% if decl.vehicule %}
+        <i class="bi bi-check2-circle text-success"></i>
+    {% else %}
+        <i class="bi bi-x-circle text-danger"></i>
+    {% endif %}
+</td>
 
+<!-- Soumis à TVA en N (icône ✔️/❌) -->
+<td>
+    {% if decl.soumis_tva_n %}
+        <i class="bi bi-check2-circle text-success"></i>
+    {% else %}
+        <i class="bi bi-x-circle text-danger"></i>
+    {% endif %}
+</td>
+
+            <!-- Formulaire -->
+            <td>{{ decl.formulaire|default:"—" }}</td>
+
+            <!-- Montant + badge statut dans la même cellule -->
             <td>
+                {{ decl.montant|default:"—" }}
                 {% include "partials/statut_badge.html" with statut=decl.statut_tvs %}
             </td>
 
-            <td>
-                <a href="{% url 'tvs_saisie' cm.id %}" class="btn btn-sm btn-outline-primary">
-                    Saisir TVS
-                </a>
-            </td>
         </tr>
         {% endwith %}
     {% endfor %}
@@ -61,13 +105,14 @@
 
 </section>
 
+<!-- Filtre dynamique JS -->
 <script>
 document.getElementById("searchInput").addEventListener("keyup", function () {
     let filter = this.value.toLowerCase();
     let rows = document.querySelectorAll("table tbody tr");
 
     rows.forEach(row => {
-        let name = row.querySelector("td strong").textContent.toLowerCase();
+        let name = row.querySelector("td a").textContent.toLowerCase();
         row.style.display = name.includes(filter) ? "" : "none";
     });
 });

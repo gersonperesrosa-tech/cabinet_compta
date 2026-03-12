@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 {% block content %}
 
 <section class="section">
@@ -13,19 +14,24 @@
            style="width: 220px;">
 </div>
 
-<table class="table table-bordered align-middle mt-4">
+<table class="table table-bordered align-middle mt-4 no-vertical-lines">
+
     <thead class="table-light">
         <tr>
-            <th>Client</th>
+            <th data-sort="numero">N° <span class="sort-icon">⬍</span></th>
+            <th data-sort="client">Client <span class="sort-icon">⬍</span></th>
+
             <th>Forme juridique</th>
-            <th>Dossier déontologie</th>
-            <th>Acceptation LAB</th>
-            <th>Pièce d'identité</th>
-            <th>Statut</th>
-            <th>Bail</th>
-            <th>Lettre de mission</th>
+            <th>Régime d’imposition</th>
+
+            <th data-sort="deontologie">Dossier déontologie <span class="sort-icon">⬍</span></th>
+            <th data-sort="lab">Acceptation LAB <span class="sort-icon">⬍</span></th>
+            <th data-sort="piece">Pièce d'identité <span class="sort-icon">⬍</span></th>
+            <th data-sort="statut">Statut <span class="sort-icon">⬍</span></th>
+            <th data-sort="bail">Bail <span class="sort-icon">⬍</span></th>
+            <th data-sort="lettre">Lettre de mission <span class="sort-icon">⬍</span></th>
+
             <th>Avenant</th>
-            <th>Actions</th>
         </tr>
     </thead>
 
@@ -33,24 +39,35 @@
     {% for client in clients %}
         {% with dp=client.dp %}
         <tr>
-            <td><strong>{{ client.nom }}</strong></td>
 
-            <td>{{ client.forme_juridique|default:"—" }}</td>
+            <!-- Numéro -->
+            <td>{{ client.numero|empty_dash }}</td>
 
-            <td>{{ dp.dossier_deontologie|default:"—" }}</td>
-            <td>{{ dp.acceptation_lab|default:"—" }}</td>
-            <td>{{ dp.piece_identite|default:"—" }}</td>
-            <td>{{ dp.statut|default:"—" }}</td>
-            <td>{{ dp.bail|default:"—" }}</td>
-            <td>{{ dp.lettre_mission|default:"—" }}</td>
-            <td>{{ dp.avenant|default:"—" }}</td>
-
+            <!-- Client -->
             <td>
                 <a href="{% url 'dp_saisie' client.id %}"
-                   class="btn btn-sm btn-outline-primary">
-                    Modifier
+                   class="text-decoration-none fw-semibold">
+                    {{ client.nom }}
                 </a>
             </td>
+
+            <!-- Forme juridique -->
+            <td>{{ client.forme_juridique|empty_dash }}</td>
+
+            <!-- Régime d’imposition -->
+            <td>{{ client.regime_imposition|empty_dash }}</td>
+
+            <!-- Champs DP triables -->
+            <td>{{ dp.dossier_deontologie|empty_dash }}</td>
+            <td>{{ dp.acceptation_lab|empty_dash }}</td>
+            <td>{{ dp.piece_identite|empty_dash }}</td>
+            <td>{{ dp.statut|empty_dash }}</td>
+            <td>{{ dp.bail|empty_dash }}</td>
+            <td>{{ dp.lettre_mission|empty_dash }}</td>
+
+            <!-- Avenant (non trié) -->
+            <td>{{ dp.avenant|empty_dash }}</td>
+
         </tr>
         {% endwith %}
     {% endfor %}
@@ -59,13 +76,14 @@
 
 </section>
 
+<!-- Filtre dynamique JS -->
 <script>
 document.getElementById("searchInput").addEventListener("keyup", function () {
     let filter = this.value.toLowerCase();
     let rows = document.querySelectorAll("table tbody tr");
 
     rows.forEach(row => {
-        let name = row.querySelector("td strong").textContent.toLowerCase();
+        let name = row.querySelector("td a").textContent.toLowerCase();
         row.style.display = name.includes(filter) ? "" : "none";
     });
 });

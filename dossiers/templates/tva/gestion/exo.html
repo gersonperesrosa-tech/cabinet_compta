@@ -39,8 +39,8 @@
     <table class="table table-bordered align-middle" id="tvaTable">
         <thead class="table-light">
             <tr>
-                <th>N°</th>
-                <th>Client</th>
+                <th data-sort="numero">N° <span class="sort-icon">⬍</span></th>
+                <th data-sort="nom">Client <span class="sort-icon">⬍</span></th>
                 <th>Suivi comptable</th>
             </tr>
         </thead>
@@ -49,9 +49,13 @@
             {% for tca in tca_list %}
             <tr>
 
+                <!-- N° client -->
                 <td>{{ tca.client.numero }}</td>
-                <td><strong>{{ tca.client.nom }}</strong></td>
 
+                <!-- Nom du client -->
+                <td class="client-name"><strong>{{ tca.client.nom }}</strong></td>
+
+                <!-- Pastille suivi comptable -->
                 <td>
                     {% include "tva/partials/pastille_suivi.html" with suivi=tca.suivi %}
                 </td>

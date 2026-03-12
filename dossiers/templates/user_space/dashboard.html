@@ -58,7 +58,7 @@
                     <!-- Donut -->
                     <div class="row align-items-center">
                         <div class="col-6 text-center">
-                            <canvas id="comptaDonut" style="max-width:190px; max-height:190px;"></canvas>
+                            <canvas id="comptaDonut" style="max-width:150px; max-height:150px;"></canvas>
                         </div>
                         <div class="col-6 text-center">
                             <div class="display-6 fw-bold">{{ kpi_pourcentage_terminees }}%</div>
@@ -99,7 +99,7 @@
                     <!-- Donut -->
                     <div class="row align-items-center">
                         <div class="col-6 text-center">
-                            <canvas id="ca3mDonut" style="max-width:190px; max-height:190px;"></canvas>
+                            <canvas id="ca3mDonut" style="max-width:150px; max-height:150px;"></canvas>
                         </div>
                         <div class="col-6 text-center">
                             <div class="display-6 fw-bold">{{ ca3m_pourcentage_terminees }}%</div>
@@ -161,7 +161,7 @@
         <!-- Donut -->
         <div class="row align-items-center">
             <div class="col-md-6 text-center">
-                <canvas id="tvaDonut" style="max-width:190px; max-height:190px;"></canvas>
+                <canvas id="tvaDonut" style="max-width:150px; max-height:150px;"></canvas>
             </div>
             <div class="col-md-6 text-center">
                 <div class="fw-bold display-6">{{ pct_acceptes }}%</div>
@@ -178,6 +178,48 @@
             <!-- COLONNE DROITE (40%) -->
             <!-- ========================= -->
             <div class="col-lg-4">
+
+<div class="card shadow-sm border-primary mb-4">
+    <div class="card-header bg-primary fw-bold text-white">
+        🔔 Notifications Paie
+    </div>
+
+    <div class="card-body" style="max-height: 250px; overflow-y: auto;">
+
+        {% if notifications_paie %}
+            <ul class="list-group list-group-flush">
+
+                {% for n in notifications_paie %}
+                <li id="notif-{{ n.id }}" 
+                    class="list-group-item small d-flex justify-content-between align-items-center">
+
+                    <div>
+                        <div class="fw-bold">{{ n.date|date:"d/m/Y à H:i" }}</div>
+                        <div class="text-muted">
+                            {{ n.client.nom }} a validé un mois de paie
+                            ({{ n.paie_mois.mois }}/{{ n.paie_mois.annee }})
+                        </div>
+                    </div>
+
+                    <button class="btn btn-sm btn-outline-success"
+                            onclick="marquerNotificationLu({{ n.id }})">
+                        ✓ Lu
+                    </button>
+
+                </li>
+                {% endfor %}
+
+            </ul>
+
+        {% else %}
+            <div class="text-muted small text-center">
+                Aucune notification de paie
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+
 
                 <!-- Rappels du jour -->
  <div class="card shadow-sm border-warning mb-4">
@@ -402,6 +444,21 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 });
+</script>
+
+<script>
+function marquerNotificationLu(id) {
+    fetch(`/dossiers/notifications/paie/${id}/lu/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "ok") {
+                const item = document.getElementById(`notif-${id}`);
+                item.style.transition = "opacity 0.3s";
+                item.style.opacity = "0";
+                setTimeout(() => item.remove(), 300);
+            }
+        });
+}
 </script>
 
 

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load custom_filters %}
 {% block content %}
 
 <section class="section">
@@ -36,44 +36,72 @@
 <table class="table table-bordered align-middle mt-4">
     <thead class="table-light">
         <tr>
-            <th>Client</th>
+            <th data-sort="numero">N° <span class="sort-icon">⬍</span></th>
+            <th data-sort="nom">Client <span class="sort-icon">⬍</span></th>
+
             <th>CFE N‑1</th>
             <th>Acompte</th>
             <th>Solde</th>
-            <th>1447C</th>
+
+            <!-- Total CFE juste après Solde -->
             <th style="background:#e9fbe8;">Total CFE</th>
-            <th>Actions</th>
+
+            <!-- Puis Mode de paiement + Dégrèvement -->
+            <th data-sort="mode_paiement">Mode de paiement <span class="sort-icon">⬍</span></th>
+            <th>Dégrèvement</th>
+
+            <!-- Et 1447C en dernière position -->
+            <th>1447C</th>
         </tr>
     </thead>
 
     <tbody>
         {% for cm in cms %}
         <tr>
-            <td><strong>{{ cm.client.nom }}</strong></td>
 
+            <!-- N° client -->
+            <td>{{ cm.client.numero }}</td>
+
+            <!-- NOM DU CLIENT → LIEN VERS LA SAISIE -->
+            <td>
+                <a href="{% url 'cfe_saisie' cm.id %}"
+                   class="text-decoration-none fw-semibold">
+                    {{ cm.client.nom }}
+                </a>
+            </td>
+
+            <!-- CFE N-1 -->
             <td>{{ cm.declaration.cfe_n_1|default:"—" }}</td>
 
-            <td>{{ cm.declaration.acompte_cfe|default:"—" }}
+            <!-- Acompte -->
+            <td>
+                {{ cm.declaration.acompte_cfe|default:"—" }}
                 {% include "partials/statut_badge.html" with statut=cm.declaration.statut_acompte %}
             </td>
 
-            <td>{{ cm.declaration.solde_cfe|default:"—" }}
+            <!-- Solde -->
+            <td>
+                {{ cm.declaration.solde_cfe|default:"—" }}
                 {% include "partials/statut_badge.html" with statut=cm.declaration.statut_solde %}
             </td>
 
-            <td>{{ cm.declaration.formulaire_1447c|default:"—" }}
-                {% include "partials/statut_badge.html" with statut=cm.declaration.statut_1447c %}
-            </td>
-
+            <!-- Total CFE (juste après Solde) -->
             <td style="background:#e9fbe8;">
                 {{ cm.total_cfe|floatformat:2 }}
             </td>
 
+            <!-- Mode de paiement -->
+            <td>{{ cm.declaration.mode_paiement|default:"—" }}</td>
+
+            <!-- Dégrèvement -->
+            <td>{{ cm.declaration.degrevement|default:"—" }}</td>
+
+            <!-- Formulaire 1447C (dernière colonne) -->
             <td>
-                <a href="{% url 'cfe_saisie' cm.id %}" class="btn btn-sm btn-outline-primary">
-                    Saisir CFE
-                </a>
+                {{ cm.declaration.formulaire_1447c|default:"—" }}
+                {% include "partials/statut_badge.html" with statut=cm.declaration.statut_1447c %}
             </td>
+
         </tr>
         {% endfor %}
     </tbody>
@@ -88,7 +116,7 @@ document.getElementById("searchInput").addEventListener("keyup", function () {
     let rows = document.querySelectorAll("table tbody tr");
 
     rows.forEach(row => {
-        let clientName = row.querySelector("td strong").textContent.toLowerCase();
+        let clientName = row.querySelector("td a").textContent.toLowerCase();
         row.style.display = clientName.includes(filter) ? "" : "none";
     });
 });

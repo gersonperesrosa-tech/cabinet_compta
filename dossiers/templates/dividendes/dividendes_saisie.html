@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 {% block content %}
 
 <section class="section">
@@ -10,61 +11,83 @@
 
     <table class="table table-bordered align-middle mt-4">
 
+        <!-- Nom -->
         <tr>
             <th>Nom</th>
             <td colspan="2">
-                <input type="text" name="nom" class="form-control"
-                       value="{{ declaration.nom }}">
+                <input type="text"
+                       name="nom"
+                       class="form-control"
+                       value="{{ declaration.nom|empty_dash }}">
             </td>
         </tr>
 
+        <!-- Montant -->
         <tr>
             <th>Montant des dividendes</th>
             <td colspan="2">
-                <input type="text" name="montant" class="form-control"
-                       value="{{ declaration.montant }}">
+                <input type="text"
+                       name="montant"
+                       class="form-control"
+                       value="{{ declaration.montant|empty_dash }}">
             </td>
         </tr>
 
+        <!-- Date paiement -->
         <tr>
             <th>Date de paiement</th>
             <td colspan="2">
-                <input type="date" name="date_paiement" class="form-control"
+                <input type="date"
+                       name="date_paiement"
+                       class="form-control"
                        value="{{ declaration.date_paiement|date:'Y-m-d' }}">
             </td>
         </tr>
 
+        <!-- Date 2777D -->
         <tr>
             <th>Date 2777D</th>
             <td colspan="2">
-                <input type="date" name="date_2777d" class="form-control"
+                <input type="date"
+                       name="date_2777d"
+                       class="form-control"
                        value="{{ declaration.date_2777d|date:'Y-m-d' }}">
             </td>
         </tr>
 
+        <!-- Date 2561 -->
         <tr>
             <th>Date 2561</th>
             <td colspan="2">
-                <input type="date" name="date_2561" class="form-control"
+                <input type="date"
+                       name="date_2561"
+                       class="form-control"
                        value="{{ declaration.date_2561|date:'Y-m-d' }}">
             </td>
         </tr>
 
+        <!-- Année de versement -->
         <tr>
             <th>Année de versement</th>
             <td colspan="2">
-                <input type="text" name="annee_versement" class="form-control"
-                       value="{{ declaration.annee_versement }}">
+                <input type="text"
+                       name="annee_versement"
+                       class="form-control"
+                       value="{{ declaration.annee_versement|empty_dash }}">
             </td>
         </tr>
 
+        <!-- Commentaires -->
         <tr>
             <th>Commentaires</th>
             <td colspan="2">
-                <textarea name="commentaires" class="form-control" rows="3">{{ declaration.commentaires }}</textarea>
+                <textarea name="commentaires"
+                          class="form-control"
+                          rows="3">{{ declaration.commentaires|empty_dash }}</textarea>
             </td>
         </tr>
 
+        <!-- Statut -->
         <tr>
             <th>Statut des dividendes</th>
             <td colspan="2">
@@ -76,11 +99,16 @@
 
     </table>
 
+    <!-- Boutons bas de page -->
     <div class="d-flex justify-content-between mt-4">
         <a href="{% url 'fiscal_clients_module' client_module.annee.id client_module.module.id %}"
-           class="btn btn-outline-secondary">Retour</a>
+           class="btn btn-outline-secondary">
+            Module annuel Dividendes
+        </a>
 
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <button type="submit" class="btn btn-primary">
+            Enregistrer
+        </button>
     </div>
 
 </form>

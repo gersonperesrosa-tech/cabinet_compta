@@ -81,12 +81,11 @@
 <table class="table table-hover align-middle">
 <thead>
     <tr>
-        <th>Salarié</th>
-        <th>Heures 25%</th>
-        <th>Heures 50%</th>
+	<th>Nom</th>
+	<th>Salarié</th>
+        <th>Heures supplémentaires</th>
         <th>Primes</th>
-        <th>Congés début</th>
-        <th>Congés fin</th>
+        <th>Congés</th>
         <th>Absences maladie</th>
         <th>Autres absences</th>
         <th>Acomptes</th>
@@ -99,13 +98,13 @@
 <tbody>
     {% for ligne in lignes %}
     <tr>
-        <td>{{ ligne.salarie.prenom }} {{ ligne.salarie.nom }}</td>
+        <td>{{ ligne.salarie.nom }}</td>
+        <td>{{ ligne.salarie.prenom }}</td>
+
 
         <td>{{ ligne.variables.heures_sup_25|default:"-" }}</td>
-        <td>{{ ligne.variables.heures_sup_50|default:"-" }}</td>
         <td>{{ ligne.variables.primes|default:"-" }}</td>
         <td>{{ ligne.variables.conges_debut|default:"-" }}</td>
-        <td>{{ ligne.variables.conges_fin|default:"-" }}</td>
         <td>{{ ligne.variables.absences_maladie|default:"-" }}</td>
         <td>{{ ligne.variables.absences_autres|default:"-" }}</td>
         <td>{{ ligne.variables.acomptes|default:"-" }}</td>

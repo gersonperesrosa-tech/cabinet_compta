@@ -28,6 +28,7 @@ urlpatterns = [
     path("partenaire/mois/<int:paie_mois_id>/salarie/<int:salarie_id>/", views_partenaire.partenaire_detail_salarie_mois, name="partenaire_detail_salarie_mois"),
     path("partenaire/mois/<int:paie_mois_id>/bs-fait/", views_partenaire.partenaire_bs_fait, name="partenaire_bs_fait"),
     path("partenaire/mois/<int:paie_mois_id>/dsn-faite/", views_partenaire.partenaire_dsn_faite, name="partenaire_dsn_faite"),
+    path("partenaire/notifications/<int:notif_id>/lu/", views_partenaire.notification_lue, name="notification_lue"),
 
 
 
@@ -79,7 +80,6 @@ urlpatterns = [
     # ----------------------------------------------------
 
     path("client/<int:client_id>/mois/", views_cabinet.liste_mois_client, name="liste_mois_client"),
-    path("mois/<int:paie_mois_id>/export-pdf/", views_cabinet.export_pdf_variables, name="export_pdf_variables"),
     path("mes-mois/", views_client.client_liste_mois, name="client_liste_mois"),
     path("cabinet/client/<int:client_id>/mois/creer-suivant/", views_cabinet.creer_mois_suivant, name="cabinet_creer_mois_suivant"),
 

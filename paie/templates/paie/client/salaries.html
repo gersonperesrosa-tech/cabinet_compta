@@ -44,6 +44,7 @@
     <thead>
         <tr>
             <th>Nom</th>
+            <th>Prénom</th>
             <th>Date de naissance</th>
             <th>N° Sécurité sociale</th>
             <th>Mutuelle</th>
@@ -57,7 +58,8 @@
     <tbody>
         {% for s in salaries %}
         <tr>
-            <td>{{ s.prenom }} {{ s.nom }}</td>
+            <td>{{ s.nom }}</td>
+            <td>{{ s.prenom }}</td>
             <td>{{ s.date_naissance|date:"d/m/Y" }}</td>
             <td>{{ s.numero_securite_sociale }}</td>
             <td>{{ s.mutuelle|default:"-" }}</td>

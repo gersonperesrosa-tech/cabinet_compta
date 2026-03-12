@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load custom_filters %}
 {% block content %}
 
 <section class="section">
@@ -20,6 +20,7 @@
 
         <tbody>
 
+            <!-- CVAE N-1 -->
             <tr>
                 <td><strong>CVAE N‑1</strong></td>
                 <td>
@@ -27,11 +28,12 @@
                            name="cvae_n_1"
                            id="cvae_n_1"
                            class="form-control"
-                           value="{{ declaration.cvae_n_1 }}">
+                           value="{{ declaration.cvae_n_1|empty_dash }}">
                 </td>
                 <td></td>
             </tr>
 
+            <!-- Acompte CVAE -->
             <tr>
                 <td><strong>Acompte CVAE (15/06)</strong></td>
                 <td>
@@ -39,7 +41,7 @@
                            name="acompte_cvae"
                            id="acompte_cvae"
                            class="form-control"
-                           value="{{ declaration.acompte_cvae }}">
+                           value="{{ declaration.acompte_cvae|empty_dash }}">
                 </td>
                 <td>
                     <select name="statut_acompte_cvae" class="form-select">
@@ -48,6 +50,7 @@
                 </td>
             </tr>
 
+            <!-- Solde CVAE -->
             <tr>
                 <td><strong>Solde CVAE (15/09)</strong></td>
                 <td>
@@ -55,7 +58,7 @@
                            name="solde_cvae"
                            id="solde_cvae"
                            class="form-control"
-                           value="{{ declaration.solde_cvae }}">
+                           value="{{ declaration.solde_cvae|empty_dash }}">
                 </td>
                 <td>
                     <select name="statut_solde_cvae" class="form-select">
@@ -64,18 +67,20 @@
                 </td>
             </tr>
 
+            <!-- Commentaire -->
             <tr>
                 <td><strong>Commentaire si CVAE > 1500 €</strong></td>
                 <td colspan="2">
                     <textarea name="commentaire_plus_1500"
                               class="form-control"
-                              rows="3">{{ declaration.commentaire_plus_1500 }}</textarea>
+                              rows="3">{{ declaration.commentaire_plus_1500|empty_dash }}</textarea>
                 </td>
             </tr>
 
         </tbody>
     </table>
 
+    <!-- Total CVAE -->
     <div class="p-3 mt-4 rounded" style="background:#f5f7fa; border:1px solid #dce1e7;">
         <strong>Total CVAE :</strong>
         <span id="total_cvae_display" style="font-size:1.2rem; font-weight:600;">
@@ -83,22 +88,18 @@
         </span>
     </div>
 
+    <!-- Boutons bas de page -->
     <div class="d-flex justify-content-between align-items-center mt-4">
+
         <a href="{% url 'fiscal_clients_module' client_module.annee.id client_module.module.id %}"
            class="btn btn-outline-secondary">
-            Retour au Module CVAE
+            Module annuel CVAE
         </a>
 
-        <div class="d-flex gap-2 justify-content-end">
-            <a href="{% url 'cvae_gestion' client_module.annee.id %}"
-               class="btn btn-outline-dark">
-                Retour
-            </a>
+        <button type="submit" class="btn btn-primary">
+            Enregistrer
+        </button>
 
-            <button type="submit" class="btn btn-primary">
-                Enregistrer
-            </button>
-        </div>
     </div>
 
 </form>

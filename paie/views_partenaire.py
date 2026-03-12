@@ -1,13 +1,14 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from paie.models import Client, PaieMois, Salarie, VariablePaie
+from dossiers.models import NotificationPaie
 from django.utils import timezone
 
 
 @login_required
 def partenaire_liste_clients(request):
     # Tous les clients ayant le module paie actif
-    clients = Client.objects.filter(module_paie=True)
+    clients = Client.objects.filter(module_paie=True).order_by("nom")
 
     for c in clients:
         # Dernier mois traité (BS + DSN faites)
@@ -47,7 +48,7 @@ def partenaire_dashboard(request):
         mois=mois,
     )
 
-    # KPI 1 : clients avec mois actuel ouvert (mois créé)
+    # KPI 1 : clients avec mois actuel ouvert
     kpi_ouverts = (
         mois_courant_qs
         .values("client")
@@ -55,7 +56,7 @@ def partenaire_dashboard(request):
         .count()
     )
 
-    # KPI 2 : clients avec mois actuel fait (BS + DSN faites)
+    # KPI 2 : clients avec mois actuel terminé
     kpi_faits = (
         mois_courant_qs
         .filter(bs_fait=True, dsn_faite=True)
@@ -64,7 +65,7 @@ def partenaire_dashboard(request):
         .count()
     )
 
-    # KPI 3 : clients avec mois actuel à faire (BS ou DSN manquantes)
+    # KPI 3 : clients avec mois actuel à faire
     kpi_a_faire = (
         mois_courant_qs
         .exclude(bs_fait=True, dsn_faite=True)
@@ -73,26 +74,16 @@ def partenaire_dashboard(request):
         .count()
     )
 
-    # Enrichir chaque client pour la liste détaillée
-    for c in clients:
-        mois_client = PaieMois.objects.filter(client=c)
-
-        c.dernier_mois_traite = (
-            mois_client
-            .filter(bs_fait=True, dsn_faite=True)
-            .order_by("-annee", "-mois")
-            .first()
-        )
-
-        c.mois_en_attente = mois_client.filter(bs_fait=False).count()
+    # 🔥 Notifications de paie (les plus récentes en premier)
+    notifications = NotificationPaie.objects.filter(lu_partenaire=False).select_related("client", "paie_mois")
 
     return render(request, "paie/partenaire/dashboard.html", {
-        "clients": clients,
         "kpi_ouverts": kpi_ouverts,
         "kpi_faits": kpi_faits,
         "kpi_a_faire": kpi_a_faire,
         "annee": annee,
         "mois": mois,
+        "notifications": notifications,
     })
 
 
@@ -110,13 +101,17 @@ def partenaire_mois_client(request, client_id):
 @login_required
 def partenaire_variables_mois(request, paie_mois_id):
     paie_mois = get_object_or_404(PaieMois, id=paie_mois_id)
-    salaries = Salarie.objects.filter(client=paie_mois.client)
 
+    # Tri des salariés par NOM (A → Z)
+    salaries = Salarie.objects.filter(client=paie_mois.client).order_by("nom")
+
+    # Dictionnaire : { salarie_id : VariablePaie }
     variables_dict = {
         v.salarie_id: v
         for v in VariablePaie.objects.filter(paie_mois=paie_mois)
     }
 
+    # Construction des lignes pour le tableau
     lignes = []
     for s in salaries:
         lignes.append({
@@ -169,3 +164,11 @@ def partenaire_dsn_faite(request, paie_mois_id):
         paie_mois.save()
 
     return redirect("paie:partenaire_variables_mois", paie_mois_id=paie_mois.id)
+
+
+@login_required
+def notification_lue(request, notif_id):
+    notif = get_object_or_404(NotificationPaie, id=notif_id)
+    notif.lu_partenaire = True
+    notif.save()
+    return redirect("paie:partenaire_dashboard")

@@ -1,4 +1,6 @@
 {% extends "base_paie_client.html" %}
+{% load paie_filters %}
+
 
 {% block title %}Mois {{ mois.mois }}/{{ mois.annee }}{% endblock %}
 
@@ -37,22 +39,56 @@
     </p>
 {% endif %}
 
-<h3 class="mt-4">Salariés</h3>
+<h3 class="mt-4">Variables de paie</h3>
 
-<ul class="list-group">
-    {% for s in salaries %}
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-            {{ s.prenom }} {{ s.nom }}
+<div class="table-responsive mt-3">
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Heures supplémentaires</th>
+                <th>Congés</th>
+                <th>Absences maladie</th>
+                <th>Autres absences</th>
+                <th>Primes</th>
+                <th>Acomptes</th>
+                <th>Autres infos</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
 
-            {% if not mois.client_valide %}
-                <a href="{% url 'paie:client_variables_salarie' mois.id s.id %}"
-                   class="btn btn-sm btn-outline-primary">
-                    Saisir les variables
-                </a>
-            {% endif %}
-        </li>
-    {% endfor %}
-</ul>
+        <tbody>
+            {% for s in salaries %}
+            {% with vars=variables_dict|get_item:s.id %}
+            <tr>
+                <td>{{ s.nom }}</td>
+                <td>{{ s.prenom }}</td>
+
+                <td>{{ vars.heures_sup_25|default:"-" }}</td>
+                <td>{{ vars.conges_debut|default:"-" }}</td>
+                <td>{{ vars.absences_maladie|default:"-" }}</td>
+                <td>{{ vars.absences_autres|default:"-" }}</td>
+                <td>{{ vars.primes|default:"-" }}</td>
+                <td>{{ vars.acomptes|default:"-" }}</td>
+                <td>{{ vars.autres_infos|default:"-" }}</td>
+
+                <td class="text-end">
+                    {% if not mois.client_valide %}
+                        <a href="{% url 'paie:client_variables_salarie' mois.id s.id %}"
+                           class="btn btn-sm btn-outline-primary">
+                            Modifier
+                        </a>
+                    {% else %}
+                        <span class="text-muted">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endwith %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
 
 {% endblock %}

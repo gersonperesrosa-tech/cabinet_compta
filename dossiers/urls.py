@@ -357,6 +357,10 @@ urlpatterns = [
     path("cloture/client/<int:cloture_id>/", cloture_client_detail, name="cloture_client_detail"),
     path("cloture/annee/create/", cloture_annee_create, name="cloture_annee_create"),
 
+    # ============================
+    # MODULE NOTIFICATIONS DASHBOARD DE LA PAIE
+    # ============================
+    path("notifications/paie/<int:notif_id>/lu/", views.notification_paie_lu, name="notification_paie_lu"),
 
 
 

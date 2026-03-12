@@ -10,7 +10,7 @@
 
 <div class="container-fluid">
 
-    <!-- Titre + barre de recherche alignée -->
+    <!-- Titre + barre de recherche -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="mb-0">Suivi Comptable</h1>
 
@@ -28,14 +28,18 @@
         <table class="table table-hover align-middle">
             <thead class="table-light">
                 <tr>
-                    <th>Numéro</th>
-                    <th>Nom</th>
-                    <th>Périodicité</th>
+                    <th data-sort="numero">N°<span class="sort-icon">⬍</span></th>
+                    <th data-sort="nom">Nom <span class="sort-icon">⬍</span></th>
+                    <th data-sort="periodicite">Périodicité <span class="sort-icon">⬍</span></th>
+
                     <th>Forme juridique</th>
                     <th>Date de clôture</th>
-                    <th>Régime TVA actuel</th>
-                    <th>Echéance TVA</th>
-                    <th>Date MAJ compta</th>
+
+                    <th data-sort="regime_tva">Régime TVA actuel <span class="sort-icon">⬍</span></th>
+                    <th data-sort="echeance_tva">Échéance TVA <span class="sort-icon">⬍</span></th>
+
+                    <th data-sort="maj_compta">Date MAJ compta <span class="sort-icon">⬍</span></th>
+
                     <th>Dernier mois saisi</th>
                     <th>Saisi par</th>
                     <th>Vérification</th>
@@ -49,8 +53,11 @@
                     {% with annee=annees|get_item:client.id %}
 
                     <tr>
+
+                        <!-- Numéro -->
                         <td>{{ client.numero }}</td>
 
+                        <!-- Nom (ouvre popup AJAX) -->
                         <td>
                             <a href="{% url 'popup_suivi_comptable' client.id annee %}"
                                class="suivi-link text-decoration-none fw-semibold">
@@ -58,12 +65,21 @@
                             </a>
                         </td>
 
+                        <!-- Périodicité -->
                         <td>{{ client.periodicite }}</td>
+
                         <td>{{ client.forme_juridique }}</td>
                         <td>{{ client.date_cloture }}</td>
+
+                        <!-- Régime TVA -->
                         <td>{{ client.regime_tva }}</td>
- 	                <td>{{ client.jour_echeance_tva|default_if_none:""}}</td>
+
+                        <!-- Échéance TVA -->
+                        <td>{{ client.jour_echeance_tva|default_if_none:"" }}</td>
+
+                        <!-- Date MAJ compta -->
                         <td>{{ suivi.date_maj_compta|default:"—" }}</td>
+
                         <td>{{ suivi.dernier_mois_traite|default:"—" }}</td>
                         <td>{{ suivi.saisi_par|default:"—" }}</td>
 
@@ -76,6 +92,7 @@
                         </td>
 
                         <td>{{ suivi.commentaire|default:"—" }}</td>
+
                     </tr>
 
                     {% endwith %}
@@ -88,6 +105,7 @@
     </div>
 </div>
 
+<!-- Recherche dynamique -->
 <script>
 document.getElementById("searchInput").addEventListener("input", function() {
     const filter = this.value.toLowerCase();
@@ -100,9 +118,7 @@ document.getElementById("searchInput").addEventListener("input", function() {
 });
 </script>
 
-
-</section>
-
+<!-- Popup AJAX -->
 <script>
 document.addEventListener("click", function(e) {
     const link = e.target.closest(".suivi-link");
@@ -121,6 +137,7 @@ document.addEventListener("click", function(e) {
 });
 </script>
 
+<!-- Enregistrement AJAX -->
 <script>
 document.addEventListener("submit", function(e) {
     const form = e.target.closest("#suiviComptableForm");
@@ -136,17 +153,14 @@ document.addEventListener("submit", function(e) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-
-            // Fermer le popup
             const modal = bootstrap.Modal.getInstance(document.getElementById("clientModal"));
             modal.hide();
-
-            // Recharger la page
             location.reload();
         }
     });
 });
 </script>
 
+</section>
 
 {% endblock %}

@@ -2,7 +2,7 @@
 
 {% block content %}
 <section class="section">
-<div class="container mt-4">
+<div class="container-fluid mt-4">
 
     <!-- Titre + Sélecteur d'année sur la même ligne -->
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -24,6 +24,7 @@
     <table class="table table-bordered align-middle text-center">
         <thead class="table-light">
             <tr>
+                <th>N°</th>
                 <th>Client</th>
                 {% for m in mois_range %}
                     <th>{{ m }}/{{ annee }}</th>
@@ -34,7 +35,13 @@
         <tbody>
             {% for c in clients %}
             <tr>
-                <td class="fw-bold">{{ c.nom }}</td>
+                <td class="fw">{{ c.numero }}</td>
+<td class="fw-bold text-start">
+    <a href="{% url 'paie:liste_mois_client' c.id %}" 
+       class="text-decoration-none">
+        {{ c.nom }}
+    </a>
+</td>
 
                 {% for mois in c.suivi %}
                 <td>

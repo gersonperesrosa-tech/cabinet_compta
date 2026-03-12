@@ -9,7 +9,7 @@ from django.http import HttpResponse
 
 from .models import Client, SuiviComptable, TVA, IS
 from .forms import ClientForm, SuiviComptableForm, TVAForm, ISForm, ClotureClientForm
-from .models import TVAAnnee, TVAModule, TVAClientAnnee, TVADeclaration, TVSDeclaration, DESDEBDeclaration, DividendesDeclaration, DPDeclaration, NoteTag, NoteCategorie, ClientNote, KanbanColumn, KanbanCard, KanbanTag, KanbanCardTag, ClotureAnnee, ClotureClient
+from .models import TVAAnnee, TVAModule, TVAClientAnnee, TVADeclaration, TVSDeclaration, DESDEBDeclaration, DividendesDeclaration, DPDeclaration, NoteTag, NoteCategorie, ClientNote, KanbanColumn, KanbanCard, KanbanTag, KanbanCardTag, ClotureAnnee, ClotureClient, NotificationPaie
 
 
 def home(request):
@@ -1258,7 +1258,9 @@ def tva_saisie_ca3m(request, tva_client_annee_id):
         declaration.save()
 
         messages.success(request, "Déclaration TVA mensuelle enregistrée.")
-        return redirect(request.path)
+
+        # 🔥 REDIRECTION VERS LA GESTION CA3M
+        return redirect("tva_gestion_ca3m")
 
     return render(request, "tva/tva_saisie_ca3m.html", {
         "tca": tca,
@@ -1298,7 +1300,9 @@ def tva_saisie_ca3t(request, tva_client_annee_id):
 
         declaration.save()
         messages.success(request, "Déclaration trimestrielle enregistrée.")
-        return redirect(request.path)
+
+        # 🔥 Redirection vers la gestion CA3T
+        return redirect("tva_gestion_ca3t")
 
     return render(request, "tva/tva_saisie_ca3t.html", {
         "tca": tca,
@@ -1371,22 +1375,16 @@ def tva_saisie_ca12(request, tva_client_annee_id):
     tca = get_object_or_404(TVAClientAnnee, id=tva_client_annee_id)
     declaration, created = TVADeclaration.objects.get_or_create(tva_client_annee=tca)
 
-    # ----------------------------------------------------
-    # 🔧 Nettoyage des décimaux (amélioré)
-    # ----------------------------------------------------
     def clean_decimal(value):
         if not value or value.strip() == "":
-            return 0  # 🔥 On renvoie 0 au lieu de None
-
+            return 0
         value = value.replace("\xa0", "").replace(" ", "").replace(",", ".")
         try:
-            return float(value)  # ou Decimal(value) si tu préfères
+            return float(value)
         except:
-            return 0  # 🔥 Sécurité : si l'utilisateur tape n'importe quoi
+            return 0
 
-    # ----------------------------------------------------
-    # 🔥 CALCUL AUTOMATIQUE DU N-1
-    # ----------------------------------------------------
+    # --- Calcul N-1 ---
     annee_actuelle = tca.annee.annee
     annee_precedente = annee_actuelle - 1
 
@@ -1404,17 +1402,11 @@ def tva_saisie_ca12(request, tva_client_annee_id):
     else:
         n_1_calcule = 0
 
-    # ----------------------------------------------------
-    # 🔥 SI GET : pré-remplir N-1 si vide
-    # ----------------------------------------------------
     if request.method == "GET":
         if not declaration.tva_n_1:
             declaration.tva_n_1 = n_1_calcule
             declaration.save()
 
-    # ----------------------------------------------------
-    # 🔥 TRAITEMENT POST
-    # ----------------------------------------------------
     if request.method == "POST":
 
         declaration.tva_n_1 = clean_decimal(request.POST.get("tva_n_1"))
@@ -1432,11 +1424,10 @@ def tva_saisie_ca12(request, tva_client_annee_id):
 
         declaration.save()
         messages.success(request, "Déclaration annuelle enregistrée.")
-        return redirect(request.path)
 
-    # ----------------------------------------------------
-    # 🔢 TOTAL TVA DE L'ANNÉE (A1 + A2 + Solde)
-    # ----------------------------------------------------
+        # 🔥 REDIRECTION VERS LA GESTION CA12
+        return redirect("tva_gestion_ca12")
+
     total_tva_annee = (
         (declaration.tva_acompte_1 or 0) +
         (declaration.tva_acompte_2 or 0) +
@@ -1447,7 +1438,7 @@ def tva_saisie_ca12(request, tva_client_annee_id):
         "tca": tca,
         "declaration": declaration,
         "n_1_calcule": n_1_calcule,
-        "total_tva_annee": total_tva_annee,  # 🔥 envoyé au template
+        "total_tva_annee": total_tva_annee,
     })
 
 from django.contrib.auth.decorators import login_required
@@ -1954,6 +1945,7 @@ def is_saisie(request, client_module_id):
         "declaration": declaration,
         "acompte_values": acompte_values,
         "total_is": total_is,
+
     })
 
 
@@ -1998,6 +1990,8 @@ def is_gestion(request, annee_id):
         "annee": annee,
         "annees": annees,
         "cms": cms,
+        "annee_selectionnee": annee,
+
     })
 
 # ----------------------------------------------------
@@ -2037,6 +2031,8 @@ def cfe_gestion(request, annee_id):
         "annee": annee,
         "annees": annees,
         "cms": cms,
+        "annee_selectionnee": annee,
+
     })
 
 @login_required
@@ -2044,33 +2040,34 @@ def cfe_saisie(request, client_module_id):
     cm = get_object_or_404(ClientModuleFiscal, id=client_module_id)
     declaration, created = CFEDeclaration.objects.get_or_create(client_module=cm)
 
-    # Pré-remplissage CFE N-1
-    if created:
+    def clean_decimal(value):
+        if not value or value.strip() == "":
+            return 0
+        value = value.replace(" ", "").replace(",", ".")
         try:
-            annee_precedente = AnneeFiscale.objects.get(annee=cm.annee.annee - 1)
-            cm_prec = ClientModuleFiscal.objects.get(
-                client=cm.client,
-                module__nom="CFE",
-                annee=annee_precedente
-            )
-            decl_prec = CFEDeclaration.objects.get(client_module=cm_prec)
-            declaration.cfe_n_1 = decl_prec.total_cfe
+            return float(value)
         except:
-            declaration.cfe_n_1 = 0
+            return 0
 
+    # --- Pré-remplissage CFE N-1 ---
+    annee_actuelle = cm.annee.annee
+    annee_n_1 = annee_actuelle - 1
+
+    prev = CFEDeclaration.objects.filter(
+        client_module__client=cm.client,
+        client_module__annee__annee=annee_n_1
+    ).first()
+
+    if request.method == "GET":
+        if not declaration.cfe_n_1:
+            declaration.cfe_n_1 = prev.total_cfe if prev else 0
         declaration.save()
 
-    # Fonction utilitaire interne
-    def to_decimal(value):
-        if not value:
-            return 0
-        return value.replace(",", ".")
-
-    # Traitement POST
+    # --- Traitement POST ---
     if request.method == "POST":
-        declaration.cfe_n_1 = to_decimal(request.POST.get("cfe_n_1"))
-        declaration.acompte_cfe = to_decimal(request.POST.get("acompte_cfe"))
-        declaration.solde_cfe = to_decimal(request.POST.get("solde_cfe"))
+        declaration.cfe_n_1 = clean_decimal(request.POST.get("cfe_n_1"))
+        declaration.acompte_cfe = clean_decimal(request.POST.get("acompte_cfe"))
+        declaration.solde_cfe = clean_decimal(request.POST.get("solde_cfe"))
 
         declaration.statut_acompte = request.POST.get("statut_acompte")
         declaration.statut_solde = request.POST.get("statut_solde")
@@ -2084,12 +2081,10 @@ def cfe_saisie(request, client_module_id):
         messages.success(request, "Déclaration CFE enregistrée avec succès.")
         return redirect("cfe_gestion", annee_id=cm.annee.id)
 
-    # Affichage GET
     return render(request, "cfe/cfe_saisie.html", {
         "client_module": cm,
         "declaration": declaration,
     })
-
 
 # ----------------------------------------------------
 #   MODULE CVAE
@@ -2105,30 +2100,35 @@ def cvae_saisie(request, client_module_id):
     cm = get_object_or_404(ClientModuleFiscal, id=client_module_id)
     declaration, created = CVAEDeclaration.objects.get_or_create(client_module=cm)
 
-    # Pré-remplissage CVAE N-1
-    if created and declaration.cvae_n_1 == 0:
-        try:
-            annee_precedente = AnneeFiscale.objects.get(annee=cm.annee.annee - 1)
-            cm_prec = ClientModuleFiscal.objects.get(
-                client=cm.client,
-                module__nom="CVAE",
-                annee=annee_precedente
-            )
-            decl_prec = CVAEDeclaration.objects.get(client_module=cm_prec)
-            declaration.cvae_n_1 = decl_prec.total_cvae()
-            declaration.save()
-        except:
-            pass
+    # --- Pré-remplissage CVAE N-1 ---
+    annee_actuelle = cm.annee.annee
+    annee_n_1 = annee_actuelle - 1
 
-    def to_decimal(value):
-        if not value:
+    prev = CVAEDeclaration.objects.filter(
+        client_module__client=cm.client,
+        client_module__annee__annee=annee_n_1
+    ).first()
+
+    if request.method == "GET":
+        if not declaration.cvae_n_1:
+            declaration.cvae_n_1 = prev.total_cvae() if prev else 0
+        declaration.save()
+
+    # --- Nettoyage ---
+    def clean_decimal(value):
+        if not value or value.strip() == "":
             return 0
-        return value.replace(",", ".")
+        value = value.replace(" ", "").replace(",", ".")
+        try:
+            return float(value)
+        except:
+            return 0
 
+    # --- POST ---
     if request.method == "POST":
-        declaration.cvae_n_1 = to_decimal(request.POST.get("cvae_n_1"))
-        declaration.acompte_cvae = to_decimal(request.POST.get("acompte_cvae"))
-        declaration.solde_cvae = to_decimal(request.POST.get("solde_cvae"))
+        declaration.cvae_n_1 = clean_decimal(request.POST.get("cvae_n_1"))
+        declaration.acompte_cvae = clean_decimal(request.POST.get("acompte_cvae"))
+        declaration.solde_cvae = clean_decimal(request.POST.get("solde_cvae"))
 
         declaration.statut_acompte_cvae = request.POST.get("statut_acompte_cvae")
         declaration.statut_solde_cvae = request.POST.get("statut_solde_cvae")
@@ -2144,13 +2144,26 @@ def cvae_saisie(request, client_module_id):
         "client_module": cm,
         "declaration": declaration,
         "total_cvae": total_cvae,
+        "annee_selectionnee": cm.annee,
     })
+
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Prefetch
 
 @login_required
 def cvae_gestion(request, annee_id):
+
+    # 1) Si l'utilisateur change l'année via le SELECT
+    if "annee" in request.GET:
+        nouvelle_annee = request.GET.get("annee")
+        try:
+            annee_obj = AnneeFiscale.objects.get(annee=nouvelle_annee)
+            return redirect("cvae_gestion", annee_id=annee_obj.id)
+        except AnneeFiscale.DoesNotExist:
+            pass  # on ignore si l'année n'existe pas
+
+    # 2) Sinon on continue normalement
     annee = get_object_or_404(AnneeFiscale, id=annee_id)
     annees = AnneeFiscale.objects.all().order_by("-annee")
 
@@ -2161,7 +2174,6 @@ def cvae_gestion(request, annee_id):
         .prefetch_related("cvae_declaration")
     )
 
-    # On s’assure que chaque cm a une déclaration
     for cm in cms:
         if not hasattr(cm, "cvae_declaration"):
             cm.cvae_declaration, _ = CVAEDeclaration.objects.get_or_create(client_module=cm)
@@ -2170,6 +2182,7 @@ def cvae_gestion(request, annee_id):
         "annee": annee,
         "annees": annees,
         "cms": cms,
+        "annee_selectionnee": annee,
     })
 
 # ----------------------------------------------------
@@ -2181,36 +2194,41 @@ def tvs_saisie(request, client_module_id):
     cm = get_object_or_404(ClientModuleFiscal, id=client_module_id)
     declaration, created = TVSDeclaration.objects.get_or_create(client_module=cm)
 
-    # Pré-remplissage TVS N-1
-    if created and declaration.tvs_n_1 == 0:
-        try:
-            annee_prec = AnneeFiscale.objects.get(annee=cm.annee.annee - 1)
-            cm_prec = ClientModuleFiscal.objects.get(
-                client=cm.client,
-                module__nom="TVS",
-                annee=annee_prec
-            )
-            decl_prec = TVSDeclaration.objects.get(client_module=cm_prec)
-            declaration.tvs_n_1 = decl_prec.montant
-            declaration.save()
-        except:
-            pass
+    # --- Pré-remplissage TVS N-1 (logique harmonisée) ---
+    annee_actuelle = cm.annee.annee
+    annee_n_1 = annee_actuelle - 1
 
-    def to_decimal(value):
-        if not value:
+    prev = TVSDeclaration.objects.filter(
+        client_module__client=cm.client,
+        client_module__annee__annee=annee_n_1
+    ).first()
+
+    if request.method == "GET":
+        if not declaration.tvs_n_1:
+            declaration.tvs_n_1 = prev.montant if prev else 0
+        declaration.save()
+
+    # --- Nettoyage des décimaux ---
+    def clean_decimal(value):
+        if not value or value.strip() == "":
             return 0
-        return value.replace(",", ".")
+        value = value.replace(" ", "").replace(",", ".")
+        try:
+            return float(value)
+        except:
+            return 0
 
+    # --- POST ---
     if request.method == "POST":
-        declaration.tvs_n_1 = to_decimal(request.POST.get("tvs_n_1"))
+        declaration.tvs_n_1 = clean_decimal(request.POST.get("tvs_n_1"))
         declaration.vehicule = "vehicule" in request.POST
         declaration.soumis_tvs_n = "soumis_tvs_n" in request.POST
 
-        declaration.formulaire = request.POST.get("formulaire")
-        declaration.montant = to_decimal(request.POST.get("montant"))
+        declaration.formulaire = request.POST.get("formulaire", "")
+        declaration.montant = clean_decimal(request.POST.get("montant"))
 
         declaration.statut_tvs = request.POST.get("statut_tvs")
-        declaration.info_vehicule = request.POST.get("info_vehicule")
+        declaration.info_vehicule = request.POST.get("info_vehicule", "")
 
         declaration.date_achat = request.POST.get("date_achat") or None
         declaration.date_cession = request.POST.get("date_cession") or None
@@ -2226,6 +2244,17 @@ def tvs_saisie(request, client_module_id):
 
 @login_required
 def tvs_gestion(request, annee_id):
+
+    # Gestion du changement d'année via GET
+    if "annee" in request.GET:
+        nouvelle_annee = request.GET.get("annee")
+        try:
+            annee_obj = AnneeFiscale.objects.get(annee=nouvelle_annee)
+            return redirect("tvs_gestion", annee_id=annee_obj.id)
+        except AnneeFiscale.DoesNotExist:
+            pass
+
+    # Affichage normal
     annee = get_object_or_404(AnneeFiscale, id=annee_id)
     annees = AnneeFiscale.objects.all().order_by("-annee")
 
@@ -2244,6 +2273,7 @@ def tvs_gestion(request, annee_id):
         "annee": annee,
         "annees": annees,
         "cms": cms,
+        "annee_selectionnee": annee,
     })
 
 
@@ -2298,10 +2328,22 @@ def desdeb_saisie(request, client_module_id):
         "client_module": cm,
         "declaration": declaration,
         "mois_data": mois_data,
+
     })
 
 @login_required
 def desdeb_gestion(request, annee_id):
+
+    # Gestion du changement d'année via GET
+    if "annee" in request.GET:
+        nouvelle_annee = request.GET.get("annee")
+        try:
+            annee_obj = AnneeFiscale.objects.get(annee=nouvelle_annee)
+            return redirect("desdeb_gestion", annee_id=annee_obj.id)
+        except AnneeFiscale.DoesNotExist:
+            pass
+
+    # Affichage normal
     annee = get_object_or_404(AnneeFiscale, id=annee_id)
     annees = AnneeFiscale.objects.all().order_by("-annee")
 
@@ -2312,7 +2354,6 @@ def desdeb_gestion(request, annee_id):
         .prefetch_related("desdeclaration")
     )
 
-    # Labels des mois
     mois_labels = {
         "janvier": "Janvier",
         "fevrier": "Février",
@@ -2328,7 +2369,6 @@ def desdeb_gestion(request, annee_id):
         "decembre": "Décembre",
     }
 
-    # On prépare les données pour chaque client
     for cm in cms:
         if not hasattr(cm, "desdeclaration"):
             cm.desdeclaration, _ = DESDEBDeclaration.objects.get_or_create(client_module=cm)
@@ -2350,6 +2390,7 @@ def desdeb_gestion(request, annee_id):
         "annees": annees,
         "cms": cms,
         "mois_labels": mois_labels,
+        "annee_selectionnee": annee,
     })
 
 
@@ -2387,10 +2428,22 @@ def dividendes_saisie(request, client_module_id):
     return render(request, "dividendes/dividendes_saisie.html", {
         "client_module": cm,
         "declaration": declaration,
+
     })
 
 @login_required
 def dividendes_gestion(request, annee_id):
+
+    # Gestion du changement d'année via GET
+    if "annee" in request.GET:
+        nouvelle_annee = request.GET.get("annee")
+        try:
+            annee_obj = AnneeFiscale.objects.get(annee=nouvelle_annee)
+            return redirect("dividendes_gestion", annee_id=annee_obj.id)
+        except AnneeFiscale.DoesNotExist:
+            pass
+
+    # Affichage normal
     annee = get_object_or_404(AnneeFiscale, id=annee_id)
     annees = AnneeFiscale.objects.all().order_by("-annee")
 
@@ -2401,14 +2454,29 @@ def dividendes_gestion(request, annee_id):
         .prefetch_related("dividendes_declaration")
     )
 
+    # S'assurer que chaque CM a une déclaration
     for cm in cms:
         if not hasattr(cm, "dividendes_declaration"):
             cm.dividendes_declaration, _ = DividendesDeclaration.objects.get_or_create(client_module=cm)
+
+        # On prépare les champs supplémentaires pour le template
+        decl = cm.dividendes_declaration
+
+        cm.nom = decl.nom
+        cm.montant = decl.montant
+        cm.date_paiement = decl.date_paiement
+        cm.annee_versement = decl.annee_versement
+        cm.statut = decl.statut_dividendes
+
+        # Nouveaux champs
+        cm.date_2777d = decl.date_2777d
+        cm.date_2561 = decl.date_2561
 
     return render(request, "dividendes/dividendes_gestion.html", {
         "annee": annee,
         "annees": annees,
         "cms": cms,
+        "annee_selectionnee": annee,
     })
 
 
@@ -2502,7 +2570,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from .models import (
     UserNote, Todo, Client, SuiviComptable,
-    TVAAnnee, TVAModule, TVAClientAnnee, TVADeclaration
+    TVAAnnee, TVAModule, TVAClientAnnee, TVADeclaration, NotificationPaie
 )
 
 
@@ -2674,7 +2742,13 @@ def user_space(request):
         pct_acceptes = pct_teletransmis = pct_a_envoyer = pct_sans_pastille = pct_rejetes = 0
 
     # ----------------------------------------------------
-    # 5) RENDER
+    # 5) NOTIFICATIONS PAIE
+    # ----------------------------------------------------
+    notifications_paie = NotificationPaie.objects.filter(lu_cabinet=False).order_by("-date")
+
+
+    # ----------------------------------------------------
+    # 6) RENDER
     # ----------------------------------------------------
     return render(request, "user_space/dashboard.html", {
         "user": user,
@@ -2711,6 +2785,9 @@ def user_space(request):
         "pct_a_envoyer": pct_a_envoyer,
         "pct_sans_pastille": pct_sans_pastille,
         "pct_rejetes": pct_rejetes,
+
+        # Notifications paie
+        "notifications_paie": notifications_paie,
     })
 
 
@@ -3409,3 +3486,15 @@ def cloture_client_detail(request, cloture_id):
         "form": form,
     })
 
+# ----------------------------------------------------
+#   MODULE NOTIFICATIONS DASHBOARD DE LA PAIE
+# ----------------------------------------------------
+
+
+
+@login_required
+def notification_paie_lu(request, notif_id):
+    notif = get_object_or_404(NotificationPaie, id=notif_id)
+    notif.lu_cabinet = True
+    notif.save()
+    return JsonResponse({"status": "ok"})
