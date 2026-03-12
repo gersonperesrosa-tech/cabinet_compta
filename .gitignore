@@ -18,6 +18,3 @@ media/
 
 # Local settings (ne jamais envoyer sur Render)
 settings_local.py
-
-# Node / JS (si jamais tu ajoutes du JS buildé)
-node_modules/
