@@ -113,3 +113,18 @@ DEFAULT_FROM_EMAIL = os.environ.get("EMAIL_SENDER")
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+# ============================
+# SECURITE RENDER / HTTPS
+# ============================
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://cabinet-compta.onrender.com",
+]
+
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+# Optionnel mais recommandé
+SECURE_SSL_REDIRECT = True
+
+
