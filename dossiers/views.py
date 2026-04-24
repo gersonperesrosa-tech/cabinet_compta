@@ -2585,22 +2585,9 @@ class CustomLoginView(LoginView):
     template_name = "auth/login.html"
 
     def get_success_url(self):
-        user = self.request.user
-
-        # Staff + Admin
-        if user.is_staff or user.is_superuser:
-            return reverse_lazy("user_space")
-
-        # Client
-        if user.groups.filter(name__iexact="client").exists():
-            return reverse_lazy("paie:paie_client_dashboard")
-
-        # Partenaire
-        if user.groups.filter(name__iexact="partenaire").exists():
-            return reverse_lazy("paie:partenaire_dashboard")
-       
-        # Fallback
-        return reverse_lazy("user_space")
+        # 🔥 Test simple : si la connexion fonctionne,
+        # Django doit te rediriger vers /admin/
+        return "/admin/"
 
 class RegisterView(CreateView):
     form_class = UserCreationForm
