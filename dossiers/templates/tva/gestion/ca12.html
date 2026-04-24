@@ -46,9 +46,9 @@
     <table class="table table-bordered align-middle" id="tvaTable">
         <thead class="table-light">
             <tr>
-                <th data-sort="numero">N° <span class="sort-icon">⬍</span></th>
-                <th data-sort="nom">Client <span class="sort-icon">⬍</span></th>
-                <th data-sort="echeance">Échéance <span class="sort-icon">⬍</span></th>
+                <th data-sort="numero">N° <span class="sort-icon"></span></th>
+                <th data-sort="nom">Client <span class="sort-icon"></span></th>
+                <th data-sort="echeance">Échéance <span class="sort-icon"></span></th>
 
                 <th style="background:#e8f1ff;">TVA N‑1</th>
 
@@ -59,7 +59,7 @@
                 <th style="background:#e9fbe8;">Total TVA année</th>
 
                 <th>Si >1000€</th>
-                <th data-sort="suivi">Suivi comptable <span class="sort-icon">⬍</span></th>
+                <th data-sort="suivi">Suivi comptable <span class="sort-icon"></span></th>
             </tr>
         </thead>
 
@@ -186,5 +186,32 @@ document.getElementById("resetSuiviBtn").addEventListener("click", function () {
     });
 });
 </script>
+
+<!-- Tri dynamique sur toutes les colonnes -->
+<script>
+document.querySelectorAll("table thead th").forEach((header, index) => {
+    header.style.cursor = "pointer";
+
+    header.addEventListener("click", () => {
+        const table = header.closest("table");
+        const tbody = table.querySelector("tbody");
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+
+        const isAsc = header.classList.toggle("asc");
+
+        rows.sort((a, b) => {
+            const aVal = (a.cells[index].innerText || "").toLowerCase();
+            const bVal = (b.cells[index].innerText || "").toLowerCase();
+
+            if (aVal < bVal) return isAsc ? -1 : 1;
+            if (aVal > bVal) return isAsc ? 1 : -1;
+            return 0;
+        });
+
+        rows.forEach(row => tbody.appendChild(row));
+    });
+});
+</script>
+
 
 {% endblock %}

@@ -1,12 +1,20 @@
 from django import forms
-from .models import Client, SuiviComptable, TVA, IS, ClotureClient, ClotureAnnee
+from .models import Client, SuiviComptable, TVA, IS, ClotureClient, ClotureAnnee, User
 
 
 class ClientForm(forms.ModelForm):
 
+    # Champ User ajouté explicitement pour contrôle total
+    user = forms.ModelChoiceField(
+        queryset=User.objects.filter(is_active=True),
+        required=False,
+        label="Utilisateur associé",
+        widget=forms.Select(attrs={"class": "form-select"})
+    )
+
     class Meta:
         model = Client
-        fields = "__all__"   # On garde tout le modèle
+        fields = "__all__"
 
         labels = {
             "numero": "Numéro interne",
@@ -20,7 +28,7 @@ class ClientForm(forms.ModelForm):
             "commentaires": "Notes internes",
             "archive": "Archivé",
 
-            # Labels des modules
+            # Modules
             "module_saisie": "Saisie comptable",
             "module_tva": "TVA",
             "module_cfe": "CFE",
@@ -51,7 +59,7 @@ class ClientForm(forms.ModelForm):
             "commentaires": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
             "archive": forms.CheckboxInput(attrs={"class": "form-check-input"}),
 
-            # Widgets des modules (cases à cocher)
+            # Modules
             "module_saisie": forms.CheckboxInput(attrs={"class": "form-check-input"}),
             "module_tva": forms.CheckboxInput(attrs={"class": "form-check-input"}),
             "module_cfe": forms.CheckboxInput(attrs={"class": "form-check-input"}),
@@ -243,3 +251,33 @@ class ClotureClientForm(forms.ModelForm):
         model = ClotureClient
         fields = "__all__"
         exclude = ["annee", "client", "date_maj", "utilisateur_maj"]
+
+
+from django import forms
+from django.contrib.auth.models import User
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ["first_name", "last_name", "email"]
+
+        widgets = {
+            "first_name": forms.TextInput(attrs={"class": "form-control"}),
+            "last_name": forms.TextInput(attrs={"class": "form-control"}),
+            "email": forms.EmailInput(attrs={"class": "form-control"}),
+        }
+
+
+from django import forms
+from .models import NotificationEmail
+
+class NotificationEmailForm(forms.ModelForm):
+    class Meta:
+        model = NotificationEmail
+        fields = ["event", "email"]
+
+        widgets = {
+            "event": forms.Select(attrs={"class": "form-select"}),
+            "email": forms.EmailInput(attrs={"class": "form-control", "placeholder": "exemple@cabinet.com"}),
+        }
+

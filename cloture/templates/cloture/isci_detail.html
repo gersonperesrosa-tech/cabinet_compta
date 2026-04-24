@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load cloture_tags %}
+{% block content %}
+<section class="section">
+
+<h1 class="mb-4">
+    IS / CI – {{ module.client.nom }} ({{ module.cloture.annee }})
+</h1>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <div class="row g-4">
+
+        <!-- COLONNE GAUCHE -->
+        <div class="col-md-8">
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">IS fait</label>
+                <textarea name="is_fait" class="form-control" rows="2" style="resize:none;">
+{{ module.is_fait|default_if_none:"" }}</textarea>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">IS envoi</label>
+                <textarea name="is_envoi" class="form-control" rows="2" style="resize:none;">
+{{ module.is_envoi|default_if_none:"" }}</textarea>
+            </div>
+
+        </div>
+
+        <!-- COLONNE DROITE -->
+        <div class="col-md-4">
+
+            <div class="p-3 border rounded bg-light">
+
+                <h5 class="mb-3">Statuts</h5>
+
+                <label class="form-label fw-bold">IS fait</label>
+                <select name="statut_is_fait" class="form-select mb-3">
+                    {% for value, label in statuts %}
+                        <option value="{{ value }}" {% if module.statut_is_fait == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label class="form-label fw-bold">IS envoi</label>
+                <select name="statut_is_envoi" class="form-select mb-3">
+                    {% for value, label in statuts %}
+                        <option value="{{ value }}" {% if module.statut_is_envoi == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- STATUT GÉNÉRAL -->
+    <div class="mt-4">
+        <h5 class="fw-bold">Statut général</h5>
+        <select name="statut_general" class="form-select w-50">
+            {% for value, label in statuts %}
+                <option value="{{ value }}" {% if module.statut_general == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <button class="btn btn-primary mt-4">Enregistrer</button>
+
+</form>
+
+</section>
+{% endblock %}

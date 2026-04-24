@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section text-center py-5">
+
+    <div class="card shadow-sm p-5 mx-auto" style="max-width: 600px;">
+        <h1 class="mb-3 text-danger">
+            <i class="bi bi-shield-lock"></i> Accès refusé
+        </h1>
+
+        <p class="lead mb-4">
+            Vous n’avez pas les permissions nécessaires pour accéder à cette page.
+        </p>
+
+        <a href="{% url 'dashboard' %}" class="btn btn-primary">
+            Retour au tableau de bord
+        </a>
+    </div>
+
+</section>
+{% endblock %}

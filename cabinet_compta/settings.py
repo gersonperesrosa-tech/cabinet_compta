@@ -1,6 +1,10 @@
 from pathlib import Path
 import os
 import dj_database_url
+from dotenv import load_dotenv
+
+# Charger le fichier .env
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -22,9 +26,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Apps du projet
-    'cabinet_compta.apps.CabinetComptaConfig',  # IMPORTANT pour charger les signaux
+    'cabinet_compta.apps.CabinetComptaConfig',
+    'widget_tweaks',
     'dossiers',
     'paie',
+    'cloture',
+    'administration',
 ]
 
 MIDDLEWARE = [
@@ -35,6 +42,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
 ]
 
 ROOT_URLCONF = 'cabinet_compta.urls'
@@ -52,6 +61,7 @@ TEMPLATES = [
                 'dossiers.context_processors.last_fiscal_year',
                 'dossiers.context_processors.cloture_context',
                 'cabinet_compta.context_processors.user_role',
+                'cabinet_compta.context_processors.latest_cloture_year',
             ],
         },
     },
@@ -62,8 +72,9 @@ WSGI_APPLICATION = 'cabinet_compta.wsgi.application'
 # DATABASES — local = SQLite, Render = PostgreSQL
 DATABASES = {
     "default": dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        default=os.environ.get("DATABASE_URL"),
         conn_max_age=600,
+        ssl_require=True
     )
 }
 
@@ -85,3 +96,21 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 LOGIN_URL = "/login/"
 LOGOUT_REDIRECT_URL = "/login/"
+
+# ============================================
+# EMAIL — CONFIGURATION SENDINBLUE (BREVO)
+# ============================================
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp-relay.brevo.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+# ⚠️ À REMPLIR AVEC TES INFOS SENDINBLUE
+EMAIL_HOST_USER = os.environ.get("BREVO_SMTP_LOGIN")
+EMAIL_HOST_PASSWORD = os.environ.get("BREVO_SMTP_PASSWORD")
+
+DEFAULT_FROM_EMAIL = os.environ.get("EMAIL_SENDER")
+
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+

@@ -20,13 +20,11 @@
                    class="global-search form-control">
 
             <!-- Bouton Ajouter un client -->
- 
-<a href="{% url 'ajouter_client' %}"
-   class="btn btn-primary"
-   style="white-space: nowrap; height: 38px;">
-    + Ajouter un client
-</a>
-
+            <a href="{% url 'ajouter_client' %}"
+               class="btn btn-primary"
+               style="white-space: nowrap; height: 38px;">
+                + Ajouter un client
+            </a>
 
         </div>
     </div>
@@ -37,66 +35,79 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th data-sort="numero">N°<span class="sort-icon">⬍</span></th>
-                    <th data-sort="nom">Nom <span class="sort-icon">⬍</span></th>
+                    <th data-sort="numero">N°<span class="sort-icon"></span></th>
+                    <th data-sort="nom">Nom <span class="sort-icon"></span></th>
                     <th>Forme juridique</th>
                     <th>Régime d’imposition</th>
                     <th>Régime TVA</th>
-                    <th data-sort="jour_echeance_tva">Jour échéance TVA <span class="sort-icon">⬍</span></th>
+                    <th data-sort="jour_echeance_tva">Jour échéance TVA <span class="sort-icon"></span></th>
                     <th>Périodicité</th>
-                    <th>Modules</th> <!-- ⭐ nouvelle colonne --> 
+
+                    <!-- 🔥 Nouvelle colonne -->
+                    <th>Utilisateur</th>
+
+                    <th>Modules</th>
                     <th></th> <!-- actions -->
                 </tr>
             </thead>
 
-<tbody>
-    {% for client in clients %}
-    <tr style="cursor:pointer;" onclick="window.location.href='{% url 'fiche_client' client.id %}'">
-        <td>{{ client.numero }}</td>
+            <tbody>
+                {% for client in clients %}
+                <tr style="cursor:pointer;" onclick="window.location.href='{% url 'fiche_client' client.id %}'">
+                    <td>{{ client.numero }}</td>
 
-        <td>
-            <a href="{% url 'fiche_client' client.id %}" class="client-link">
-                {{ client.nom }}
-            </a>
-        </td>
+                    <td>
+                        <a href="{% url 'fiche_client' client.id %}" class="client-link">
+                            {{ client.nom }}
+                        </a>
+                    </td>
 
-        <td>{{ client.forme_juridique|default_if_none:"" }}</td>
-        <td>{{ client.regime_imposition|default_if_none:"" }}</td>
-        <td>{{ client.regime_tva|default_if_none:"" }}</td>
-        <td>{{ client.jour_echeance_tva|default_if_none:"" }}</td>
-        <td>{{ client.periodicite|default_if_none:"" }}</td>
+                    <td>{{ client.forme_juridique|default_if_none:"" }}</td>
+                    <td>{{ client.regime_imposition|default_if_none:"" }}</td>
+                    <td>{{ client.regime_tva|default_if_none:"" }}</td>
+                    <td>{{ client.jour_echeance_tva|default_if_none:"" }}</td>
+                    <td>{{ client.periodicite|default_if_none:"" }}</td>
 
-        <td class="text-center">
-            {% if client.module_saisie %}
-                <span class="badge rounded-pill bg-primary">Saisie</span>
-            {% endif %}
-            {% if client.module_paie %}
-                <span class="badge rounded-pill bg-success">Paie</span>
-            {% endif %}
-            {% if client.tva_actuelle %}
-                {% with tva=client.tva_actuelle.0 %}
-                    <span class="badge rounded-pill bg-info">
-                        TVA : {{ tva.module.get_type_display }}
-                    </span>
-                {% endwith %}
-            {% else %}
-                <span class="badge rounded-pill bg-light text-muted">TVA : —</span>
-            {% endif %}
-            {% if client.fiscal_actuel %}
-                {% for mf in client.fiscal_actuel %}
-                    <span class="badge rounded-pill bg-warning text-dark">
-                        {{ mf.module.nom }}
-                    </span>
+                    <!-- 🔥 Nouvelle colonne -->
+                    <td>
+                        {% if client.user %}
+                            <span class="text-muted">{{ client.user.username }}</span>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="text-center">
+                        {% if client.module_saisie %}
+                            <span class="badge rounded-pill bg-primary">Saisie</span>
+                        {% endif %}
+                        {% if client.module_paie %}
+                            <span class="badge rounded-pill bg-success">Paie</span>
+                        {% endif %}
+                        {% if client.tva_actuelle %}
+                            {% with tva=client.tva_actuelle.0 %}
+                                <span class="badge rounded-pill bg-info">
+                                    TVA : {{ tva.module.get_type_display }}
+                                </span>
+                            {% endwith %}
+                        {% else %}
+                            <span class="badge rounded-pill bg-light text-muted">TVA : —</span>
+                        {% endif %}
+                        {% if client.fiscal_actuel %}
+                            {% for mf in client.fiscal_actuel %}
+                                <span class="badge rounded-pill bg-warning text-dark">
+                                    {{ mf.module.nom }}
+                                </span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="badge rounded-pill bg-light text-muted">Fiscal : —</span>
+                        {% endif %}
+                    </td>
+
+                    <td></td>
+                </tr>
                 {% endfor %}
-            {% else %}
-                <span class="badge rounded-pill bg-light text-muted">Fiscal : —</span>
-            {% endif %}
-        </td>
-
-        <td></td>
-    </tr>
-    {% endfor %}
-</tbody>
+            </tbody>
 
         </table>
     </div>
@@ -116,43 +127,29 @@ document.getElementById("global-search").addEventListener("keyup", function() {
 });
 </script>
 
-
-
+<!-- Tri dynamique -->
 <script>
-document.addEventListener("submit", function(e) {
-    if (e.target.id === "clientForm") {
-        e.preventDefault();
+document.querySelectorAll("table thead th").forEach((header, index) => {
+    header.style.cursor = "pointer";
 
-        let form = e.target;
-        let url = form.action || window.location.href;
+    header.addEventListener("click", () => {
+        const table = header.closest("table");
+        const tbody = table.querySelector("tbody");
+        const rows = Array.from(tbody.querySelectorAll("tr"));
 
-        fetch(url, {
-            method: "POST",
-            body: new FormData(form),
-            headers: { "X-Requested-With": "XMLHttpRequest" }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                let modal = bootstrap.Modal.getInstance(document.getElementById("clientModal"));
-                modal.hide();
-                window.location.reload();
-            }
+        const isAsc = header.classList.toggle("asc");
+
+        rows.sort((a, b) => {
+            const aVal = (a.cells[index].innerText || "").toLowerCase();
+            const bVal = (b.cells[index].innerText || "").toLowerCase();
+
+            if (aVal < bVal) return isAsc ? -1 : 1;
+            if (aVal > bVal) return isAsc ? 1 : -1;
+            return 0;
         });
-    }
-});
-</script>
 
-
-
-<script>
-document.addEventListener("click", function(e) {
-    if (e.target.matches("[data-bs-dismiss='modal'], .btn-close")) {
-        document.body.classList.remove("modal-open");
-
-        // Supprimer les backdrops restants
-        document.querySelectorAll(".modal-backdrop").forEach(el => el.remove());
-    }
+        rows.forEach(row => tbody.appendChild(row));
+    });
 });
 </script>
 

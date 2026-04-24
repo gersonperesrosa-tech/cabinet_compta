@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% load custom_filters cloture_tags %}
+{% load cloture_tags %}
+
+
+{% block content %}
+
+<section class="section">
+
+
+<div class="container py-4">
+
+    <!-- TITRE PRINCIPAL -->
+    <h1 class="mb-4">
+        Dossier client : <strong>{{ client.nom }}</strong> — {{ annee }}
+    </h1>
+
+<!-- INFORMATIONS CLIENT -->
+<h3 class="mt-4">Informations du client</h3>
+
+<table class="table table-bordered align-middle">
+    <tr>
+        <th style="width: 200px;">Numéro</th>
+        <td>{{ client.numero }}</td>
+    </tr>
+    <tr>
+        <th>Forme juridique</th>
+        <td>{{ client.forme_juridique }}</td>
+    </tr>
+    <tr>
+        <th>Régime d'imposition</th>
+        <td>{{ client.get_regime_imposition_display }}</td>
+    </tr>
+    <tr>
+        <th>Régime TVA</th>
+        <td>{{ client.get_regime_tva_display }}</td>
+    </tr>
+    <tr>
+        <th>Date de clôture</th>
+        <td>{{ client.date_cloture }}</td>
+    </tr>
+</table>
+
+    <!-- =============================== -->
+    <!-- SUIVI COMPTABLE — TABLEAU HORIZONTAL -->
+    <!-- =============================== -->
+
+    <h3 class="mt-5">Suivi comptable</h3>
+
+    <table class="table table-bordered align-middle text-center">
+        <thead class="table-light">
+            <tr>
+                <th>Dernière MAJ</th>
+                <th>Dernier mois</th>
+                <th>Période</th>
+                <th>Vérifié</th>
+                <th>CA actuel</th>
+                <th>Saisie en cours</th>
+                <th>Saisie terminée</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% if suivi_comptable %}
+            <tr>
+                <td>{{ suivi_comptable.date_maj_compta }}</td>
+                <td>{{ suivi_comptable.dernier_mois_traite }}</td>
+                <td>{{ suivi_comptable.periode_traitement }}</td>
+                <td>{{ suivi_comptable.verifie|yesno:"Oui,Non" }}</td>
+                <td>{{ suivi_comptable.ca_actuel }} €</td>
+                <td>{{ suivi_comptable.saisie_en_cours|yesno:"Oui,Non" }}</td>
+                <td>{{ suivi_comptable.saisie_terminee|yesno:"Oui,Non" }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7"><em>Aucune donnée</em></td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+
+    <!-- =============================== -->
+    <!-- TVA — EXACTEMENT COMME PAGE CA3M -->
+    <!-- =============================== -->
+
+    {% if tva_client %}
+    <h3 class="mt-5">
+        Gestion TVA – Régime {{ tva_client.module.get_type_display }}
+    </h3>
+
+    {% if tva_declaration %}
+    <table class="table table-bordered align-middle mt-3">
+        <thead class="table-light text-center">
+            <tr>
+                <th>Jan</th><th>Fév</th><th>Mar</th><th>Avr</th><th>Mai</th><th>Juin</th>
+                <th>Juil</th><th>Août</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Déc</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr>
+                {% for montant, statut in tva_declaration.get_mensuels %}
+                <td>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span>{{ montant|default:" " }}</span>
+                        {% include "tva/partials/statut_badge.html" with statut=statut %}
+                    </div>
+                </td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+    {% else %}
+        <em>Aucune déclaration TVA pour {{ annee }}.</em>
+    {% endif %}
+    {% endif %}
+
+
+    <!-- =============================== -->
+    <!-- MODULES FISCAUX — EXACTEMENT COMME TES PAGES -->
+    <!-- =============================== -->
+
+    <h3 class="mt-5">Modules fiscaux</h3>
+
+    <table class="table table-bordered align-middle text-center">
+        <thead class="table-light">
+            <tr>
+                <th>IS</th>
+                <th>CFE</th>
+                <th>CVAE</th>
+                <th>TVS</th>
+                <th>DESDEB</th>
+                <th>Dividendes</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr>
+                <td>
+                    {{ is_decl.total_is|default:"—" }}
+                    {% if is_decl %}
+                        {% include "partials/statut_badge.html" with statut=is_decl.statut_acompte_1 %}
+                    {% endif %}
+                </td>
+
+                <td>
+                    {{ cfe_decl.total_cfe|default:"—" }}
+                    {% if cfe_decl %}
+                        {% include "partials/statut_badge.html" with statut=cfe_decl.statut_acompte %}
+                    {% endif %}
+                </td>
+
+                <td>
+                    {{ cvae_decl.total_cvae|default:"—" }}
+                    {% if cvae_decl %}
+                        {% include "partials/statut_badge.html" with statut=cvae_decl.statut_general %}
+                    {% endif %}
+                </td>
+
+                <td>
+                    {{ tvs_decl.montant|default:"—" }}
+                    {% if tvs_decl %}
+                        {% include "partials/statut_badge.html" with statut=tvs_decl.statut_general %}
+                    {% endif %}
+                </td>
+
+                <td>
+                    {{ desdeb_decl.responsable|default:"—" }}
+                    {% if desdeb_decl %}
+                        {% include "partials/statut_badge.html" with statut=desdeb_decl.statut_general %}
+                    {% endif %}
+                </td>
+
+                <td>
+                    {{ dividendes_decl.montant|default:"—" }}
+                    {% if dividendes_decl %}
+                        {% include "partials/statut_badge.html" with statut=dividendes_decl.statut_general %}
+                    {% endif %}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- =============================== -->
+    <!-- CLOTURE — EXACTEMENT COMME TA VUE GLOBALE -->
+    <!-- =============================== -->
+
+    <h3 class="mt-5">Clôture {{ annee }}</h3>
+
+    <table class="table table-bordered align-middle text-center">
+        <thead class="table-light">
+            <tr>
+                <th>Révision</th>
+                <th>Plaquettes</th>
+                <th>CA12</th>
+                <th>IS/CI</th>
+                <th>Déclarations</th>
+                <th>Mission</th>
+                <th>Juridique</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr>
+                <td>{{ revision.statut_general|badge|safe }}</td>
+                <td>{{ plaquettes.statut_general|badge|safe }}</td>
+                <td>{{ ca12.statut_general|badge|safe }}</td>
+                <td>{{ isci.statut_general|badge|safe }}</td>
+                <td>{{ declarations.statut_general|badge|safe }}</td>
+                <td>{{ mission.statut_general|badge|safe }}</td>
+                <td>{{ juridique.statut_general|badge|safe }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+</div>
+
+{% endblock %}

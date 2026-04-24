@@ -85,7 +85,7 @@
                     </div>
 
                     <div>
-                        <label class="form-label">Régime d’imposition</label>
+                        <label class="form-label">Régime d’imposition pour le suivi</label>
                         {{ form.regime_imposition }}
                     </div>
 
@@ -98,6 +98,13 @@
                         <label class="form-label">Périodicité de saisie</label>
                         {{ form.periodicite }}
                     </div>
+
+                    <!-- 🔥 AJOUT DU CHAMP USER -->
+                    <div>
+                        <label class="form-label">Utilisateur du client pour la paie</label>
+                        {{ form.user }}
+                    </div>
+
                 </div>
             </div>
 
@@ -173,23 +180,21 @@
         <!-- COLONNE DROITE -->
         <div class="col-lg-5 col-md-12">
 
-<!-- SECTION 4 : Modules activés -->
-<div class="form-section">
-    <h5>Modules activés</h5>
+            <!-- SECTION 4 : Modules activés -->
+            <div class="form-section">
+                <h5>Modules activés</h5>
 
-    <div class="form-grid">
+                <div class="form-grid">
+                    <label class="form-label">{{ form.module_saisie }} Saisie comptable</label>
+                    <label class="form-label">{{ form.module_paie }} Module Paie</label>
+                </div>
 
-        <label class="form-label">{{ form.module_saisie }} Saisie comptable</label>
-        <label class="form-label">{{ form.module_paie }} Module Paie</label>
-
-    </div>
-
-    <div class="mt-3">
-        <a href="{% url 'dp_saisie' client.id %}" class="btn btn-outline-secondary w-100">
-            📁 Dossier Permanent
-        </a>
-    </div>
-</div>
+                <div class="mt-3">
+                    <a href="{% url 'dp_saisie' client.id %}" class="btn btn-outline-secondary w-100">
+                        📁 Dossier Permanent
+                    </a>
+                </div>
+            </div>
 
             <!-- SECTION 5 : Archivage -->
             <div class="form-section">
@@ -197,7 +202,7 @@
                 <label class="form-label">{{ form.archive }} Archivé</label>
             </div>
 
-            <!-- BOUTON NOTES PRIVÉES (PAGE COMPLÈTE) -->
+            <!-- BOUTON NOTES PRIVÉES -->
             <div class="form-section">
                 <a href="{% url 'client_notes' client.id %}" class="btn btn-outline-secondary w-100">
                     📝 Notes privées

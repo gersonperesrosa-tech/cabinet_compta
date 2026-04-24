@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+
+    <h2 class="mb-4">Modifier le tag</h2>
+
+    <a href="{% url 'manage_kanban_tags' %}" class="btn btn-secondary mb-3">
+        ← Retour à la gestion des tags
+    </a>
+
+    <form method="POST" class="card p-4 shadow-sm">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label class="form-label">Nom</label>
+            <input type="text" name="name" value="{{ tag.name }}" class="form-control">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Couleur</label>
+            <input type="color" name="color" value="{{ tag.color }}" class="form-control form-control-color">
+        </div>
+
+        <div class="text-end">
+            <button class="btn btn-primary">Enregistrer</button>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

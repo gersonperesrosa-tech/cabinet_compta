@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% load cloture_tags %}
+
+{% block content %}
+<section class="section">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <h1 class="mb-4">
+        Gestion Juridique
+        {% if selected_year %}
+            ({{ selected_year }})
+        {% else %}
+            (Toutes années)
+        {% endif %}
+    </h1>
+
+    <div class="d-flex align-items-center gap-3">
+
+        <!-- Recherche -->
+        <input id="searchInput" type="text" class="form-control" 
+               style="width: 250px;" placeholder="Rechercher un client...">
+
+        <!-- Sélecteur d'année -->
+        <form method="GET" class="m-0">
+            <select name="annee" class="form-select" onchange="this.form.submit()">
+                <option value="">Toutes les années</option>
+                {% for an in annees %}
+                    <option value="{{ an.annee }}" {% if selected_year == an.annee|stringformat:"s" %}selected{% endif %}>
+                        {{ an.annee }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+
+    </div>
+
+</div>
+
+<table id="juridiqueTable" class="table table-hover align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>N°</th>
+            <th>Client</th>
+            <th>Juridique fait</th>
+            <th>Envoi client</th>
+            <th>Retour client</th>
+            <th>Envoi greffe</th>
+            <th>Validation greffe</th>
+            <th>Statut général</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for module in modules %}
+        <tr>
+
+            <!-- ID client -->
+            <td data-sort="{{ module.client.id }}">
+                {{ module.client.id }}
+            </td>
+
+            <!-- Nom client -->
+            <td data-sort="{{ module.client.nom|lower }}" class="fw-semibold">
+                <a href="{% url 'juridique_detail' module.id %}" class="text-decoration-none">
+                    {{ module.client.nom }}
+                </a>
+            </td>
+
+            <!-- Juridique fait -->
+            <td data-sort="{{ module.statut_juridique_fait }}">
+                <span class="text-muted small">{{ module.juridique_fait|truncate10 }}</span>
+                {{ module.statut_juridique_fait|badge|safe }}
+            </td>
+
+            <!-- Envoi client -->
+            <td data-sort="{{ module.statut_juridique_envoi_client }}">
+                <span class="text-muted small">{{ module.juridique_envoi_client|truncate10 }}</span>
+                {{ module.statut_juridique_envoi_client|badge|safe }}
+            </td>
+
+            <!-- Retour client -->
+            <td data-sort="{{ module.statut_retour_client }}">
+                <span class="text-muted small">{{ module.retour_client|truncate10 }}</span>
+                {{ module.statut_retour_client|badge|safe }}
+            </td>
+
+            <!-- Envoi greffe -->
+            <td data-sort="{{ module.statut_envoi_greffe }}">
+                <span class="text-muted small">{{ module.envoi_greffe|truncate10 }}</span>
+                {{ module.statut_envoi_greffe|badge|safe }}
+            </td>
+
+            <!-- Validation greffe -->
+            <td data-sort="{{ module.statut_validation_greffe }}">
+                <span class="text-muted small">{{ module.validation_greffe|truncate10 }}</span>
+                {{ module.statut_validation_greffe|badge|safe }}
+            </td>
+
+            <!-- Statut général -->
+            <td data-sort="{{ module.statut_general }}">
+                {{ module.statut_general|badge|safe }}
+            </td>
+
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Recherche dynamique -->
+<script>
+document.getElementById("searchInput").addEventListener("keyup", function() {
+    let filter = this.value.toLowerCase();
+    let rows = document.querySelectorAll("#juridiqueTable tbody tr");
+
+    rows.forEach(row => {
+        let clientName = row.cells[1].innerText.toLowerCase();
+        row.style.display = clientName.includes(filter) ? "" : "none";
+    });
+});
+</script>
+
+<!-- Tri dynamique sur toutes les colonnes -->
+<script>
+document.querySelectorAll("#juridiqueTable th").forEach((header, index) => {
+    header.style.cursor = "pointer";
+
+    header.addEventListener("click", () => {
+        const table = header.closest("table");
+        const tbody = table.querySelector("tbody");
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+
+        const isAsc = header.classList.toggle("asc");
+
+        rows.sort((a, b) => {
+            const aVal = a.cells[index].dataset.sort || a.cells[index].innerText.toLowerCase();
+            const bVal = b.cells[index].dataset.sort || b.cells[index].innerText.toLowerCase();
+
+            if (aVal < bVal) return isAsc ? -1 : 1;
+            if (aVal > bVal) return isAsc ? 1 : -1;
+            return 0;
+        });
+
+        rows.forEach(row => tbody.appendChild(row));
+    });
+});
+</script>
+
+</section>
+{% endblock %}

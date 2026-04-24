@@ -3,6 +3,11 @@ from django.contrib.auth.decorators import login_required
 from paie.models import Client, PaieMois, Salarie, VariablePaie
 from dossiers.models import NotificationPaie
 from django.utils import timezone
+from dossiers.notifications import (
+    envoyer_notifications_bs,
+    envoyer_notifications_dsn,
+)
+
 
 
 @login_required
@@ -151,6 +156,9 @@ def partenaire_bs_fait(request, paie_mois_id):
         paie_mois.date_bs_fait = timezone.now()
         paie_mois.save()
 
+        # 📧 Envoi email BS
+        envoyer_notifications_bs(paie_mois)
+
     return redirect("paie:partenaire_variables_mois", paie_mois_id=paie_mois.id)
 
 
@@ -162,6 +170,9 @@ def partenaire_dsn_faite(request, paie_mois_id):
         paie_mois.dsn_faite = True
         paie_mois.date_dsn_faite = timezone.now()
         paie_mois.save()
+
+        # 📧 Envoi email DSN
+        envoyer_notifications_dsn(paie_mois)
 
     return redirect("paie:partenaire_variables_mois", paie_mois_id=paie_mois.id)
 

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+
+<h1 class="mb-4">Administration</h1>
+
+<div class="row">
+
+    <!-- Section Utilisateurs -->
+    <div class="col-md-6 mb-4">
+        <div class="card p-4">
+            <h4 class="mb-3">Utilisateurs</h4>
+
+            <a href="{% url 'admin_users_list' %}" class="btn btn-primary w-100 mb-2">
+                Liste des utilisateurs
+            </a>
+
+            <a href="{% url 'admin_groups_list' %}" class="btn btn-outline-primary w-100">
+                Liste des groupes
+            </a>
+        </div>
+    </div>
+
+    <!-- Section Configurations -->
+    <div class="col-md-6 mb-4">
+        <div class="card p-4">
+            <h4 class="mb-3">Configurations</h4>
+
+            <a href="{% url 'notification_email_settings' %}" class="btn btn-primary w-100">
+                Paramétrage des emails
+            </a>
+
+<a href="{% url 'email_logs_list' %}" class="btn btn-outline-primary w-100">
+    Historique des emails
+</a>
+
+        </div>
+    </div>
+
+</div>
+
+</section>
+{% endblock %}

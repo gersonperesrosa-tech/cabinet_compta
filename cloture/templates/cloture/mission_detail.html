@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load cloture_tags %}
+{% block content %}
+<section class="section">
+
+<h1 class="mb-4">
+    Mission – {{ module.client.nom }} ({{ module.cloture.annee }})
+</h1>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <div class="row g-4">
+
+        <!-- COLONNE GAUCHE -->
+        <div class="col-md-8">
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">LAB / Maintien</label>
+                <textarea name="lab_maintien" class="form-control" rows="2" style="resize:none;">
+{{ module.lab_maintien|default_if_none:"" }}</textarea>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">Dossier de travail</label>
+                <textarea name="dossier_travail" class="form-control" rows="2" style="resize:none;">
+{{ module.dossier_travail|default_if_none:"" }}</textarea>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">Attestation</label>
+                <textarea name="attestation" class="form-control" rows="2" style="resize:none;">
+{{ module.attestation|default_if_none:"" }}</textarea>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">CR Mission</label>
+                <textarea name="cr_mission" class="form-control" rows="2" style="resize:none;">
+{{ module.cr_mission|default_if_none:"" }}</textarea>
+            </div>
+
+        </div>
+
+        <!-- COLONNE DROITE -->
+        <div class="col-md-4">
+
+            <div class="p-3 border rounded bg-light">
+
+                <h5 class="mb-3">Statuts</h5>
+
+                <label class="form-label fw-bold">LAB / Maintien</label>
+                <select name="statut_lab_maintien" class="form-select mb-3">
+                    {% for value, label in statuts %}
+                        <option value="{{ value }}" {% if module.statut_lab_maintien == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label class="form-label fw-bold">Dossier de travail</label>
+                <select name="statut_dossier_travail" class="form-select mb-3">
+                    {% for value, label in statuts %}
+                        <option value="{{ value }}" {% if module.statut_dossier_travail == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label class="form-label fw-bold">Attestation</label>
+                <select name="statut_attestation" class="form-select mb-3">
+                    {% for value, label in statuts %}
+                        <option value="{{ value }}" {% if module.statut_attestation == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label class="form-label fw-bold">CR Mission</label>
+                <select name="statut_cr_mission" class="form-select mb-3">
+                    {% for value, label in statuts %}
+                        <option value="{{ value }}" {% if module.statut_cr_mission == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- STATUT GÉNÉRAL -->
+    <div class="mt-4">
+        <h5 class="fw-bold">Statut général</h5>
+        <select name="statut_general" class="form-select w-50">
+            {% for value, label in statuts %}
+                <option value="{{ value }}" {% if module.statut_general == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <button class="btn btn-primary mt-4">Enregistrer</button>
+
+</form>
+
+</section>
+{% endblock %}

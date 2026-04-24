@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="m-0">Gestion des utilisateurs</h1>
+
+    <div class="d-flex gap-2">
+        <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary">
+            ← Retour à l'administration
+        </a>
+
+        <a href="{% url 'admin_user_add' %}" class="btn btn-primary">
+            Ajouter un utilisateur
+        </a>
+    </div>
+</div>
+
+<table class="table table-hover align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>Nom</th>
+            <th>Prénom</th>
+            <th>Utilisateur</th>
+            <th>Email</th>
+            <th>Groupe</th>
+            <th>Actif</th>
+            <th>Dernière connexion</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for u in users %}
+        <tr>
+
+            <!-- Nom -->
+            <td>
+                {% if u.last_name %}
+                    {{ u.last_name }}
+                {% else %}
+                    <span class="text-muted">—</span>
+                {% endif %}
+            </td>
+
+            <!-- Prénom -->
+            <td>
+                {% if u.first_name %}
+                    {{ u.first_name }}
+                {% else %}
+                    <span class="text-muted">—</span>
+                {% endif %}
+            </td>
+
+            <!-- Nom d'utilisateur -->
+            <td>{{ u.username }}</td>
+
+            <!-- Email -->
+            <td>{{ u.email }}</td>
+
+            <!-- Groupe -->
+            <td>
+                {% for g in u.groups.all %}
+                    <span class="badge bg-secondary">{{ g.name }}</span>
+                {% empty %}
+                    <span class="text-muted">Aucun</span>
+                {% endfor %}
+            </td>
+
+            <!-- Actif -->
+            <td>
+                {% if u.is_active %}
+                    <span class="badge bg-success">Actif</span>
+                {% else %}
+                    <span class="badge bg-danger">Inactif</span>
+                {% endif %}
+            </td>
+
+            <!-- Dernière connexion -->
+            <td>{{ u.last_login|default:"—" }}</td>
+
+            <!-- Actions -->
+            <td>
+                <a href="{% url 'admin_user_edit' u.id %}" class="btn btn-sm btn-outline-primary">Modifier</a>
+                <a href="{% url 'admin_user_toggle' u.id %}" class="btn btn-sm btn-outline-warning">Activer/Désactiver</a>
+
+                <a href="{% url 'admin_user_delete' u.id %}" 
+                   class="btn btn-sm btn-outline-danger"
+                   onclick="return confirm('Supprimer cet utilisateur ?');">
+                   Supprimer
+                </a>
+            </td>
+
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</section>
+<!-- Tri dynamique sur toutes les colonnes -->
+<script>
+document.querySelectorAll("table thead th").forEach((header, index) => {
+    header.style.cursor = "pointer";
+
+    header.addEventListener("click", () => {
+        const table = header.closest("table");
+        const tbody = table.querySelector("tbody");
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+
+        const isAsc = header.classList.toggle("asc");
+
+        rows.sort((a, b) => {
+            const aVal = (a.cells[index].innerText || "").toLowerCase();
+            const bVal = (b.cells[index].innerText || "").toLowerCase();
+
+            if (aVal < bVal) return isAsc ? -1 : 1;
+            if (aVal > bVal) return isAsc ? 1 : -1;
+            return 0;
+        });
+
+        rows.forEach(row => tbody.appendChild(row));
+    });
+});
+</script>
+{% endblock %}

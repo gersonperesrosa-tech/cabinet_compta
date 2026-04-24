@@ -8,6 +8,10 @@ urlpatterns = [
     path('', CustomLoginView.as_view(), name='login'),
     path('dossiers/', include('dossiers.urls')),
     path('paie/', include('paie.urls')),
+    path("cloture/", include("cloture.urls")),
+    path("admin-panel/", include("administration.urls")),
+
+
 ]
 
 from django.conf import settings

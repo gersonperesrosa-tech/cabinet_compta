@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="section">
+
+    <h3 class="mb-4">Mon profil</h3>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-section">
+            <h5>Informations personnelles</h5>
+
+            <div class="form-grid">
+                <div>
+                    <label class="form-label">Prénom</label>
+                    {{ form.first_name }}
+                </div>
+
+                <div>
+                    <label class="form-label">Nom</label>
+                    {{ form.last_name }}
+                </div>
+
+                <div style="grid-column: span 2;">
+                    <label class="form-label">Email</label>
+                    {{ form.email }}
+                </div>
+            </div>
+        </div>
+
+        <div class="page-footer-fixed">
+            <a href="{% url 'change_password' %}" class="btn btn-outline-secondary me-2">
+                🔐 Changer mon mot de passe
+            </a>
+            <button type="submit" class="btn btn-primary px-4">Enregistrer</button>
+        </div>
+
+    </form>
+
+</section>
+
+{% endblock %}

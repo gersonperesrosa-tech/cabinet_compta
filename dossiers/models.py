@@ -1301,3 +1301,45 @@ class NotificationPaie(models.Model):
 
     def __str__(self):
         return f"Le client {self.client.nom} a validé un mois de paie"
+
+
+class NotificationPaieLu(models.Model):
+    notification = models.ForeignKey(NotificationPaie, on_delete=models.CASCADE)
+    user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
+    date_lecture = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("notification", "user")
+
+    def __str__(self):
+        return f"{self.user} a lu {self.notification}"
+
+
+# -------------------------------
+#   CONFIGURATIONS DES MAILS A ENVOYER
+# -------------------------------
+
+from django.db import models
+
+class NotificationEmail(models.Model):
+    EVENT_CHOICES = [
+        ("PAIE_VALIDEE", "Validation du mois de paie"),
+        ("BS_FAIT", "Bulletins de salaire faits"),
+        ("DSN_FAITE", "DSN faite"),
+    ]
+
+    event = models.CharField(max_length=50, choices=EVENT_CHOICES)
+    email = models.EmailField()
+
+    def __str__(self):
+        return f"{self.email} ({self.get_event_display()})"
+
+class EmailLog(models.Model):
+    event = models.CharField(max_length=50)
+    destinataire = models.EmailField()
+    date_envoi = models.DateTimeField(auto_now_add=True)
+    statut = models.CharField(max_length=20, default="envoyé")  # ou "échec"
+    message = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.event} → {self.destinataire} ({self.date_envoi})"

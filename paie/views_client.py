@@ -3,8 +3,7 @@ from django.contrib.auth.decorators import login_required
 from paie.models import PaieMois, Salarie, VariablePaie
 from dossiers.models import NotificationPaie
 from paie.forms import VariablePaieForm
-
-
+from dossiers.notifications import envoyer_notifications_paie
 
 
 
@@ -146,7 +145,7 @@ def valider_mois(request, mois_id):
         mois.date_validation_client = timezone.now()
         mois.save()
 
-        # 🔔 Notification pour le cabinet
+        # 🔔 Notification interne
         NotificationPaie.objects.create(
             client=mois.client,
             paie_mois=mois,
@@ -164,13 +163,16 @@ def valider_mois(request, mois_id):
     mois.date_validation_client = timezone.now()
     mois.save()
 
-    # 🔔 Notification pour le cabinet
+    # 🔔 Notification interne
     NotificationPaie.objects.create(
         client=mois.client,
         paie_mois=mois,
         lu_cabinet=False,
         lu_partenaire=False
     )
+
+    # 📧 Envoi email (MANQUAIT ICI)
+    envoyer_notifications_paie(mois)
 
     return redirect("paie:client_mois_detail", mois_id=mois.id)
 

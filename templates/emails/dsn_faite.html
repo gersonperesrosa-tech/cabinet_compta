@@ -1,0 +1,15 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+
+<p>Bonjour,</p>
+
+<p>
+La DSN du mois <strong>{{ mois.mois }}/{{ mois.annee }}</strong> a été validée.
+</p>
+
+<p style="margin-top:25px;color:#666;font-size:14px;">
+Le dossier est maintenant complet pour ce mois.
+</p>
+
+{% endblock %}

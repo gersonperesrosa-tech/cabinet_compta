@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2 class="mb-4">Clôture {{ cloture.annee }}</h2>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <a href="{% url 'cloture_add_clients' cloture.id %}" class="btn btn-primary">
+        Ajouter des clients
+    </a>
+</div>
+
+<table class="table table-hover align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>N°</th>
+            <th>Client</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for item in clients_data %}
+        <tr>
+
+            <td>
+                {{ item.client.id }}
+            </td>
+
+            <!-- Nom du client -->
+            <td>{{ item.client.nom }}</td>
+
+
+            <!-- Bouton retirer -->
+            <td>
+                <a href="{% url 'cloture_remove_client' cloture.id item.client.id %}"
+                   class="btn btn-sm btn-outline-danger">
+                    Retirer
+                </a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3" class="text-center text-muted py-4">
+                Aucun client associé à cette année.
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

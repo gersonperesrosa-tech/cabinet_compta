@@ -1,0 +1,16 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+
+<p>Bonjour,</p>
+
+<p>
+Le client <strong>{{ mois.client }}</strong> a validé le mois de paie
+<strong>{{ mois.mois }}/{{ mois.annee }}</strong>.
+</p>
+
+<p style="margin-top:25px;color:#666;font-size:14px;">
+Vous pouvez maintenant poursuivre le traitement dans votre espace cabinet.
+</p>
+
+{% endblock %}

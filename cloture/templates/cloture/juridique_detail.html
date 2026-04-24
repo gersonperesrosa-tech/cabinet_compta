@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% load cloture_tags %}
+{% block content %}
+<section class="section">
+
+<h1 class="mb-4">
+    Juridique – {{ module.client.nom }} ({{ module.cloture.annee }})
+</h1>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <div class="row g-4">
+
+        <!-- COLONNE GAUCHE -->
+        <div class="col-md-8">
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">Juridique fait</label>
+                <textarea name="juridique_fait" class="form-control" rows="2" style="resize:none;">
+{{ module.juridique_fait|default_if_none:"" }}</textarea>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">Juridique envoyé client</label>
+                <textarea name="juridique_envoi_client" class="form-control" rows="2" style="resize:none;">
+{{ module.juridique_envoi_client|default_if_none:"" }}</textarea>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">Retour client</label>
+                <textarea name="retour_client" class="form-control" rows="2" style="resize:none;">
+{{ module.retour_client|default_if_none:"" }}</textarea>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">Envoi greffe</label>
+                <textarea name="envoi_greffe" class="form-control" rows="2" style="resize:none;">
+{{ module.envoi_greffe|default_if_none:"" }}</textarea>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">Validation greffe</label>
+                <textarea name="validation_greffe" class="form-control" rows="2" style="resize:none;">
+{{ module.validation_greffe|default_if_none:"" }}</textarea>
+            </div>
+
+        </div>
+
+        <!-- COLONNE DROITE -->
+        <div class="col-md-4">
+
+            <div class="p-3 border rounded bg-light">
+
+                <h5 class="mb-3">Statuts</h5>
+
+                <label class="form-label fw-bold">Juridique fait</label>
+                <select name="statut_juridique_fait" class="form-select mb-3">
+                    {% for value, label in statuts %}
+                        <option value="{{ value }}" {% if module.statut_juridique_fait == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label class="form-label fw-bold">Juridique envoyé client</label>
+                <select name="statut_juridique_envoi_client" class="form-select mb-3">
+                    {% for value, label in statuts %}
+                        <option value="{{ value }}" {% if module.statut_juridique_envoi_client == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label class="form-label fw-bold">Retour client</label>
+                <select name="statut_retour_client" class="form-select mb-3">
+                    {% for value, label in statuts %}
+                        <option value="{{ value }}" {% if module.statut_retour_client == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label class="form-label fw-bold">Envoi greffe</label>
+                <select name="statut_envoi_greffe" class="form-select mb-3">
+                    {% for value, label in statuts %}
+                        <option value="{{ value }}" {% if module.statut_envoi_greffe == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label class="form-label fw-bold">Validation greffe</label>
+                <select name="statut_validation_greffe" class="form-select mb-3">
+                    {% for value, label in statuts %}
+                        <option value="{{ value }}" {% if module.statut_validation_greffe == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- STATUT GÉNÉRAL -->
+    <div class="mt-4">
+        <h5 class="fw-bold">Statut général</h5>
+        <select name="statut_general" class="form-select w-50">
+            {% for value, label in statuts %}
+                <option value="{{ value }}" {% if module.statut_general == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <button class="btn btn-primary mt-4">Enregistrer</button>
+
+</form>
+
+</section>
+{% endblock %}

@@ -9,7 +9,7 @@ from django.http import HttpResponse
 
 from .models import Client, SuiviComptable, TVA, IS
 from .forms import ClientForm, SuiviComptableForm, TVAForm, ISForm, ClotureClientForm
-from .models import TVAAnnee, TVAModule, TVAClientAnnee, TVADeclaration, TVSDeclaration, DESDEBDeclaration, DividendesDeclaration, DPDeclaration, NoteTag, NoteCategorie, ClientNote, KanbanColumn, KanbanCard, KanbanTag, KanbanCardTag, ClotureAnnee, ClotureClient, NotificationPaie
+from .models import TVAAnnee, TVAModule, TVAClientAnnee, TVADeclaration, TVSDeclaration, DESDEBDeclaration, DividendesDeclaration, DPDeclaration, NoteTag, NoteCategorie, ClientNote, KanbanColumn, KanbanCard, KanbanTag, KanbanCardTag, ClotureAnnee, ClotureClient, NotificationPaie, NotificationPaieLu
 
 
 def home(request):
@@ -41,15 +41,25 @@ from .models import (
 
 @login_required
 def liste_clients(request):
-    # Tri alphabétique insensible à la casse
-    clients = Client.objects.filter(archive=False).order_by(Lower("nom"))
+
+    # --- Sécurité d'accès ---
+    if request.user.is_superuser or request.user.is_staff:
+        # Staff / superuser → accès total
+        clients = Client.objects.filter(archive=False)
+
+    elif Client.objects.filter(user=request.user).exists():
+        # Client simple → accès uniquement à son client
+        clients = Client.objects.filter(user=request.user, archive=False)
+
+    else:
+        return redirect("access_denied")
+
+    # --- Préchargement optimisé ---
     annee_en_cours = datetime.now().year
 
-    # Récupération des objets année TVA et année fiscale
     tva_annee = TVAAnnee.objects.filter(annee=annee_en_cours).first()
     fiscale_annee = AnneeFiscale.objects.filter(annee=annee_en_cours).first()
 
-    # Préchargement optimisé TVA + Fiscalité
     clients = clients.prefetch_related(
         Prefetch(
             "tvaclientannee_set",
@@ -61,9 +71,9 @@ def liste_clients(request):
             queryset=ClientModuleFiscal.objects.filter(annee=fiscale_annee).select_related("module"),
             to_attr="fiscal_actuel"
         )
-    )
+    ).order_by(Lower("nom"))
 
-    form = ClientForm()  # ← tu gardes ton form
+    form = ClientForm()
 
     return render(request, "dossiers/liste_clients.html", {
         "clients": clients,
@@ -73,6 +83,11 @@ def liste_clients(request):
 
 @login_required
 def ajouter_client(request):
+
+    # --- Accès réservé staff / superuser ---
+    if not (request.user.is_staff or request.user.is_superuser):
+        return redirect("access_denied")
+
     if request.method == 'POST':
         form = ClientForm(request.POST)
         if form.is_valid():
@@ -88,6 +103,10 @@ def ajouter_client(request):
 @login_required
 def archiver_client(request, client_id):
     client = get_object_or_404(Client, id=client_id)
+
+    if not (request.user.is_staff or request.user.is_superuser):
+        return redirect("access_denied")
+
     client.archive = True
     client.save()
     return redirect('liste_clients')
@@ -95,6 +114,10 @@ def archiver_client(request, client_id):
 @login_required
 def restaurer_client(request, client_id):
     client = get_object_or_404(Client, id=client_id)
+
+    if not (request.user.is_staff or request.user.is_superuser):
+        return redirect("access_denied")
+
     client.archive = False
     client.save()
     return redirect('archives_clients')
@@ -102,6 +125,10 @@ def restaurer_client(request, client_id):
 @login_required
 def supprimer_client(request, client_id):
     client = get_object_or_404(Client, id=client_id)
+
+    if not (request.user.is_staff or request.user.is_superuser):
+        return redirect("access_denied")
+
     client.delete()
     return redirect('liste_clients')
 
@@ -690,13 +717,20 @@ from .forms import ClientForm
 def fiche_client(request, client_id):
     client = get_object_or_404(Client, id=client_id)
 
+    # --- Sécurité d'accès ---
+    if request.user.is_staff or request.user.is_superuser:
+        pass
+    elif client.user != request.user:
+        return redirect("access_denied")
+
+    # --- Traitement du formulaire ---
     if request.method == "POST":
         form = ClientForm(request.POST, instance=client)
 
         if form.is_valid():
             client = form.save(commit=False)
 
-            # --- Mise à jour du module Paie ---
+            # Gestion du module Paie
             client.module_paie = "module_paie" in request.POST
 
             client.save()
@@ -709,6 +743,7 @@ def fiche_client(request, client_id):
         "form": form,
         "client": client,
     })
+
 # ----------------------------------------------------
 #   IS (multi‑annuel)
 # ----------------------------------------------------
@@ -1158,16 +1193,19 @@ def tva_modules_annee(request, annee_id):
 def tva_clients_module(request, module_id):
     module = get_object_or_404(TVAModule, id=module_id)
 
-    # Liste correcte : les objets TVAClientAnnee liés au module
+    # Clients déjà dans ce module TVA
     clients_module = TVAClientAnnee.objects.filter(module=module).select_related("client")
 
-    # Tous les clients disponibles pour ajout
-    tous_les_clients = Client.objects.all().order_by("nom")
+    # IDs des clients déjà dans le module
+    clients_ids = clients_module.values_list("client_id", flat=True)
+
+    # Clients disponibles = tous les clients sauf ceux déjà dans le module
+    clients_disponibles = Client.objects.exclude(id__in=clients_ids).order_by("nom")
 
     return render(request, "tva/tva_clients_module.html", {
         "module": module,
         "clients_module": clients_module,
-        "tous_les_clients": tous_les_clients,
+        "clients_disponibles": clients_disponibles,
     })
 
 @login_required
@@ -1175,17 +1213,21 @@ def tva_clients_module_ajouter(request, module_id):
     module = get_object_or_404(TVAModule, id=module_id)
 
     if request.method == "POST":
-        client_id = request.POST.get("client_id")
-        client = get_object_or_404(Client, id=client_id)
+        client_ids = request.POST.getlist("clients")  # ← liste de clients sélectionnés
 
-        TVAClientAnnee.objects.get_or_create(
-            module=module,
-            client=client,
-            annee=module.annee  # ← OBLIGATOIRE
+        for cid in client_ids:
+            client = get_object_or_404(Client, id=cid)
+
+            TVAClientAnnee.objects.get_or_create(
+                module=module,
+                client=client,
+                annee=module.annee  # ← OBLIGATOIRE dans ton modèle
+            )
+
+        messages.success(
+            request,
+            f"{len(client_ids)} client(s) ajouté(s) au module {module.get_type_display()}."
         )
-
-        messages.success(request, f"{client.nom} a été ajouté au module {module.get_type_display()}.")
-        return redirect("tva_clients_module", module_id=module.id)
 
     return redirect("tva_clients_module", module_id=module.id)
 
@@ -1830,32 +1872,41 @@ def fiscal_clients_module(request, annee_id, module_id):
     annee = get_object_or_404(AnneeFiscale, id=annee_id)
     module = get_object_or_404(ModuleFiscal, id=module_id)
 
-    # Clients déjà dans le module
+    # Clients déjà dans le module fiscal
     cms = ClientModuleFiscal.objects.filter(
         annee=annee,
         module=module
     ).select_related("client")
 
-    # Tous les clients disponibles
-    clients = Client.objects.all().order_by("nom")
+    # IDs des clients déjà dans le module
+    clients_ids = cms.values_list("client_id", flat=True)
+
+    # Clients disponibles = tous les clients sauf ceux déjà dans le module
+    clients_disponibles = Client.objects.exclude(id__in=clients_ids).order_by("nom")
 
     if request.method == "POST":
-        client_id = request.POST.get("client_id")
-        if client_id:
-            client = get_object_or_404(Client, id=client_id)
+        client_ids = request.POST.getlist("clients")  # ← multi-sélection
+
+        for cid in client_ids:
+            client = get_object_or_404(Client, id=cid)
+
             ClientModuleFiscal.objects.get_or_create(
                 client=client,
                 module=module,
                 annee=annee
             )
-            messages.success(request, "Client ajouté au module.")
-            return redirect(request.path)
+
+        messages.success(
+            request,
+            f"{len(client_ids)} client(s) ajouté(s) au module {module.nom}."
+        )
+        return redirect(request.path)
 
     return render(request, "fiscal/clients_module.html", {
         "annee": annee,
         "module": module,
         "cms": cms,
-        "clients": clients,
+        "clients_disponibles": clients_disponibles,
     })
 
 @login_required
@@ -2562,8 +2613,87 @@ def logout_view(request):
     return redirect("login")
 
 # ----------------------------------------------------
+#   Reset Mots de Passe
+# ----------------------------------------------------
+
+from django.contrib.auth.views import PasswordChangeView, PasswordChangeDoneView
+from django.urls import reverse_lazy
+
+class CustomPasswordChangeView(PasswordChangeView):
+
+    def get_template_names(self):
+        user = self.request.user
+
+        # Cabinet (staff ou superuser)
+        if user.is_staff or user.is_superuser:
+            return ["users/change_password_cabinet.html"]
+
+        # Partenaire
+        if user.groups.filter(name="partenaire").exists():
+            return ["users/change_password_partenaire.html"]
+
+        # Client
+        if user.groups.filter(name="client").exists():
+            return ["users/change_password_client.html"]
+
+        # fallback
+        return ["users/change_password_cabinet.html"]
+
+    success_url = reverse_lazy("password_change_done")
+
+
+class CustomPasswordChangeDoneView(PasswordChangeDoneView):
+
+    def get_template_names(self):
+        user = self.request.user
+
+        if user.is_staff or user.is_superuser:
+            return ["users/change_password_done_cabinet.html"]
+
+        if user.groups.filter(name="partenaire").exists():
+            return ["users/change_password_done_partenaire.html"]
+
+        if user.groups.filter(name="client").exists():
+            return ["users/change_password_done_client.html"]
+
+        return ["users/change_password_done_cabinet.html"]
+
+
+
+# ----------------------------------------------------
 #   ESPACE UTILISATEUR
 # ----------------------------------------------------
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from .forms import ProfileForm
+
+@login_required
+def mon_profil(request):
+
+    user = request.user
+
+    # Sélection du bon template selon le groupe
+    if user.is_staff or user.is_superuser:
+        template = "users/profil_cabinet.html"
+    elif user.groups.filter(name="partenaire").exists():
+        template = "users/profil_partenaire.html"
+    else:
+        template = "users/profil_client.html"
+
+    if request.method == "POST":
+        form = ProfileForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            return redirect("mon_profil")
+    else:
+        form = ProfileForm(instance=user)
+
+    return render(request, template, {"form": form})
+
+
+
+
 
 from datetime import date
 from django.contrib.auth.decorators import login_required
@@ -2584,8 +2714,10 @@ def user_space(request):
     # 1) NOTES & TÂCHES
     # ----------------------------------------------------
     last_notes = UserNote.objects.filter(user=user).order_by('-created_at')[:3]
-    last_todos = Todo.objects.filter(user=user).order_by('-created_at')[:3]
-
+    last_todos = Todo.objects.filter(
+        user=user,
+        done=False
+    ).order_by('-created_at')[:3]
     reminders_today = Todo.objects.filter(
         user=user,
         reminder_date__date=today,
@@ -2744,7 +2876,9 @@ def user_space(request):
     # ----------------------------------------------------
     # 5) NOTIFICATIONS PAIE
     # ----------------------------------------------------
-    notifications_paie = NotificationPaie.objects.filter(lu_cabinet=False).order_by("-date")
+    notifications_paie = NotificationPaie.objects.exclude(
+        notificationpaielu__user=request.user
+    ).order_by("-date")
 
 
     # ----------------------------------------------------
@@ -2966,16 +3100,31 @@ def user_notes(request):
 
 @login_required
 def add_user_note(request):
-    categories = UserNoteCategorie.objects.filter(user=request.user)
+    user = request.user
 
-    # Soumission du formulaire "Nouvelle catégorie"
+    # Charger toutes les catégories de l'utilisateur
+    categories = UserNoteCategorie.objects.filter(user=user)
+
+    # ----------------------------------------------------
+    # 1) SUPPRESSION D'UNE CATÉGORIE
+    # ----------------------------------------------------
+    if request.method == "POST" and "delete_category" in request.POST:
+        cat_id = request.POST.get("delete_category")
+        UserNoteCategorie.objects.filter(id=cat_id, user=user).delete()
+        return redirect("add_user_note")
+
+    # ----------------------------------------------------
+    # 2) AJOUT D'UNE NOUVELLE CATÉGORIE
+    # ----------------------------------------------------
     if request.method == "POST" and "new_category" in request.POST:
         nom = request.POST.get("nom_categorie")
         if nom:
-            UserNoteCategorie.objects.create(user=request.user, nom=nom)
+            UserNoteCategorie.objects.create(user=user, nom=nom)
         return redirect("add_user_note")
 
-    # Soumission du formulaire "Nouvelle note"
+    # ----------------------------------------------------
+    # 3) CRÉATION D'UNE NOUVELLE NOTE
+    # ----------------------------------------------------
     if request.method == "POST" and "new_note" in request.POST:
         titre = request.POST.get("titre")
         contenu = request.POST.get("contenu")
@@ -2983,13 +3132,16 @@ def add_user_note(request):
 
         if contenu:
             UserNote.objects.create(
-                user=request.user,
+                user=user,
                 titre=titre,
                 contenu=contenu,
                 categorie_id=categorie_id if categorie_id else None
             )
         return redirect("user_notes")
 
+    # ----------------------------------------------------
+    # 4) AFFICHAGE DU FORMULAIRE
+    # ----------------------------------------------------
     return render(request, "dossiers/add_user_note.html", {
         "categories": categories,
     })
@@ -3223,7 +3375,7 @@ def edit_kanban_tag(request, tag_id):
         tag.save()
         return redirect("kanban_tags")
 
-    return render(request, "dossiers/edit_kanban_tag.html", {
+    return render(request, "kanban/edit_kanban_tag.html", {
         "tag": tag,
     })
 
@@ -3267,6 +3419,15 @@ def remove_tag_from_card(request):
     ).delete()
 
     return JsonResponse({"status": "ok"})
+
+@login_required
+def manage_kanban_tags(request):
+    tags = KanbanTag.objects.filter(user=request.user).order_by("name")
+
+    return render(request, "kanban/manage_tags.html", {
+        "tags": tags
+    })
+
 
 # ----------------------------------------------------
 #   TO DO LIST
@@ -3416,6 +3577,25 @@ def subtask_delete(request, subtask_id):
     subtask.delete()
     return redirect("todo_list")
 
+@login_required
+def todo_completed(request):
+    completed_tasks = Todo.objects.filter(
+        user=request.user,
+        done=True
+    ).order_by('-completed_at')
+
+    return render(request, "todo/todo_completed.html", {
+        "completed_tasks": completed_tasks
+    })
+
+@login_required
+def todo_delete_multiple(request):
+    if request.method == "POST":
+        ids = request.POST.getlist("task_ids")
+        Todo.objects.filter(id__in=ids, user=request.user).delete()
+
+    return redirect("todo_completed")
+
 
 # ----------------------------------------------------
 #   MODULE DE CLOTURE
@@ -3495,6 +3675,184 @@ def cloture_client_detail(request, cloture_id):
 @login_required
 def notification_paie_lu(request, notif_id):
     notif = get_object_or_404(NotificationPaie, id=notif_id)
-    notif.lu_cabinet = True
-    notif.save()
+
+    NotificationPaieLu.objects.get_or_create(
+        notification=notif,
+        user=request.user
+    )
+
     return JsonResponse({"status": "ok"})
+
+# ----------------------------------------------------
+#   TEST MAIL
+# ----------------------------------------------------
+
+
+from django.core.mail import send_mail
+from django.http import HttpResponse
+from django.conf import settings
+
+def test_email(request):
+    send_mail(
+        subject="Test d'envoi d'email depuis ton SaaS",
+        message="Bravo Gerson, ton SMTP fonctionne 🎉",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=["gerson.peres.rosa@gmail.com"],
+        fail_silently=False,
+    )
+    return HttpResponse("Email envoyé ! Vérifie ta boîte mail.")
+
+# ----------------------------------------------------
+#  CONFIGURATION DES MAILS A ENVOYER
+# ----------------------------------------------------
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import NotificationEmail
+from .forms import NotificationEmailForm
+
+def notification_email_settings(request):
+    emails = NotificationEmail.objects.all().order_by("event")
+    form = NotificationEmailForm()
+
+    if request.method == "POST":
+        form = NotificationEmailForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("notification_email_settings")
+
+    return render(request, "dossiers/notification_email_settings.html", {
+        "emails": emails,
+        "form": form,
+    })
+
+
+def notification_email_delete(request, email_id):
+    email = get_object_or_404(NotificationEmail, id=email_id)
+    email.delete()
+    return redirect("notification_email_settings")
+
+
+# ----------------------------------------------------
+#  RECHERCHE GLOBALE PAR CLIENT
+# ----------------------------------------------------
+
+@login_required
+def client_search(request):
+    q = request.GET.get("q", "").strip()
+
+    if not q:
+        return redirect("mon_espace")
+
+    clients = Client.objects.filter(nom__icontains=q, archive=False)
+
+    if clients.count() == 1:
+        return redirect("client_hub", client_id=clients.first().id)
+
+    return render(request, "dossiers/client_search.html", {
+        "query": q,
+        "clients": clients,
+    })
+
+
+@login_required
+def client_hub(request, client_id):
+    from datetime import date
+    annee = date.today().year
+
+    client = get_object_or_404(Client, id=client_id)
+
+    # -------------------------
+    # Suivi comptable
+    # -------------------------
+    suivi_comptable = SuiviComptable.objects.filter(
+        client=client,
+        annee=annee
+    ).first()
+
+    # -------------------------
+    # TVA
+    # -------------------------
+    tva_annee = TVAAnnee.objects.filter(annee=annee).first()
+    tva_client = None
+    tva_declaration = None
+
+    if tva_annee:
+        tva_client = TVAClientAnnee.objects.filter(
+            client=client,
+            annee=tva_annee
+        ).first()
+
+        if tva_client:
+            tva_declaration = TVADeclaration.objects.filter(
+                tva_client_annee=tva_client
+            ).first()
+
+    # -------------------------
+    # MODULES FISCAUX
+    # -------------------------
+    def get_fiscal_module(nom):
+        module = ModuleFiscal.objects.filter(nom=nom).first()
+        if not module:
+            return None, None
+
+        cmf = ClientModuleFiscal.objects.filter(
+            client=client,
+            module=module,
+            annee__annee=annee
+        ).first()
+
+        if not cmf:
+            return None, None
+
+        declaration = getattr(cmf, f"{nom.lower()}_declaration", None)
+        return cmf, declaration
+
+    is_module, is_decl = get_fiscal_module("IS")
+    cfe_module, cfe_decl = get_fiscal_module("CFE")
+    cvae_module, cvae_decl = get_fiscal_module("CVAE")
+    tvs_module, tvs_decl = get_fiscal_module("TVS")
+    desdeb_module, desdeb_decl = get_fiscal_module("DESDEB")
+    dividendes_module, dividendes_decl = get_fiscal_module("Dividendes")
+
+    # -------------------------
+    # CLOTURE
+    # -------------------------
+    cloture = ClotureAnnee.objects.filter(annee=annee).first()
+
+    revision = plaquettes = ca12 = isci = declarations = mission = juridique = None
+
+    if cloture:
+        revision = ModuleRevision.objects.filter(cloture=cloture, client=client).first()
+        plaquettes = ModulePlaquettesLiasse.objects.filter(cloture=cloture, client=client).first()
+        ca12 = ModuleCA12.objects.filter(cloture=cloture, client=client).first()
+        isci = ModuleISCI.objects.filter(cloture=cloture, client=client).first()
+        declarations = ModuleDeclarations.objects.filter(cloture=cloture, client=client).first()
+        mission = ModuleMission.objects.filter(cloture=cloture, client=client).first()
+        juridique = ModuleJuridique.objects.filter(cloture=cloture, client=client).first()
+
+    return render(request, "dossiers/client_hub.html", {
+        "client": client,
+        "annee": annee,
+
+        "suivi_comptable": suivi_comptable,
+
+        "tva_client": tva_client,
+        "tva_declaration": tva_declaration,
+
+        "is_decl": is_decl,
+        "cfe_decl": cfe_decl,
+        "cvae_decl": cvae_decl,
+        "tvs_decl": tvs_decl,
+        "desdeb_decl": desdeb_decl,
+        "dividendes_decl": dividendes_decl,
+
+        "revision": revision,
+        "plaquettes": plaquettes,
+        "ca12": ca12,
+        "isci": isci,
+        "declarations": declarations,
+        "mission": mission,
+        "juridique": juridique,
+    })
+

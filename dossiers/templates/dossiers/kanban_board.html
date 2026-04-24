@@ -31,6 +31,10 @@
             + Ajouter un tag
         </button>
 
+<a href="{% url 'manage_kanban_tags' %}" class="btn btn-secondary">
+    Gérer les tags
+</a>
+
     </div>
 
 </div>
@@ -342,25 +346,34 @@ function removeTag(cardId, tagId) {
 document.getElementById("kanbanSearch").addEventListener("input", function () {
     const query = this.value.toLowerCase().trim();
 
-    // Toutes les cartes
-    const cards = document.querySelectorAll(".kanban-card");
+    const columns = document.querySelectorAll(".kanban-column");
 
-    cards.forEach(card => {
-        const title = card.querySelector(".fw-bold")?.textContent.toLowerCase() || "";
-        const description = card.querySelector(".card-description")?.textContent.toLowerCase() || "";
+    columns.forEach(column => {
+        let columnHasMatch = false;
 
-        // Récupérer les tags affichés sur la carte
-        const tagElements = card.querySelectorAll(".badge");
-        const tagTexts = Array.from(tagElements).map(t => t.textContent.toLowerCase());
+        const cards = column.querySelectorAll(".kanban-card");
 
-        // Condition : correspondance titre OU description OU tag
-        const match =
-            title.includes(query) ||
-            description.includes(query) ||
-            tagTexts.some(tag => tag.includes(query));
+        cards.forEach(card => {
+            const title = card.querySelector(".fw-bold")?.textContent.toLowerCase() || "";
+            const description = card.querySelector("textarea, .card-description")?.textContent?.toLowerCase() || "";
 
-        // Afficher / masquer
-        card.style.display = match ? "" : "none";
+            // Tags
+            const tagElements = card.querySelectorAll(".badge");
+            const tagTexts = Array.from(tagElements).map(t => t.textContent.toLowerCase());
+
+            const match =
+                title.includes(query) ||
+                description.includes(query) ||
+                tagTexts.some(tag => tag.includes(query));
+
+            // Afficher / masquer la carte
+            card.style.display = match ? "" : "none";
+
+            if (match) columnHasMatch = true;
+        });
+
+        // Masquer la colonne si aucune carte ne correspond
+        column.style.display = columnHasMatch ? "" : "none";
     });
 });
 </script>
@@ -386,13 +399,11 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 <script>
 function prepareColorModal(columnId, currentColor) {
-    // Remplir les champs du formulaire
     document.getElementById("columnId").value = columnId;
     document.getElementById("columnColor").value = currentColor;
 
-    // Mettre à jour l'URL du formulaire
     const form = document.getElementById("editColumnColorForm");
-    form.action = `/kanban/colonnes/${columnId}/couleur/`;
+    form.action = `/dossiers/kanban/colonnes/${columnId}/couleur/`;
 }
 </script>
 
@@ -401,7 +412,7 @@ function prepareRenameModal(columnId, currentTitle) {
     document.getElementById("renameColumnTitle").value = currentTitle;
 
     const form = document.getElementById("renameColumnForm");
-    form.action = `/kanban/colonnes/${columnId}/renommer/`;
+    form.action = `/dossiers/kanban/colonnes/${columnId}/renommer/`;
 }
 </script>
 
@@ -410,7 +421,7 @@ function prepareAddCardModal(columnId) {
     document.getElementById("addCardColumnId").value = columnId;
 
     const form = document.getElementById("addCardForm");
-    form.action = `/kanban/cartes/ajouter/`;
+    form.action = "{% url 'add_kanban_card' %}";
 }
 </script>
 
@@ -419,7 +430,10 @@ function prepareAddCardModal(columnId) {
 {% block modals %}
 <div class="modal fade" id="addCardModal">
     <div class="modal-dialog">
-        <form method="POST" id="addCardForm" class="modal-content">
+<form method="POST"
+      id="addCardForm"
+      class="modal-content"
+      action="{% url 'add_kanban_card' %}">
             {% csrf_token %}
             <input type="hidden" name="column_id" id="addCardColumnId">
 

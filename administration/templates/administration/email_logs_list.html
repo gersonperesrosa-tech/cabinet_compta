@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="m-0">Historique des emails</h1>
+
+    <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary">
+        ← Retour à l'administration
+    </a>
+</div>
+
+<table class="table table-hover align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>Événement</th>
+            <th>Destinataire</th>
+            <th>Date</th>
+            <th>Statut</th>
+            <th>Message</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for log in logs %}
+        <tr>
+            <td>{{ log.event }}</td>
+            <td>{{ log.destinataire }}</td>
+            <td>{{ log.date_envoi|date:"d/m/Y H:i" }}</td>
+
+            <td>
+                {% if log.statut == "envoyé" %}
+                    <span class="badge bg-success">Envoyé</span>
+                {% else %}
+                    <span class="badge bg-danger">Échec</span>
+                {% endif %}
+            </td>
+
+            <td>
+                <button class="btn btn-sm btn-outline-primary"
+                        onclick="alert(`{{ log.message|escapejs }}`)">
+                    Voir
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</section>
+
+<!-- Tri dynamique -->
+<script>
+document.querySelectorAll("table thead th").forEach((header, index) => {
+    header.style.cursor = "pointer";
+
+    header.addEventListener("click", () => {
+        const table = header.closest("table");
+        const tbody = table.querySelector("tbody");
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+
+        const isAsc = header.classList.toggle("asc");
+
+        rows.sort((a, b) => {
+            const aVal = (a.cells[index].innerText || "").toLowerCase();
+            const bVal = (b.cells[index].innerText || "").toLowerCase();
+
+            if (aVal < bVal) return isAsc ? -1 : 1;
+            if (aVal > bVal) return isAsc ? 1 : -1;
+            return 0;
+        });
+
+        rows.forEach(row => tbody.appendChild(row));
+    });
+});
+</script>
+
+{% endblock %}

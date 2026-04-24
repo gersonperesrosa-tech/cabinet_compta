@@ -4,7 +4,17 @@
 
 <div class="container py-4">
 
-    <h3 class="mb-4">Nouvelle note personnelle</h3>
+<section class="section">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Nouvelle note personnelle</h2>
+
+    <div class="header-right">
+
+                            <a href="{% url 'user_notes' %}" class="btn btn-outline-secondary">← Retour aux notes</a>
+
+    </div>
+    </div>
 
     <div class="row">
 
@@ -36,7 +46,6 @@
                         <textarea name="contenu" class="form-control mb-3" rows="6"></textarea>
 
                         <div class="d-flex justify-content-between">
-                            <a href="{% url 'user_notes' %}" class="btn btn-outline-secondary">Annuler</a>
                             <button class="btn btn-primary">Enregistrer</button>
                         </div>
 
@@ -50,27 +59,49 @@
         <!-- ========================= -->
         <!-- Colonne 2 : Ajouter une catégorie -->
         <!-- ========================= -->
-        <div class="col-md-4">
+<div class="col-md-4">
 
-            <div class="card">
-                <div class="card-header fw-bold">Nouvelle catégorie</div>
-                <div class="card-body">
+    <div class="card">
+        <div class="card-header fw-bold">Nouvelle catégorie</div>
+        <div class="card-body">
 
-                    <form method="POST">
-                        {% csrf_token %}
-                        <input type="hidden" name="new_category" value="1">
+            <!-- Formulaire ajout catégorie -->
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="new_category" value="1">
 
-                        <label class="form-label">Nom de la catégorie</label>
-                        <input type="text" name="nom_categorie" class="form-control mb-3">
+                <label class="form-label">Nom de la catégorie</label>
+                <input type="text" name="nom_categorie" class="form-control mb-3">
 
-                        <button class="btn btn-outline-primary w-100">Ajouter</button>
-                    </form>
+                <button class="btn btn-outline-primary w-100">Ajouter</button>
+            </form>
 
-                </div>
-            </div>
+            <!-- Liste des catégories existantes -->
+            <hr class="my-3">
+
+            <h6 class="fw-bold mb-2">Catégories existantes</h6>
+
+            {% if categories %}
+                <ul class="list-group mb-3">
+                    {% for cat in categories %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ cat.nom }}
+
+                        <form method="POST" style="margin:0;">
+                            {% csrf_token %}
+                            <input type="hidden" name="delete_category" value="{{ cat.id }}">
+                            <button class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <em class="text-muted">Aucune catégorie pour le moment.</em>
+            {% endif %}
 
         </div>
-
     </div>
 
 </div>

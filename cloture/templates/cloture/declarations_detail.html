@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% load cloture_tags %}
+{% block content %}
+<section class="section">
+
+<h1 class="mb-4">
+    Déclarations – {{ module.client.nom }} ({{ module.cloture.annee }})
+</h1>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <div class="row g-4">
+
+        <!-- ========================= -->
+        <!-- COLONNE GAUCHE (70%)     -->
+        <!-- ========================= -->
+        <div class="col-md-8">
+
+            <!-- VA1330 CVAE -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">VA-1330 CVAE fait</label>
+                <textarea name="va1330_fait" class="form-control" rows="2" style="resize:none;">
+{{ module.va1330_fait|default_if_none:"" }}</textarea>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">VA-1330 CVAE envoi</label>
+                <textarea name="va1330_envoi" class="form-control" rows="2" style="resize:none;">
+{{ module.va1330_envoi|default_if_none:"" }}</textarea>
+            </div>
+
+            <!-- CVAE 1329DEF -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">CVAE 1329DEF fait</label>
+                <textarea name="cvae1329_fait" class="form-control" rows="2" style="resize:none;">
+{{ module.cvae1329_fait|default_if_none:"" }}</textarea>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">CVAE 1329DEF envoi</label>
+                <textarea name="cvae1329_envoi" class="form-control" rows="2" style="resize:none;">
+{{ module.cvae1329_envoi|default_if_none:"" }}</textarea>
+            </div>
+
+            <!-- DECLOYER -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">DECLOYER fait</label>
+                <textarea name="decloyer_fait" class="form-control" rows="2" style="resize:none;">
+{{ module.decloyer_fait|default_if_none:"" }}</textarea>
+            </div>
+
+            <!-- DAS2 -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">DAS2 fait</label>
+                <textarea name="das2_fait" class="form-control" rows="2" style="resize:none;">
+{{ module.das2_fait|default_if_none:"" }}</textarea>
+            </div>
+
+            <!-- DRI -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">DRI fait</label>
+                <textarea name="dri_fait" class="form-control" rows="2" style="resize:none;">
+{{ module.dri_fait|default_if_none:"" }}</textarea>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">DRI envoi</label>
+                <textarea name="dri_envoi" class="form-control" rows="2" style="resize:none;">
+{{ module.dri_envoi|default_if_none:"" }}</textarea>
+            </div>
+
+        </div>
+
+        <!-- ========================= -->
+        <!-- COLONNE DROITE (30%)     -->
+        <!-- ========================= -->
+        <div class="col-md-4">
+
+            <div class="p-3 border rounded bg-light">
+
+                <h5 class="mb-3">Statuts</h5>
+
+                <!-- VA1330 CVAE -->
+                <label class="form-label fw-bold">VA-1330 CVAE fait</label>
+                <select name="statut_va1330_fait" class="form-select mb-3">
+                    {% for value, label in statuts %}
+                        <option value="{{ value }}" {% if module.statut_va1330_fait == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label class="form-label fw-bold">VA-1330 CVAE envoi</label>
+                <select name="statut_va1330_envoi" class="form-select mb-3">
+                    {% for value, label in statuts %}
+                        <option value="{{ value }}" {% if module.statut_va1330_envoi == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <!-- CVAE 1329DEF -->
+                <label class="form-label fw-bold">CVAE 1329DEF fait</label>
+                <select name="statut_cvae1329_fait" class="form-select mb-3">
+                    {% for value, label in statuts %}
+                        <option value="{{ value }}" {% if module.statut_cvae1329_fait == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label class="form-label fw-bold">CVAE 1329DEF envoi</label>
+                <select name="statut_cvae1329_envoi" class="form-select mb-3">
+                    {% for value, label in statuts %}
+                        <option value="{{ value }}" {% if module.statut_cvae1329_envoi == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <!-- DECLOYER -->
+                <label class="form-label fw-bold">DECLOYER fait</label>
+                <select name="statut_decloyer_fait" class="form-select mb-3">
+                    {% for value, label in statuts %}
+                        <option value="{{ value }}" {% if module.statut_decloyer_fait == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <!-- DAS2 -->
+                <label class="form-label fw-bold">DAS2 fait</label>
+                <select name="statut_das2_fait" class="form-select mb-3">
+                    {% for value, label in statuts %}
+                        <option value="{{ value }}" {% if module.statut_das2_fait == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <!-- DRI -->
+                <label class="form-label fw-bold">DRI fait</label>
+                <select name="statut_dri_fait" class="form-select mb-3">
+                    {% for value, label in statuts %}
+                        <option value="{{ value }}" {% if module.statut_dri_fait == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label class="form-label fw-bold">DRI envoi</label>
+                <select name="statut_dri_envoi" class="form-select mb-3">
+                    {% for value, label in statuts %}
+                        <option value="{{ value }}" {% if module.statut_dri_envoi == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- STATUT GÉNÉRAL (EN BAS)   -->
+    <!-- ========================= -->
+    <div class="mt-4">
+        <h5 class="fw-bold">Statut général</h5>
+        <select name="statut_general" class="form-select w-50">
+            {% for value, label in statuts %}
+                <option value="{{ value }}" {% if module.statut_general == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <button class="btn btn-primary mt-4">Enregistrer</button>
+
+</form>
+
+</section>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load cloture_tags %}
+{% block content %}
+<section class="section">
+
+<h1 class="mb-4">
+    CA12 – {{ module.client.nom }} ({{ module.cloture.annee }})
+</h1>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <div class="row g-4">
+
+        <!-- ========================= -->
+        <!-- COLONNE GAUCHE (70%)     -->
+        <!-- ========================= -->
+        <div class="col-md-8">
+
+            <!-- CA12 faite -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">CA12 faite</label>
+                <textarea name="ca12_faite" class="form-control" rows="2" style="resize:none;">
+{{ module.ca12_faite|default_if_none:"" }}</textarea>
+            </div>
+
+            <!-- CA12 envoyée -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">CA12 envoyée</label>
+                <textarea name="ca12_envoyee" class="form-control" rows="2" style="resize:none;">
+{{ module.ca12_envoyee|default_if_none:"" }}</textarea>
+            </div>
+
+        </div>
+
+        <!-- ========================= -->
+        <!-- COLONNE DROITE (30%)     -->
+        <!-- ========================= -->
+        <div class="col-md-4">
+
+            <div class="p-3 border rounded bg-light">
+
+                <h5 class="mb-3">Statuts</h5>
+
+                <!-- Statut CA12 faite -->
+                <label class="form-label fw-bold">CA12 faite</label>
+                <select name="statut_ca12_faite" class="form-select mb-3">
+                    <option value="">-- Statut --</option>
+                    {% for value, label in statuts %}
+                        <option value="{{ value }}" {% if module.statut_ca12_faite == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <!-- Statut CA12 envoyée -->
+                <label class="form-label fw-bold">CA12 envoyée</label>
+                <select name="statut_ca12_envoyee" class="form-select mb-3">
+                    <option value="">-- Statut --</option>
+                    {% for value, label in statuts %}
+                        <option value="{{ value }}" {% if module.statut_ca12_envoyee == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- STATUT GÉNÉRAL (EN BAS)   -->
+    <!-- ========================= -->
+    <div class="mt-4">
+        <h5 class="fw-bold">Statut général</h5>
+        <select name="statut_general" class="form-select w-50">
+            <option value="">-- Statut général --</option>
+            {% for value, label in statuts %}
+                <option value="{{ value }}" {% if module.statut_general == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <button class="btn btn-primary mt-4">Enregistrer</button>
+
+</form>
+
+</section>
+{% endblock %}

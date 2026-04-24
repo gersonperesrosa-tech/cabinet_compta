@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+
+<h2 class="mb-4">Créer une année de clôture</h2>
+
+<form method="POST" class="mb-5">
+    {% csrf_token %}
+
+    <label class="form-label fw-bold">Année :</label>
+    <input type="number" name="annee" class="form-control w-auto" placeholder="2024">
+
+    <button class="btn btn-primary mt-3">Créer</button>
+</form>
+
+
+<!-- 🔥 Liste des années existantes -->
+<h3 class="mb-3">Années existantes</h3>
+
+<table class="table table-hover align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>Année</th>
+            <th></th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for annee in annees %}
+        <tr>
+            <td class="fw-semibold">{{ annee.annee }}</td>
+            <td>
+                <a href="{% url 'cloture_detail' annee.id %}" 
+                   class="btn btn-sm btn-outline-secondary">
+                    Ouvrir
+                </a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="2" class="text-center py-4 opacity-75">
+                Aucune année créée.
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</section>
+{% endblock %}

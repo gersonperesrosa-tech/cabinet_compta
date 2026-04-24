@@ -100,22 +100,21 @@
         <!-- ========================= -->
         <div class="col-md-6">
 
-            <h4>Ajouter un client</h4>
+<h4>Ajouter des clients</h4>
 
-            <form method="POST">
-                {% csrf_token %}
+<form method="POST">
+    {% csrf_token %}
 
-                <div class="mb-3">
-                    <select name="client_id" class="form-select" required>
-                        <option value="">Sélectionner un client…</option>
-                        {% for c in clients %}
-                            <option value="{{ c.id }}">{{ c.nom }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+    <label class="form-label">Sélectionner les clients :</label>
 
-                <button class="btn btn-primary">Ajouter</button>
-            </form>
+    <select name="clients" multiple class="form-select" size="12">
+        {% for c in clients_disponibles %}
+            <option value="{{ c.id }}">{{ c.nom }}</option>
+        {% endfor %}
+    </select>
+
+    <button class="btn btn-primary mt-3">Ajouter les clients</button>
+</form>
 
         </div>
 

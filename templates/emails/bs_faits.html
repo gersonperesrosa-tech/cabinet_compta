@@ -1,0 +1,16 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+
+<p>Bonjour,</p>
+
+<p>
+Les bulletins de salaire du mois <strong>{{ mois.mois }}/{{ mois.annee }}</strong>
+ont été validés par le partenaire.
+</p>
+
+<p style="margin-top:25px;color:#666;font-size:14px;">
+Vous pouvez maintenant préparer la DSN.
+</p>
+
+{% endblock %}

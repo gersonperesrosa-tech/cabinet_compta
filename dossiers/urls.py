@@ -1,9 +1,13 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.views import LogoutView
+
 from . import views
 
 from .views import (
+    CustomPasswordChangeView,
+    CustomPasswordChangeDoneView,
+
     reset_suivi_comptable,
 
     # NOTES
@@ -46,52 +50,58 @@ from .views import (
     cloture_clients,
     cloture_client_detail,
     cloture_annee_create,
-
-
 )
 
 urlpatterns = [
+
     # ============================
     # LOGIN / LOGOUT / REGISTER
     # ============================
     path("login/", CustomLoginView.as_view(), name="login"),
     path("logout/", views.logout_view, name="logout"),
     path("register/", RegisterView.as_view(), name="register"),
+    path("mon-profil/", views.mon_profil, name="mon_profil"),
+    path("test-email/", views.test_email, name="test_email"),
 
 
     # ============================
     # PASSWORD RESET
     # ============================
+# RESET PASSWORD DJANGO
+    path("reset-password/", auth_views.PasswordResetView.as_view(
+        template_name="registration/password_reset_form.html",
+        email_template_name="registration/password_reset_email.html",
+        subject_template_name="registration/password_reset_subject.txt",
+        success_url="/dossiers/reset-password/done/",
+    ), name="password_reset"),
+
+    path("reset-password/done/", auth_views.PasswordResetDoneView.as_view(
+        template_name="registration/password_reset_done.html"
+    ), name="password_reset_done"),
+
+    path("reset-password/confirm/<uidb64>/<token>/", auth_views.PasswordResetConfirmView.as_view(
+        template_name="registration/password_reset_confirm.html",
+        success_url="/dossiers/reset-password/complete/",
+    ), name="password_reset_confirm"),
+
+    path("reset-password/complete/", auth_views.PasswordResetCompleteView.as_view(
+        template_name="registration/password_reset_complete.html"
+    ), name="password_reset_complete"),
+
+
+    # ============================
+    # CHANGE PASSWORD (3 bases)
+    # ============================
     path(
-        "password-reset/",
-        auth_views.PasswordResetView.as_view(
-            template_name="auth/password_reset.html"
-        ),
-        name="password_reset"
+        "changer-mot-de-passe/",
+        CustomPasswordChangeView.as_view(),
+        name="change_password"
     ),
 
     path(
-        "password-reset/done/",
-        auth_views.PasswordResetDoneView.as_view(
-            template_name="auth/password_reset_done.html"
-        ),
-        name="password_reset_done"
-    ),
-
-    path(
-        "password-reset-confirm/<uidb64>/<token>/",
-        auth_views.PasswordResetConfirmView.as_view(
-            template_name="auth/password_reset_confirm.html"
-        ),
-        name="password_reset_confirm"
-    ),
-
-    path(
-        "password-reset-complete/",
-        auth_views.PasswordResetCompleteView.as_view(
-            template_name="auth/password_reset_complete.html"
-        ),
-        name="password_reset_complete"
+        "changer-mot-de-passe/succes/",
+        CustomPasswordChangeDoneView.as_view(),
+        name="password_change_done"
     ),
 
 
@@ -127,6 +137,11 @@ urlpatterns = [
     path('todo/edit/<int:todo_id>/', todo_edit, name='todo_edit'),
     path('todo/toggle/<int:todo_id>/', todo_toggle, name='todo_toggle'),
     path('todo/delete/<int:todo_id>/', todo_delete, name='todo_delete'),
+
+    # Tâches terminées + suppression multiple
+    path("todo/completed/", views.todo_completed, name="todo_completed"),
+    path("todo/completed/delete-multiple/", views.todo_delete_multiple, name="todo_delete_multiple"),
+
 
     # Sous-tâches
     path('todo/subtask/add/<int:todo_id>/', subtask_add, name='subtask_add'),
@@ -193,6 +208,8 @@ urlpatterns = [
     path("kanban/add_tag/", views.add_kanban_tag, name="add_kanban_tag"),
     path("kanban/tags/<int:tag_id>/modifier/", views.edit_kanban_tag, name="edit_kanban_tag"),
     path("kanban/tags/<int:tag_id>/supprimer/", views.delete_kanban_tag, name="delete_kanban_tag"),
+    path("kanban/tags/gestion/", views.manage_kanban_tags, name="manage_kanban_tags"),
+
 
 
     # AJAX assign/remove
@@ -361,6 +378,15 @@ urlpatterns = [
     # MODULE NOTIFICATIONS DASHBOARD DE LA PAIE
     # ============================
     path("notifications/paie/<int:notif_id>/lu/", views.notification_paie_lu, name="notification_paie_lu"),
+    path("notifications/emails/", views.notification_email_settings, name="notification_email_settings"),
+    path("notifications/emails/delete/<int:email_id>/", views.notification_email_delete, name="notification_email_delete"),
+
+    # ============================
+    # BARRE DE RECHERCHE GENERALE PAR CLIENT
+    # ============================
+
+    path("client/search/", views.client_search, name="client_search"),
+    path("client/hub/<int:client_id>/", views.client_hub, name="client_hub"),
 
 
 

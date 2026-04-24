@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="m-0">Configuration des emails de notification</h1>
+
+    <div class="d-flex gap-2">
+        <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary">
+            ← Retour à l'administration
+        </a>
+    </div>
+</div>
+
+
+<div class="card p-4 mb-4" style="max-width: 500px;">
+    <h5 class="mb-3">Ajouter un email</h5>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label class="form-label">Événement</label>
+            {{ form.event }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Adresse email</label>
+            {{ form.email }}
+        </div>
+
+        <button class="btn btn-primary">Ajouter</button>
+    </form>
+</div>
+
+<h4 class="mb-3">Emails configurés</h4>
+
+<table class="table table-hover align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>Événement</th>
+            <th>Email</th>
+            <th style="width: 120px;">Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for e in emails %}
+        <tr>
+            <td>{{ e.get_event_display }}</td>
+            <td>{{ e.email }}</td>
+            <td>
+                <a href="{% url 'notification_email_delete' e.id %}"
+                   class="btn btn-sm btn-outline-danger"
+                   onclick="return confirm('Supprimer cet email ?');">
+                    Supprimer
+                </a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3" class="text-muted text-center">Aucun email configuré</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</section>
+{% endblock %}

@@ -32,6 +32,8 @@
         .table th {
             border-left: none !important;
             border-right: none !important;
+            font-size: 11.5px;
+
         }
 
         /* Lignes horizontales premium */
@@ -47,12 +49,17 @@
         }
     </style>
 
+
 <style>
     /* Sidebar scrollable */
     #sidebar {
         height: calc(100vh - 70px); /* hauteur totale - hauteur du header */
+        background: #c7c7c7;
+        width: 240px;
         overflow-y: auto;
         overflow-x: hidden;
+        font-size: 12.5px;
+
     }
 
     /* Scrollbar premium */
@@ -68,6 +75,26 @@
     }
 </style>
 
+<style>
+.quick-icon:hover div {
+    transform: scale(1.08);
+    transition: 0.2s ease-in-out;
+    box-shadow: 0 0 12px rgba(0,0,0,0.2);
+}
+</style>
+
+
+
+<style>
+.dropdown-menu {
+    position: absolute !important;
+}
+
+.dropdown-menu {
+    z-index: 3000 !important;
+}
+
+</style>
 
     {% block extra_css %}{% endblock %}
 </head>
@@ -78,26 +105,98 @@
 <!-- ========================= -->
 <!--        HEADER             -->
 <!-- ========================= -->
-<header class="top-header">
+<header class="top-header"  style="position: relative; z-index: 2000;">
     <div class="header-left">
         <img src="{% static 'img/logo_gestion.png' %}" alt="Logo" class="header-logo" style=" height:90px">
         <span class="header-title"> </span>
     </div>
+<form method="GET" action="{% url 'client_search' %}" 
+      class="d-flex align-items-center ms-3" 
+      style="width: 500px;">
+
+    <div class="input-group">
+        <span class="input-group-text bg-white">
+            <i class="bi bi-search text-secondary"></i>
+        </span>
+
+        <input type="text" 
+               name="q" 
+               class="form-control" 
+               placeholder="Rechercher un client..."
+               style="border-left: none;">
+    </div>
+
+</form>
 
     <div class="header-right">
-        <span class="welcome-text">Bienvenue, {{request.user.get_full_name }}</span>
 
-        <div class="avatar-circle d-flex justify-content-center align-items-center"
-             style="width:40px; height:40px; border-radius:50%; background:#1565d8; color:white; font-weight:600; margin-left:15px;">
-            {{ user.username|first|upper }}
-        </div>
+        <a href="{% url 'mon_profil' %}" 
+           class="btn btn-sm d-flex align-items-center ms-3"
+           style="background:white; color:#00000; border-radius:12px;">
+           👤 {{request.user.get_full_name }}
+        </a>
+
+
+<a href="{% url 'user_notes' %}" class="text-center text-decoration-none quick-icon d-flex flex-column align-items-center">
+    
+    <!-- Icône -->
+    <div class="rounded-circle d-flex justify-content-center align-items-center"
+         style="width:37px; height:37px; background-color:#6f42c1;">
+        <i class="bi bi-journal-text text-white" style="font-size:1.2rem;"></i>
+    </div>
+
+    <!-- Texte centré -->
+    <div class="small mt-1" style="color:#6f42c1; line-height:1;">
+        Notes
+    </div>
+
+</a>
+
+        <!-- Action Board -->
+<a href="{% url 'kanban_board' %}" 
+   class="text-center text-decoration-none quick-icon d-flex flex-column align-items-center">
+
+    <div class="rounded-circle d-flex justify-content-center align-items-center"
+         style="width:37px; height:37px; background-color:#283593;">
+        <i class="bi bi-kanban text-white" style="font-size:1.2rem;"></i>
+    </div>
+
+    <div class="small mt-1" style="color:#283593; line-height:1;">
+        Actions
+    </div>
+
+</a>
+        <!-- Tâches -->
+<a href="{% url 'todo_list' %}" 
+   class="text-center text-decoration-none quick-icon d-flex flex-column align-items-center">
+
+    <div class="rounded-circle d-flex justify-content-center align-items-center"
+         style="width:37px; height:37px; background-color:#00897b;">
+        <i class="bi bi-check2-square text-white" style="font-size:1.2rem;"></i>
+    </div>
+
+    <div class="small mt-1" style="color:#00897b; line-height:1;">
+        Tâches
+    </div>
+
+</a>
+
 
 <a href="{% url 'logout' %}" 
-   class="btn btn-sm d-flex align-items-center"
-   style="margin-left: 15px; background:white; color:#dc3545; border-radius:12px;">
-    <i class="bi bi-box-arrow-right" style="margin-right:6px;"></i>
-    Déconnexion
+   class="text-center text-decoration-none quick-icon d-flex flex-column align-items-center">
+
+    <div class="rounded-circle d-flex justify-content-center align-items-center"
+         style="width:37px; height:37px; background-color:white;">
+        <i class="bi bi-box-arrow-right text-danger" style="font-size:1.2rem;"></i>
+    </div>
+
+    <div class="small mt-1" style="color:#dc3545; line-height:1;">
+        Déconnexion
+    </div>
+
 </a>
+
+
 
     </div>
 </header>
@@ -119,7 +218,7 @@
     <span class="sidebar-text">Tableau de bord</span>
 </a>
 
-                <hr class="sidebar-separator my-3 opacity-25">
+                <hr class="sidebar-separator my-3 opacity-25" >
 
                 <!-- SECTION : Comptabilité -->
                 <div class="sidebar-section-title text-uppercase small opacity-75 mb-2">
@@ -152,6 +251,7 @@
                         <i class="bi bi-folder"></i>
                         <span class="sidebar-text">Clients</span>
                         <i class="bi bi-chevron-down ms-auto small"></i>
+
                     </a>
 
                     <div class="collapse ps-4" id="menuCLIENTS">
@@ -363,6 +463,99 @@
     </div>
 
 
+<!-- SECTION : Clôture -->
+<hr class="sidebar-separator my-3 opacity-25">
+<div class="sidebar-section-title text-uppercase small opacity-75 mb-2">
+    Clôture
+</div>
+
+<div class="nav-item">
+
+    <a class="nav-link text-white d-flex align-items-center gap-2"
+       data-bs-toggle="collapse"
+       href="#menuCLOTURE"
+       role="button"
+       aria-expanded="false"
+       aria-controls="menuCLOTURE">
+
+        <i class="bi bi-calendar-check"></i>
+        <span class="sidebar-text">Clôture</span>
+        <i class="bi bi-chevron-down ms-auto small"></i>
+    </a>
+
+    <div class="collapse ps-4" id="menuCLOTURE">
+
+        <!-- Gestion révisions (année la plus récente) -->
+        {% if latest_cloture_year %}
+        <a class="nav-link text-white d-flex align-items-center gap-2
+           {% if request.resolver_match.url_name == 'gestion_revisions' and request.GET.annee == latest_cloture_year|stringformat:"s" %}active{% endif %}"
+           href="{% url 'gestion_revisions' %}?annee={{ latest_cloture_year }}">
+            <span class="sidebar-text">Révisions</span>
+        </a>
+        {% endif %}
+
+        {% if latest_cloture_year %}
+<a class="nav-link text-white d-flex align-items-center gap-2
+   {% if request.resolver_match.url_name == 'gestion_plaquettes_liasse' and request.GET.annee == latest_cloture_year|stringformat:"s" %}active{% endif %}"
+   href="{% url 'gestion_plaquettes_liasse' %}?annee={{ latest_cloture_year }}">
+    <span class="sidebar-text">Plaquettes & Liasse</span>
+</a>
+        {% endif %}
+
+{% if latest_cloture_year %}
+<a class="nav-link text-white d-flex align-items-center gap-2
+   {% if request.resolver_match.url_name == 'gestion_ca12' and request.GET.annee == latest_cloture_year|stringformat:"s" %}active{% endif %}"
+   href="{% url 'gestion_ca12' %}?annee={{ latest_cloture_year }}">
+    <span class="sidebar-text">CA12</span>
+</a>
+{% endif %}
+
+{% if latest_cloture_year %}
+<a class="nav-link text-white d-flex align-items-center gap-2
+   {% if request.resolver_match.url_name == 'gestion_isci' and request.GET.annee == latest_cloture_year|stringformat:"s" %}active{% endif %}"
+   href="{% url 'gestion_isci' %}?annee={{ latest_cloture_year }}">
+    <span class="sidebar-text">IS / CI</span>
+</a>
+{% endif %}
+
+{% if latest_cloture_year %}
+<a class="nav-link text-white d-flex align-items-center gap-2
+   {% if request.resolver_match.url_name == 'gestion_declarations' and request.GET.annee == latest_cloture_year|stringformat:"s" %}active{% endif %}"
+   href="{% url 'gestion_declarations' %}?annee={{ latest_cloture_year }}">
+    <span class="sidebar-text">Déclarations</span>
+</a>
+{% endif %}
+
+{% if latest_cloture_year %}
+<a class="nav-link text-white d-flex align-items-center gap-2
+   {% if request.resolver_match.url_name == 'gestion_mission' and request.GET.annee == latest_cloture_year|stringformat:"s" %}active{% endif %}"
+   href="{% url 'gestion_mission' %}?annee={{ latest_cloture_year }}">
+    <span class="sidebar-text">Mission</span>
+</a>
+{% endif %}
+
+{% if latest_cloture_year %}
+<a class="nav-link text-white d-flex align-items-center gap-2
+   {% if request.resolver_match.url_name == 'gestion_juridique' and request.GET.annee == latest_cloture_year|stringformat:"s" %}active{% endif %}"
+   href="{% url 'gestion_juridique' %}?annee={{ latest_cloture_year }}">
+    <span class="sidebar-text">Juridique</span>
+</a>
+{% endif %}
+
+
+{% if latest_cloture_year %}
+<a class="nav-link text-white d-flex align-items-center gap-2
+   {% if request.resolver_match.url_name == 'gestion_globale_cloture' and request.GET.annee == latest_cloture_year|stringformat:"s" %}active{% endif %}"
+   href="{% url 'gestion_globale_cloture' %}?annee={{ latest_cloture_year }}">
+    <span class="sidebar-text">Vue globale</span>
+</a>
+{% endif %}
+
+
+    </div>
+</div>
+
+
 		<!-- SECTION : Gestion annuelle -->
 		<hr class="sidebar-separator my-3 opacity-25">
 		<div class="sidebar-section-title text-uppercase small opacity-75 mb-2">
@@ -396,10 +589,10 @@
                    <span class="sidebar-text">Modules Fiscaux</span>
                 </a>
 
-        <a class="nav-link text-white d-flex align-items-center gap-2
-           {% if request.resolver_match.url_name == 'cloture_annees' %}active{% endif %}"
-           href="{% url 'cloture_annees' %}">
-            <span class="sidebar-text">Années de clôture</span>
+        <a class="nav-link text-white d-flex align-items-center gap-2 
+           {% if request.resolver_match.url_name == 'cloture_create' %}active{% endif %}"
+           href="{% url 'cloture_create' %}">
+            <span class="sidebar-text">Modules de clôture</span>
         </a>
 
 
@@ -415,7 +608,29 @@
     <span class="sidebar-text">Archives</span>
 </a>
 
+{% if request.user.is_superuser %}
+
+<hr class="sidebar-separator my-3 opacity-25">
+
+<div class="sidebar-section-title text-uppercase small opacity-75 mb-2">
+    Accès administrateur
+</div>
+
+<a class="nav-link d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}"
+   href="{% url 'admin_dashboard' %}">
+    <i class="bi bi-gear"></i>
+    <span class="sidebar-text">Administrateur</span>
+</a>
+
+{% endif %}
+
+
+
+
             </nav>
+
+
+
         </aside>
 
     </div>
@@ -426,6 +641,10 @@
         {% endblock %}
     </main>
 </div>
+
+
+
+
 
 
 <!-- ========================= -->

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="section">
+
+<div class="container py-4">
+
+    <h3 class="mb-3">Résultats pour : "{{ query }}"</h3>
+
+    {% if clients %}
+        <ul class="list-group">
+            {% for c in clients %}
+            <a href="{% url 'client_hub' c.id %}" class="list-group-item list-group-item-action">
+                {{ c.nom }}
+            </a>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <em>Aucun client trouvé.</em>
+    {% endif %}
+
+</div>
+{% endblock %}

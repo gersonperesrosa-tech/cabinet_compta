@@ -40,12 +40,22 @@
             {{ user.username|first|upper }}
         </div>
 
+
+        <a href="{% url 'mon_profil' %}" 
+           class="btn btn-sm d-flex align-items-center ms-3"
+           style="background:white; color:#00000; border-radius:12px;">
+           👤 Mon profil
+        </a>
+
+
         <a href="{% url 'logout' %}" 
            class="btn btn-sm d-flex align-items-center ms-3"
            style="background:white; color:#dc3545; border-radius:12px;">
             <i class="bi bi-box-arrow-right me-2"></i>
             Déconnexion
         </a>
+
+
     </div>
 </header>
 
@@ -64,6 +74,8 @@
         <span class="sidebar-text">Dashboard</span>
     </a>
 
+
+
     <hr class="sidebar-separator my-3 opacity-25">
 
     <!-- Liste des clients -->
@@ -75,6 +87,8 @@
     </a>
 
 </nav>
+
+
         </aside>
     </div>
 

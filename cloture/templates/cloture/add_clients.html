@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Ajouter des clients – Clôture {{ cloture.annee }}</h2>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <label class="form-label">Sélectionner les clients :</label>
+
+    <select name="clients" multiple class="form-select" size="12">
+        {% for client in clients %}
+            <option value="{{ client.id }}">{{ client.nom }}</option>
+        {% endfor %}
+    </select>
+
+    <button class="btn btn-primary mt-3">Ajouter les clients</button>
+</form>
+
+<a href="{% url 'cloture_detail' cloture.id %}" class="btn btn-outline-secondary mt-3">
+    Retour
+</a>
+{% endblock %}

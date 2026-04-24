@@ -18,18 +18,18 @@
 
     <thead class="table-light">
         <tr>
-            <th data-sort="numero">N° <span class="sort-icon">⬍</span></th>
-            <th data-sort="client">Client <span class="sort-icon">⬍</span></th>
+            <th data-sort="numero">N° <span class="sort-icon"></span></th>
+            <th data-sort="client">Client <span class="sort-icon"></span></th>
 
             <th>Forme juridique</th>
             <th>Régime d’imposition</th>
 
-            <th data-sort="deontologie">Dossier déontologie <span class="sort-icon">⬍</span></th>
-            <th data-sort="lab">Acceptation LAB <span class="sort-icon">⬍</span></th>
-            <th data-sort="piece">Pièce d'identité <span class="sort-icon">⬍</span></th>
-            <th data-sort="statut">Statut <span class="sort-icon">⬍</span></th>
-            <th data-sort="bail">Bail <span class="sort-icon">⬍</span></th>
-            <th data-sort="lettre">Lettre de mission <span class="sort-icon">⬍</span></th>
+            <th data-sort="deontologie">Dossier déontologie <span class="sort-icon"></span></th>
+            <th data-sort="lab">Acceptation LAB <span class="sort-icon"></span></th>
+            <th data-sort="piece">Pièce d'identité <span class="sort-icon"></span></th>
+            <th data-sort="statut">Statut <span class="sort-icon"></span></th>
+            <th data-sort="bail">Bail <span class="sort-icon"></span></th>
+            <th data-sort="lettre">Lettre de mission <span class="sort-icon"></span></th>
 
             <th>Avenant</th>
         </tr>
@@ -88,5 +88,32 @@ document.getElementById("searchInput").addEventListener("keyup", function () {
     });
 });
 </script>
+
+<!-- Tri dynamique sur toutes les colonnes -->
+<script>
+document.querySelectorAll("table thead th").forEach((header, index) => {
+    header.style.cursor = "pointer";
+
+    header.addEventListener("click", () => {
+        const table = header.closest("table");
+        const tbody = table.querySelector("tbody");
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+
+        const isAsc = header.classList.toggle("asc");
+
+        rows.sort((a, b) => {
+            const aVal = (a.cells[index].innerText || "").toLowerCase();
+            const bVal = (b.cells[index].innerText || "").toLowerCase();
+
+            if (aVal < bVal) return isAsc ? -1 : 1;
+            if (aVal > bVal) return isAsc ? 1 : -1;
+            return 0;
+        });
+
+        rows.forEach(row => tbody.appendChild(row));
+    });
+});
+</script>
+
 
 {% endblock %}

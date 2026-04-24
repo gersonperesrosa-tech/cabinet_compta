@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="m-0">Groupes d'utilisateurs</h1>
+
+    <div class="d-flex gap-2">
+        <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary">
+            ← Retour à l'administration
+        </a>
+    </div>
+</div>
+
+
+<div class="card shadow-sm">
+    <table class="table table-hover mb-0">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Permissions</th>
+                <th style="width: 150px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for group in groups %}
+            <tr>
+                <td>{{ group.name }}</td>
+                <td>
+                    {% for perm in group.permissions.all %}
+                        <span class="badge bg-secondary">{{ perm.name }}</span>
+                    {% empty %}
+                        <span class="text-muted">Aucune permission</span>
+                    {% endfor %}
+                </td>
+                <td>
+                    <a href="{% url 'admin_group_edit' group.id %}" class="btn btn-sm btn-outline-primary">Modifier</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+</section>
+{% endblock %}
