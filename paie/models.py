@@ -46,6 +46,8 @@ class PaieMois(models.Model):
     class Meta:
         unique_together = ("client", "annee", "mois")
         ordering = ["-annee", "-mois"]
+        verbose_name = "Paie mois"
+        verbose_name_plural = "Paie mois"
 
     # Format long : Janvier, Février, ...
     @property
