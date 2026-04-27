@@ -91,7 +91,7 @@ USE_TZ = True
 
 # STATIC FILES
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = BASE_DIR / "static"
 
 LOGIN_URL = "/login/"
 LOGOUT_REDIRECT_URL = "/login/"
