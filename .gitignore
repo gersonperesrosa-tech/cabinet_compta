@@ -18,3 +18,4 @@ media/
 
 # Local settings (ne jamais envoyer sur Render)
 settings_local.py
+.env
