@@ -1,31 +1,39 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Client
 
+# -----------------------------
+# Imports modèles
+# -----------------------------
 from .models import (
     Client,
     SuiviComptable,
     TVA,
-
-    # Nouveaux modèles fiscaux
+    TVAAnnee,
+    TVAModule,
+    TVAClientAnnee,
+    TVADeclaration,
     ModuleFiscal,
     AnneeFiscale,
     ClientModuleFiscal,
     ISDeclaration,
     ClotureAnnee,
-    ClotureClient
+    ClotureClient,
 )
 
+# -----------------------------
+# Import de l’action d’import CSV
+# -----------------------------
+from .admin_import import import_clients
 
-# ---------------------------------------------------------
+
+# =========================================================
 #   CLIENT
-# ---------------------------------------------------------
-from django.contrib import admin
-from .models import Client
-
-
+# =========================================================
 @admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
+
+    # ⭐ Bouton Importer des clients
+    actions = [import_clients]
 
     list_display = (
         "numero",
@@ -85,7 +93,7 @@ class ClientAdmin(admin.ModelAdmin):
                 "module_social",
                 "module_ir",
                 "module_suivi_mission",
-                "module_paie",   # ⭐ Nouveau module paie
+                "module_paie",
             )
         }),
 
@@ -95,9 +103,9 @@ class ClientAdmin(admin.ModelAdmin):
     )
 
 
-# ---------------------------------------------------------
-#   SUIVI COMPTABLE (multi‑annuel)
-# ---------------------------------------------------------
+# =========================================================
+#   SUIVI COMPTABLE
+# =========================================================
 @admin.register(SuiviComptable)
 class SuiviComptableAdmin(admin.ModelAdmin):
     list_display = (
@@ -113,10 +121,9 @@ class SuiviComptableAdmin(admin.ModelAdmin):
     ordering = ('client', 'annee')
 
 
-
-# ---------------------------------------------------------
+# =========================================================
 #   TVA (multi‑annuel)
-# ---------------------------------------------------------
+# =========================================================
 @admin.register(TVA)
 class TVAAdmin(admin.ModelAdmin):
 
@@ -175,7 +182,7 @@ class TVAAdmin(admin.ModelAdmin):
             obj.client = old_obj.client
         super().save_model(request, obj, form, change)
 
-    # Pastilles cliquables
+    # Pastilles
     def _pastille(self, obj, mois):
         statut = getattr(obj, f"statut_{mois}")
         couleurs = {
@@ -194,7 +201,7 @@ class TVAAdmin(admin.ModelAdmin):
             obj.pk, mois, statut, color
         )
 
-    # Génération automatique des 12 pastilles
+    # Génération automatique
     def pastille_janvier(self, obj): return self._pastille(obj, "janvier")
     def pastille_fevrier(self, obj): return self._pastille(obj, "fevrier")
     def pastille_mars(self, obj): return self._pastille(obj, "mars")
@@ -210,22 +217,12 @@ class TVAAdmin(admin.ModelAdmin):
 
     class Media:
         js = ("cabinet_compta/js/tva_admin.js",)
-        css = {
-            "all": ("cabinet_compta/css/tva_admin.css",)
-        }
+        css = {"all": ("cabinet_compta/css/tva_admin.css",)}
 
 
-    # --------------------------------------------------------------------
-    # NOUVELLE STRUCTURE MODULES TVA
-    # --------------------------------------------------------------------
-
-from django.contrib import admin
-from .models import TVAAnnee, TVAModule, TVAClientAnnee, TVADeclaration
-
-
-# -----------------------------
-# TVAAnnee
-# -----------------------------
+# =========================================================
+#   MODULES TVA
+# =========================================================
 @admin.register(TVAAnnee)
 class TVAAnneeAdmin(admin.ModelAdmin):
     list_display = ("annee", "date_creation")
@@ -233,9 +230,6 @@ class TVAAnneeAdmin(admin.ModelAdmin):
     search_fields = ("annee",)
 
 
-# -----------------------------
-# TVAModule
-# -----------------------------
 @admin.register(TVAModule)
 class TVAModuleAdmin(admin.ModelAdmin):
     list_display = ("annee", "type")
@@ -244,9 +238,6 @@ class TVAModuleAdmin(admin.ModelAdmin):
     ordering = ("annee__annee", "type")
 
 
-# -----------------------------
-# TVAClientAnnee
-# -----------------------------
 @admin.register(TVAClientAnnee)
 class TVAClientAnneeAdmin(admin.ModelAdmin):
     list_display = ("client", "module", "get_annee", "get_type")
@@ -255,16 +246,11 @@ class TVAClientAnneeAdmin(admin.ModelAdmin):
 
     def get_annee(self, obj):
         return obj.module.annee.annee
-    get_annee.short_description = "Année"
 
     def get_type(self, obj):
         return obj.module.get_type_display()
-    get_type.short_description = "Régime TVA"
 
 
-# -----------------------------
-# TVADeclaration
-# -----------------------------
 @admin.register(TVADeclaration)
 class TVADeclarationAdmin(admin.ModelAdmin):
     list_display = ("tva_client_annee", "updated_at")
@@ -273,17 +259,9 @@ class TVADeclarationAdmin(admin.ModelAdmin):
     ordering = ("-updated_at",)
 
 
-# ---------------------------------------------------------
-#   MODULES FISCAUX (nouvelle architecture)
-# ---------------------------------------------------------
-
-from .models import (
-    ModuleFiscal,
-    AnneeFiscale,
-    ClientModuleFiscal,
-    ISDeclaration,
-)
-
+# =========================================================
+#   MODULES FISCAUX
+# =========================================================
 @admin.register(ModuleFiscal)
 class ModuleFiscalAdmin(admin.ModelAdmin):
     list_display = ("nom",)
@@ -313,19 +291,14 @@ class ISDeclarationAdmin(admin.ModelAdmin):
     search_fields = ("client_module__client__nom",)
     ordering = ("client_module__annee", "client_module__client__nom")
 
+
 @admin.register(ClotureAnnee)
 class ClotureAnneeAdmin(admin.ModelAdmin):
     list_display = ("annee", "date_creation")
+
 
 @admin.register(ClotureClient)
 class ClotureClientAdmin(admin.ModelAdmin):
     list_display = ("client", "annee", "date_maj", "utilisateur_maj")
     list_filter = ("annee",)
     search_fields = ("client__nom", "client__prenom")
-
-
-from django.contrib import admin
-from .models import Client
-from .admin_import import ClientImportAdmin
-
-admin.site.register(Client, ClientImportAdmin)
