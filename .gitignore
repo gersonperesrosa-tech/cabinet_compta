@@ -16,6 +16,8 @@ media/
 .env
 .venv/
 
-# Local settings (ne jamais envoyer sur Render)
+# Local settings (ne jamais envoyer en production)
 settings_local.py
-.env
+
+# CSV locaux (ne jamais envoyer en production)
+data/*.csv
