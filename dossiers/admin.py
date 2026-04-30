@@ -323,3 +323,9 @@ class ClotureClientAdmin(admin.ModelAdmin):
     list_filter = ("annee",)
     search_fields = ("client__nom", "client__prenom")
 
+
+from django.contrib import admin
+from .models import Client
+from .admin_import import ClientImportAdmin
+
+admin.site.register(Client, ClientImportAdmin)
