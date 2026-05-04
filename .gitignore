@@ -15,6 +15,7 @@ media/
 # Environment
 .env
 .venv/
+venv
 
 # Local settings (ne jamais envoyer en production)
 settings_local.py
