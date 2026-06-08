@@ -16,5 +16,4 @@ jobs:
           ssh-keyscan -p ${{ vars.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy
-        run: ssh -p ${{ vars.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "whoami"
         run: ssh -p ${{ vars.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo /usr/local/bin/deploy_cabinet_compta.sh"
