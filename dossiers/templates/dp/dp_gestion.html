@@ -24,10 +24,13 @@
             <th>Forme juridique</th>
             <th>Régime d’imposition</th>
 
-            <th data-sort="deontologie">Dossier déontologie <span class="sort-icon"></span></th>
+            <!-- NOUVEAUX NOMS -->
+            <th data-sort="status">Etat général<span class="sort-icon"></span></th>
+
+            <th data-sort="impotgouv">Impotgouv <span class="sort-icon"></span></th>
             <th data-sort="lab">Acceptation LAB <span class="sort-icon"></span></th>
             <th data-sort="piece">Pièce d'identité <span class="sort-icon"></span></th>
-            <th data-sort="statut">Statut <span class="sort-icon"></span></th>
+            <th data-sort="statuts">Statuts <span class="sort-icon"></span></th>
             <th data-sort="bail">Bail <span class="sort-icon"></span></th>
             <th data-sort="lettre">Lettre de mission <span class="sort-icon"></span></th>
 
@@ -57,15 +60,51 @@
             <!-- Régime d’imposition -->
             <td>{{ client.regime_imposition|empty_dash }}</td>
 
-            <!-- Champs DP triables -->
+            <!-- Status (badge couleur) -->
+            <td class="text-center">
+
+                {% if dp.status == "vert" %}
+                    <span class="badge rounded-pill"
+                          style="background-color:#28a745; color:white; padding:6px 12px;">
+                        
+                    </span>
+
+                {% elif dp.status == "orange" %}
+                    <span class="badge rounded-pill"
+                          style="background-color:#fd7e14; color:white; padding:6px 12px;">
+                        
+                    </span>
+
+                {% else %}
+                    <span class="badge rounded-pill"
+                          style="background-color:#e9ecef; color:#6c757d; padding:6px 12px;">
+                        
+                    </span>
+                {% endif %}
+
+            </td>
+
+            <!-- Impotgouv (ancien dossier déontologie) -->
             <td>{{ dp.dossier_deontologie|empty_dash }}</td>
+
+            <!-- Acceptation LAB -->
             <td>{{ dp.acceptation_lab|empty_dash }}</td>
+
+            <!-- Pièce d'identité -->
             <td>{{ dp.piece_identite|empty_dash }}</td>
+
+            <!-- Statuts -->
             <td>{{ dp.statut|empty_dash }}</td>
+
+
+
+            <!-- Bail -->
             <td>{{ dp.bail|empty_dash }}</td>
+
+            <!-- Lettre de mission -->
             <td>{{ dp.lettre_mission|empty_dash }}</td>
 
-            <!-- Avenant (non trié) -->
+            <!-- Avenant -->
             <td>{{ dp.avenant|empty_dash }}</td>
 
         </tr>
@@ -114,6 +153,5 @@ document.querySelectorAll("table thead th").forEach((header, index) => {
     });
 });
 </script>
-
 
 {% endblock %}

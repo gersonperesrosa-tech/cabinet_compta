@@ -5,6 +5,7 @@
 
 <section class="section">
 
+    <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-4">
 
         <h1 class="m-0" style="line-height: 1;">Gestion IS</h1>
@@ -35,87 +36,120 @@
         </div>
     </div>
 
+    <!-- TABLEAU -->
     <table class="table table-bordered align-middle mt-4">
         <thead class="table-light">
             <tr>
-                <th data-sort="numero">N° <span class="sort-icon"></span></th>
-                <th data-sort="nom">Client <span class="sort-icon"></span></th>
-                <th data-sort="cloture">Date de clôture <span class="sort-icon"></span></th>
+                <th>N°</th>
+                <th>Client</th>
+                <th>Date de clôture</th>
 
                 <th>IS N‑2</th>
                 <th>IS N‑1</th>
+
                 <th>A1</th>
                 <th>A2</th>
                 <th>A3</th>
                 <th>A4</th>
+
                 <th>Solde</th>
 
                 <th style="background:#e9fbe8;">Total IS</th>
             </tr>
         </thead>
 
-        <tbody>
-        {% for cm in cms %}
-            <tr>
+<tbody>
+    {% for cm in cms %}
 
-                <!-- N° -->
-                <td>{{ cm.client.numero }}</td>
+    <tr class="{% if cm.client.archive %}archived-row{% endif %}">
 
-                <!-- NOM DU CLIENT → LIEN VERS LA SAISIE -->
-                <td>
-                    <a href="{% url 'is_saisie' cm.id %}"
-                       class="text-decoration-none fw-semibold">
-                        {{ cm.client.nom }}
-                    </a>
-                </td>
+        <!-- N° -->
+        <td>{{ cm.client.numero }}</td>
 
-                <!-- DATE DE CLÔTURE -->
-                <td>{{ cm.client.date_cloture|default:"—" }}</td>
+        <!-- NOM DU CLIENT -->
+        <td>
+            {% if cm.client.archive %}
+                <!-- 🔒 Client archivé → pas de lien -->
+                <span class="fw-semibold text-muted">
+                    {{ cm.client.nom }}
+                </span>
+            {% else %}
+                <!-- 🔗 Client actif → lien normal -->
+                <a href="{% url 'is_saisie' cm.id %}"
+                   class="text-decoration-none fw-semibold">
+                    {{ cm.client.nom }}
+                </a>
+            {% endif %}
+        </td>
 
-                <!-- IS N-2 -->
-                <td>{{ cm.declaration.is_n_2|default:"—" }}</td>
+        <!-- DATE DE CLÔTURE -->
+        <td>{{ cm.client.date_cloture|default:"—" }}</td>
 
-                <!-- IS N-1 -->
-                <td>{{ cm.declaration.is_n_1|default:"—" }}</td>
+        <!-- IS N-2 -->
+        <td class="text-end">{{ cm.declaration.is_n_2|default:"—" }}</td>
 
-                <!-- ACOMPTE 1 -->
-                <td>
+        <!-- IS N-1 -->
+        <td class="text-end">{{ cm.declaration.is_n_1|default:"—" }}</td>
+
+        <!-- ACOMPTE 1 -->
+        <td>
+            <div class="d-flex justify-content-end align-items-center gap-2">
+                <span class="text-end" style="min-width:70px; display:inline-block;">
                     {{ cm.declaration.acompte_1|default:"—" }}
-                    {% include "partials/statut_badge.html" with statut=cm.declaration.statut_acompte_1 %}
-                </td>
+                </span>
+                {% include "partials/statut_badge.html" with statut=cm.declaration.statut_acompte_1 %}
+            </div>
+        </td>
 
-                <!-- ACOMPTE 2 -->
-                <td>
+        <!-- ACOMPTE 2 -->
+        <td>
+            <div class="d-flex justify-content-end align-items-center gap-2">
+                <span class="text-end" style="min-width:70px; display:inline-block;">
                     {{ cm.declaration.acompte_2|default:"—" }}
-                    {% include "partials/statut_badge.html" with statut=cm.declaration.statut_acompte_2 %}
-                </td>
+                </span>
+                {% include "partials/statut_badge.html" with statut=cm.declaration.statut_acompte_2 %}
+            </div>
+        </td>
 
-                <!-- ACOMPTE 3 -->
-                <td>
+        <!-- ACOMPTE 3 -->
+        <td>
+            <div class="d-flex justify-content-end align-items-center gap-2">
+                <span class="text-end" style="min-width:70px; display:inline-block;">
                     {{ cm.declaration.acompte_3|default:"—" }}
-                    {% include "partials/statut_badge.html" with statut=cm.declaration.statut_acompte_3 %}
-                </td>
+                </span>
+                {% include "partials/statut_badge.html" with statut=cm.declaration.statut_acompte_3 %}
+            </div>
+        </td>
 
-                <!-- ACOMPTE 4 -->
-                <td>
+        <!-- ACOMPTE 4 -->
+        <td>
+            <div class="d-flex justify-content-end align-items-center gap-2">
+                <span class="text-end" style="min-width:70px; display:inline-block;">
                     {{ cm.declaration.acompte_4|default:"—" }}
-                    {% include "partials/statut_badge.html" with statut=cm.declaration.statut_acompte_4 %}
-                </td>
+                </span>
+                {% include "partials/statut_badge.html" with statut=cm.declaration.statut_acompte_4 %}
+            </div>
+        </td>
 
-                <!-- SOLDE -->
-                <td>
+        <!-- SOLDE -->
+        <td>
+            <div class="d-flex justify-content-end align-items-center gap-2">
+                <span class="text-end" style="min-width:70px; display:inline-block;">
                     {{ cm.declaration.solde|default:"—" }}
-                    {% include "partials/statut_badge.html" with statut=cm.declaration.statut_solde %}
-                </td>
+                </span>
+                {% include "partials/statut_badge.html" with statut=cm.declaration.statut_solde %}
+            </div>
+        </td>
 
-                <!-- TOTAL IS -->
-                <td style="background:#e9fbe8;">
-                    {{ cm.total_is|floatformat:2 }}
-                </td>
+        <!-- TOTAL IS -->
+        <td style="background:#e9fbe8;" class="text-end fw-bold">
+            {{ cm.total_is|default:"—" }}
+        </td>
 
-            </tr>
-        {% endfor %}
-        </tbody>
+    </tr>
+
+    {% endfor %}
+</tbody>
     </table>
 
 </section>
@@ -133,7 +167,7 @@ document.getElementById("searchInput").addEventListener("keyup", function () {
 });
 </script>
 
-<!-- Tri dynamique sur toutes les colonnes -->
+<!-- Tri dynamique -->
 <script>
 document.querySelectorAll("table thead th").forEach((header, index) => {
     header.style.cursor = "pointer";
@@ -158,6 +192,5 @@ document.querySelectorAll("table thead th").forEach((header, index) => {
     });
 });
 </script>
-
 
 {% endblock %}

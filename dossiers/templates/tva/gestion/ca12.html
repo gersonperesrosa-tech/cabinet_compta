@@ -32,6 +32,14 @@
                 </select>
             </form>
 
+<form method="POST" action="{% url 'tva_valider_ca12' annee.id %}" class="m-0">
+    {% csrf_token %}
+    <button class="btn btn-outline-success" style="height: 38px;">
+        Valider télétransmissions
+    </button>
+</form>
+
+
             <!-- Bouton reset suivi comptable -->
             <button id="resetSuiviBtn"
                     class="btn btn-outline-danger"
@@ -63,79 +71,98 @@
             </tr>
         </thead>
 
-        <tbody>
-            {% for tca in tca_list %}
-            <tr>
+<tbody>
+    {% for tca in tca_list %}
 
-                <!-- N° client -->
-                <td>{{ tca.client.numero }}</td>
+    <tr class="{% if tca.client.archive %}archived-row{% endif %}">
 
-                <!-- NOM DU CLIENT → LIEN VERS LA SAISIE -->
-                <td class="client-name">
-                    <a href="{% url 'tva_saisie_ca12' tca.id %}"
-                       class="text-decoration-none fw-semibold">
-                        {{ tca.client.nom }}
-                    </a>
-                </td>
+        <!-- N° client -->
+        <td>{{ tca.client.numero }}</td>
 
-                <!-- Échéance -->
-                <td>{{ tca.client.jour_echeance_tva|default_if_none:"" }}</td>
+        <!-- NOM DU CLIENT -->
+        <td class="client-name">
 
-                <!-- TVA N-1 -->
-                <td style="background:#e8f1ff;">
-                    {% if tca.declaration_obj and tca.declaration_obj.tva_n_1 %}
-                        {{ tca.declaration_obj.tva_n_1 }}
-                    {% else %}
-                        —
-                    {% endif %}
-                </td>
+            {% if tca.client.archive %}
+                <!-- 🔒 Client archivé → pas de lien -->
+                <span class="fw-semibold text-muted">
+                    {{ tca.client.nom }}
+                </span>
 
-                <!-- Acompte 1 -->
-                <td>
-                    <div class="d-flex align-items-center justify-content-between">
-                        <span>{{ tca.declaration_obj.tva_acompte_1|default_if_none:"" }}</span>
-                        {% include "tva/partials/statut_badge.html" with statut=tca.declaration_obj.statut_acompte_1 %}
-                    </div>
-                </td>
+            {% else %}
+                <!-- 🔗 Client actif → lien normal -->
+                <a href="{% url 'tva_saisie_ca12' tca.id %}"
+                   class="text-decoration-none fw-semibold">
+                    {{ tca.client.nom }}
+                </a>
+            {% endif %}
 
-                <!-- Acompte 2 -->
-                <td>
-                    <div class="d-flex align-items-center justify-content-between">
-                        <span>{{ tca.declaration_obj.tva_acompte_2|default_if_none:"" }}</span>
-                        {% include "tva/partials/statut_badge.html" with statut=tca.declaration_obj.statut_acompte_2 %}
-                    </div>
-                </td>
+        </td>
 
-                <!-- Solde -->
-                <td>
-                    <div class="d-flex align-items-center justify-content-between">
-                        <span>{{ tca.declaration_obj.tva_solde|default_if_none:"" }}</span>
-                        {% include "tva/partials/statut_badge.html" with statut=tca.declaration_obj.statut_solde %}
-                    </div>
-                </td>
+        <!-- Échéance -->
+        <td>{{ tca.client.jour_echeance_tva|default_if_none:"" }}</td>
 
-                <!-- Total TVA année -->
-                <td style="background:#e9fbe8;">
-                    {% if tca.total_tva_annee %}
-                        {{ tca.total_tva_annee|floatformat:2 }}
-                    {% else %}
-                        —
-                    {% endif %}
-                </td>
+        <!-- TVA N-1 -->
+        <td style="background:#e8f1ff;">
+            {% if tca.declaration_obj and tca.declaration_obj.tva_n_1 %}
+                {{ tca.declaration_obj.tva_n_1 }}
+            {% else %}
+                —
+            {% endif %}
+        </td>
 
-                <!-- Commentaire si TVA > 1000 -->
-                <td>
-                    {{ tca.declaration_obj.commentaire_tva_plus_1000|default_if_none:"" }}
-                </td>
+        <!-- Acompte 1 -->
+        <td>
+            <div class="d-flex align-items-center justify-content-end gap-2">
+                <span class="text-end" style="min-width: 70px; display: inline-block;">
+                    {{ tca.declaration_obj.tva_acompte_1|default_if_none:"" }}
+                </span>
+                {% include "tva/partials/statut_badge.html" with statut=tca.declaration_obj.statut_acompte_1 %}
+            </div>
+        </td>
 
-                <!-- Suivi comptable -->
-                <td>
-                    {% include "tva/partials/pastille_suivi.html" with suivi=tca.suivi %}
-                </td>
+        <!-- Acompte 2 -->
+        <td>
+            <div class="d-flex align-items-center justify-content-end gap-2">
+                <span class="text-end" style="min-width: 70px; display: inline-block;">
+                    {{ tca.declaration_obj.tva_acompte_2|default_if_none:"" }}
+                </span>
+                {% include "tva/partials/statut_badge.html" with statut=tca.declaration_obj.statut_acompte_2 %}
+            </div>
+        </td>
 
-            </tr>
-            {% endfor %}
-        </tbody>
+        <!-- Solde -->
+        <td>
+            <div class="d-flex align-items-center justify-content-end gap-2">
+                <span class="text-end" style="min-width: 70px; display: inline-block;">
+                    {{ tca.declaration_obj.tva_solde|default_if_none:"" }}
+                </span>
+                {% include "tva/partials/statut_badge.html" with statut=tca.declaration_obj.statut_solde %}
+            </div>
+        </td>
+
+        <!-- Total TVA année -->
+        <td style="background:#e9fbe8;">
+            {% if tca.total_tva_annee %}
+                {{ tca.total_tva_annee|floatformat:2 }}
+            {% else %}
+                —
+            {% endif %}
+        </td>
+
+        <!-- Commentaire si TVA > 1000 -->
+        <td>
+            {{ tca.declaration_obj.commentaire_tva_plus_1000|default_if_none:"" }}
+        </td>
+
+        <!-- Suivi comptable -->
+        <td>
+            {% include "tva/partials/pastille_suivi.html" with suivi=tca.suivi %}
+        </td>
+
+    </tr>
+
+    {% endfor %}
+</tbody>
     </table>
 
 </section>

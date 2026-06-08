@@ -10,9 +10,9 @@
 
 <div class="container-fluid">
 
-    <!-- Titre + barre de recherche -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="mb-0">Suivi Comptable</h1>
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Suivi comptable</h1>
 
         <div class="input-group" style="max-width: 280px;">
             <span class="input-group-text bg-white">
@@ -22,85 +22,93 @@
         </div>
     </div>
 
+    <div class="table-responsive shadow-sm rounded">
 
-    <div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+    <thead class="table-light">
+        <tr>
+            <th data-sort="numero">N°</th>
+            <th data-sort="nom">Nom</th>
+            <th data-sort="periodicite">Périodicité</th>
 
-        <table class="table table-hover align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th data-sort="numero">N°<span class="sort-icon"></span></th>
-                    <th data-sort="nom">Nom <span class="sort-icon"></span></th>
-                    <th data-sort="periodicite">Périodicité <span class="sort-icon"></span></th>
+            <th>Forme juridique</th>
+            <th>Date de clôture</th>
 
-                    <th>Forme juridique</th>
-                    <th>Date de clôture</th>
+            <th data-sort="regime_tva">Régime TVA</th>
+            <th data-sort="echeance_tva">Échéance TVA</th>
 
-                    <th data-sort="regime_tva">Régime TVA actuel <span class="sort-icon"></span></th>
-                    <th data-sort="echeance_tva">Échéance TVA <span class="sort-icon"></span></th>
+            <th data-sort="maj_compta">MAJ compta</th>
 
-                    <th data-sort="maj_compta">Date MAJ compta <span class="sort-icon"></span></th>
+            <th>Dernier mois</th>
+            <th>Saisi par</th>
+            <th>Vérif.</th>
 
-                    <th>Dernier mois saisi</th>
-                    <th>Saisi par</th>
-                    <th>Vérification</th>
-                    <th>Commentaires</th>
-                </tr>
-            </thead>
+            <!-- 🟩 NOUVELLE COLONNE -->
+            <th>Statut</th>
 
-            <tbody>
-                {% for client in clients %}
-                    {% with suivi=suivis|get_item:client.id %}
-                    {% with annee=annees|get_item:client.id %}
+            <th>Commentaires</th>
+        </tr>
+    </thead>
 
-                    <tr>
+    <tbody>
+        {% for client in clients %}
+            {% with suivi=suivis|get_item:client.id %}
+            {% with annee=annees|get_item:client.id %}
 
-                        <!-- Numéro -->
-                        <td>{{ client.numero }}</td>
+            <tr>
 
-                        <!-- Nom (ouvre popup AJAX) -->
-                        <td>
-                            <a href="{% url 'popup_suivi_comptable' client.id annee %}"
-                               class="suivi-link text-decoration-none fw-semibold">
-                                {{ client.nom }}
-                            </a>
-                        </td>
+                <td>{{ client.numero }}</td>
 
-                        <!-- Périodicité -->
-                        <td>{{ client.periodicite }}</td>
+                <td>
+                    <a href="{% url 'suivi_comptable' client.id annee %}"
+                       class="text-decoration-none fw-semibold">
+                        {{ client.nom }}
+                    </a>
+                </td>
 
-                        <td>{{ client.forme_juridique }}</td>
-                        <td>{{ client.date_cloture }}</td>
+                <td>{{ client.periodicite }}</td>
 
-                        <!-- Régime TVA -->
-                        <td>{{ client.regime_tva }}</td>
+                <td>{{ client.forme_juridique }}</td>
+                <td>{{ client.date_cloture }}</td>
 
-                        <!-- Échéance TVA -->
-                        <td>{{ client.jour_echeance_tva|default_if_none:"" }}</td>
+                <td>{{ client.regime_tva }}</td>
+                <td>{{ client.jour_echeance_tva|default_if_none:"" }}</td>
 
-                        <!-- Date MAJ compta -->
-                        <td>{{ suivi.date_maj_compta|default:"—" }}</td>
+                <td>{{ suivi.date_maj_compta|default:"—" }}</td>
 
-                        <td>{{ suivi.dernier_mois_traite|default:"—" }}</td>
-                        <td>{{ suivi.saisi_par|default:"—" }}</td>
+                <td>{{ suivi.dernier_mois_traite|default:"—" }}</td>
+                <td>{{ suivi.saisi_par|default:"—" }}</td>
 
-                        <td>
-                            {% if suivi and suivi.verifie %}
-                                <i class="bi bi-check2-circle text-success" title="Vérifié"></i>
-                            {% else %}
-                                <i class="bi bi-x-circle text-danger" title="Non vérifié"></i>
-                            {% endif %}
-                        </td>
+                <td>
+                    {% if suivi and suivi.verifie %}
+                        <i class="bi bi-check2-circle text-success"></i>
+                    {% else %}
+                        <i class="bi bi-x-circle text-danger"></i>
+                    {% endif %}
+                </td>
 
-                        <td>{{ suivi.commentaire|default:"—" }}</td>
+                <!-- 🟩 BADGE STATUT -->
+                <td>
+                    {% if suivi.saisie_terminee %}
+                        <span class="badge bg-success">Terminé</span>
+                    {% elif suivi.saisie_en_cours %}
+                        <span class="badge bg-warning text-dark">En cours</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Non commencé</span>
+                    {% endif %}
+                </td>
 
-                    </tr>
+                <td class="text-muted small">
+                    {{ suivi.commentaire|default:"—" }}
+                </td>
 
-                    {% endwith %}
-                    {% endwith %}
-                {% endfor %}
-            </tbody>
+            </tr>
 
-        </table>
+            {% endwith %}
+            {% endwith %}
+        {% endfor %}
+    </tbody>
+</table>
 
     </div>
 </div>
@@ -118,52 +126,9 @@ document.getElementById("searchInput").addEventListener("input", function() {
 });
 </script>
 
-<!-- Popup AJAX -->
+<!-- Tri dynamique -->
 <script>
-document.addEventListener("click", function(e) {
-    const link = e.target.closest(".suivi-link");
-    if (!link) return;
-
-    e.preventDefault();
-
-    fetch(link.href, {
-        headers: { "X-Requested-With": "XMLHttpRequest" }
-    })
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("clientModalContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("clientModal")).show();
-    });
-});
-</script>
-
-<!-- Enregistrement AJAX -->
-<script>
-document.addEventListener("submit", function(e) {
-    const form = e.target.closest("#suiviComptableForm");
-    if (!form) return;
-
-    e.preventDefault();
-
-    fetch(form.action || window.location.href, {
-        method: "POST",
-        body: new FormData(form),
-        headers: { "X-Requested-With": "XMLHttpRequest" }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const modal = bootstrap.Modal.getInstance(document.getElementById("clientModal"));
-            modal.hide();
-            location.reload();
-        }
-    });
-});
-</script>
-
-<!-- Tri dynamique sur toutes les colonnes -->
-<script>
-document.querySelectorAll("table thead th").forEach((header, index) => {
+document.querySelectorAll("table thead th[data-sort]").forEach((header, index) => {
     header.style.cursor = "pointer";
 
     header.addEventListener("click", () => {
@@ -186,7 +151,6 @@ document.querySelectorAll("table thead th").forEach((header, index) => {
     });
 });
 </script>
-
 
 </section>
 

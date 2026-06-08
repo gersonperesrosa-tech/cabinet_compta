@@ -54,7 +54,9 @@ class Client(models.Model):
 
     regime_tva = models.CharField(
         max_length=20,
-        choices=REGIME_TVA_CHOICES
+        choices=REGIME_TVA_CHOICES,
+        blank=True,
+        null=True
     )
 
     periodicite = models.CharField(
@@ -410,7 +412,7 @@ class TVADeclaration(models.Model):
         ("JAUNE", "A envoyer au client"),
         ("VERT_CLAIR", "Télétransmis"),
         ("VERT_FONCE", "Accepté"),
-        ("BLANC", "Regeté"),
+        ("BLANC", "Rejeté"),
 
     ]
 
@@ -572,38 +574,32 @@ class ISDeclaration(models.Model):
         related_name="is_declaration"
     )
 
-    # Pré-remplis automatiquement
-    is_n_2 = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    is_n_1 = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    # Pré-remplis automatiquement (texte)
+    is_n_2 = models.CharField(max_length=255, null=True, blank=True)
+    is_n_1 = models.CharField(max_length=255, null=True, blank=True)
 
-    # Acomptes
-    acompte_1 = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    # Acomptes (texte)
+    acompte_1 = models.CharField(max_length=255, null=True, blank=True)
     statut_acompte_1 = models.CharField(max_length=20, null=True, blank=True)
 
-    acompte_2 = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    acompte_2 = models.CharField(max_length=255, null=True, blank=True)
     statut_acompte_2 = models.CharField(max_length=20, null=True, blank=True)
 
-    acompte_3 = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    acompte_3 = models.CharField(max_length=255, null=True, blank=True)
     statut_acompte_3 = models.CharField(max_length=20, null=True, blank=True)
 
-    acompte_4 = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    acompte_4 = models.CharField(max_length=255, null=True, blank=True)
     statut_acompte_4 = models.CharField(max_length=20, null=True, blank=True)
 
-    # Solde
-    solde = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    # Solde (texte)
+    solde = models.CharField(max_length=255, null=True, blank=True)
     statut_solde = models.CharField(max_length=20, null=True, blank=True)
+
+    # Nouveau champ : Total IS (texte)
+    total_is = models.CharField(max_length=255, null=True, blank=True)
 
     # Commentaire
     commentaire_plus_3000 = models.TextField(null=True, blank=True)
-
-    def total_is(self):
-        return sum([
-            self.acompte_1 or 0,
-            self.acompte_2 or 0,
-            self.acompte_3 or 0,
-            self.acompte_4 or 0,
-            self.solde or 0
-        ])
 
     # -------------------------------------------------------
     # MODULE CFE
@@ -612,15 +608,6 @@ class ISDeclaration(models.Model):
 from django.db import models
 from dossiers.models import ClientModuleFiscal
 
-# --- CFE ---
-STATUT_CHOICES = [
-    ("NONE", "Sans pastille"),
-    ("BLANC", "Blanc"),
-    ("JAUNE", "Jaune"),
-    ("VERT_CLAIR", "Vert clair"),
-    ("VERT_FONCE", "Vert foncé"),
-]
-
 class CFEDeclaration(models.Model):
     client_module = models.OneToOneField(
         ClientModuleFiscal,
@@ -628,37 +615,24 @@ class CFEDeclaration(models.Model):
         related_name="cfe_declaration"
     )
 
-    # Montants
-    cfe_n_1 = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    acompte_cfe = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    solde_cfe = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    # Montants (texte)
+    cfe_n_1 = models.CharField(max_length=255, null=True, blank=True)
+    acompte_cfe = models.CharField(max_length=255, null=True, blank=True)
+    solde_cfe = models.CharField(max_length=255, null=True, blank=True)
 
-    # Statuts
-    statut_acompte = models.CharField(
-        max_length=20,
-        choices=STATUT_CHOICES,
-        default="BLANC"
-    )
-    statut_solde = models.CharField(
-        max_length=20,
-        choices=STATUT_CHOICES,
-        default="BLANC"
-    )
-    statut_1447c = models.CharField(
-        max_length=20,
-        choices=STATUT_CHOICES,
-        default="BLANC"
-    )
+    # Nouveau champ : Total CFE (texte)
+    total_cfe = models.CharField(max_length=255, null=True, blank=True)
+
+    # Statuts (mêmes que IS → pas de choices ici)
+    statut_acompte = models.CharField(max_length=20, null=True, blank=True)
+    statut_solde = models.CharField(max_length=20, null=True, blank=True)
+    statut_1447c = models.CharField(max_length=20, null=True, blank=True)
 
     # Informations complémentaires
     mode_paiement = models.CharField(max_length=100, blank=True)
     degrevement = models.CharField(max_length=255, blank=True)
     formulaire_1447c = models.CharField(max_length=255, blank=True)
     commentaire_plus_3000 = models.TextField(blank=True)
-
-    @property
-    def total_cfe(self):
-        return (self.acompte_cfe or 0) + (self.solde_cfe or 0)
 
     def __str__(self):
         return f"CFE {self.client_module.client.nom} – {self.client_module.annee.annee}"
@@ -674,20 +648,25 @@ class CVAEDeclaration(models.Model):
         related_name="cvae_declaration"
     )
 
-    cvae_n_1 = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    acompte_cvae = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    statut_acompte_cvae = models.CharField(max_length=20, blank=True, null=True)
+    # Pré-remplissage automatique (texte)
+    cvae_n_1 = models.CharField(max_length=255, null=True, blank=True)
 
-    solde_cvae = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    statut_solde_cvae = models.CharField(max_length=20, blank=True, null=True)
+    # Acompte CVAE (texte)
+    acompte_cvae = models.CharField(max_length=255, null=True, blank=True)
+    statut_acompte_cvae = models.CharField(max_length=20, null=True, blank=True)
 
+    # Solde CVAE (texte)
+    solde_cvae = models.CharField(max_length=255, null=True, blank=True)
+    statut_solde_cvae = models.CharField(max_length=20, null=True, blank=True)
+
+    # Nouveau champ : Total CVAE (texte)
+    total_cvae = models.CharField(max_length=255, null=True, blank=True)
+
+    # Commentaire
     commentaire_plus_1500 = models.TextField(blank=True, null=True)
 
-    def total_cvae(self):
-        return (self.acompte_cvae or 0) + (self.solde_cvae or 0)
-
     def __str__(self):
-        return f"CVAE {self.client_module}"
+        return f"CVAE {self.client_module.client.nom} – {self.client_module.annee.annee}"
 
     # -------------------------------------------------------
     # MODULE TVS
@@ -700,22 +679,53 @@ class TVSDeclaration(models.Model):
         related_name="tvs_declaration"
     )
 
-    tvs_n_1 = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    # Pré-remplissage automatique (texte)
+    tvs_n_1 = models.CharField(max_length=255, null=True, blank=True)
 
-    vehicule = models.BooleanField(default=False)
+    # Indicateurs globaux
     soumis_tvs_n = models.BooleanField(default=False)
+    formulaire = models.CharField(max_length=255, null=True, blank=True)
 
-    formulaire = models.CharField(max_length=255, blank=True, null=True)
-    montant = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    # Total TVS (texte)
+    total_tvs = models.CharField(max_length=255, null=True, blank=True)
 
-    statut_tvs = models.CharField(max_length=20, blank=True, null=True)
+    # Statut global (optionnel)
+    statut_tvs = models.CharField(max_length=20, null=True, blank=True)
 
-    info_vehicule = models.CharField(max_length=255, blank=True, null=True)
-    date_achat = models.DateField(blank=True, null=True)
-    date_cession = models.DateField(blank=True, null=True)
+    # Commentaire global
+    commentaire_global = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return f"TVS {self.client_module}"
+        return f"TVS {self.client_module.client.nom} – {self.client_module.annee.annee}"
+
+class TVSVehicule(models.Model):
+    declaration = models.ForeignKey(
+        TVSDeclaration,
+        on_delete=models.CASCADE,
+        related_name="vehicules"
+    )
+
+    # Informations véhicule
+    marque = models.CharField(max_length=255, blank=True)
+    modele = models.CharField(max_length=255, blank=True)
+    immatriculation = models.CharField(max_length=50, blank=True)
+
+    date_achat = models.DateField(null=True, blank=True)
+    date_cession = models.DateField(null=True, blank=True)
+
+    puissance_fiscale = models.CharField(max_length=50, blank=True)
+
+    # Montant TVS (texte)
+    montant_tvs = models.CharField(max_length=255, null=True, blank=True)
+
+    # Statut (mêmes que IS)
+    statut_tvs = models.CharField(max_length=20, null=True, blank=True)
+
+    commentaire = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.immatriculation or 'Véhicule'} – TVS"
+
 
     # -------------------------------------------------------
     # MODULE DESDEB
@@ -803,12 +813,29 @@ class DividendesDeclaration(models.Model):
     # -------------------------------------------------------
 
 class DPDeclaration(models.Model):
+    STATUS_CHOICES = [
+        ("blanc", "Blanc"),
+        ("orange", "Orange"),
+        ("vert", "Vert"),
+    ]
+
     client = models.OneToOneField(
         Client,
         on_delete=models.CASCADE,
         related_name="dp"
     )
 
+    # 🔥 Nouveaux champs
+    etat = models.CharField(max_length=255, blank=True, null=True)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="blanc",
+        blank=True,
+        null=True
+    )
+
+    # Champs existants
     dossier_deontologie = models.CharField(max_length=255, blank=True, null=True)
     acceptation_lab = models.CharField(max_length=255, blank=True, null=True)
     piece_identite = models.CharField(max_length=255, blank=True, null=True)

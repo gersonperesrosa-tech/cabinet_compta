@@ -8,54 +8,59 @@
 <form method="post" id="clientForm" action="{% url 'fiche_client' client.id %}">
     {% csrf_token %}
 
-    <!-- HEADER DE PAGE -->
+    <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="m-0">Fiche Client – {{ client.nom }}</h3>
+        <div>
+            <h3 class="m-0 d-flex align-items-center">
+                Fiche Client – {{ client.nom }}
+
+                <!-- BADGE ARCHIVAGE -->
+                {% if client.archive %}
+                    <span class="badge bg-secondary ms-3">Archivé</span>
+                {% endif %}
+            </h3>
+        </div>
 
         <a href="{% url 'liste_clients' %}" class="btn btn-secondary">
             Retour à la liste
         </a>
     </div>
 
-    <style>
-        .page-container {
-            padding: 10px 5px 80px;
-        }
-
-        .form-section {
-            background: #ffffff;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid #e5e7eb;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        }
-
-        .form-section h5 {
-            font-weight: 600;
-            font-size: 1rem;
-            margin-bottom: 15px;
-            color: #374151;
-            border-left: 4px solid #0d6efd;
-            padding-left: 10px;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 15px 20px;
-        }
-
-        .page-footer-fixed {
-            position: sticky;
-            bottom: 0;
-            background: #ffffff;
-            padding: 15px;
-            border-top: 1px solid #e5e7eb;
-            text-align: right;
-            box-shadow: 0 -2px 6px rgba(0,0,0,0.05);
-        }
-    </style>
+<style>
+    .page-container {
+        padding: 10px 5px 80px;
+    }
+    .form-section {
+        background: #ffffff;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .form-section h5 {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 15px;
+        color: #374151;
+        border-left: 4px solid #0d6efd;
+        padding-left: 10px;
+    }
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 15px 20px;
+    }
+    .page-footer-fixed {
+        position: sticky;
+        bottom: 0;
+        background: #ffffff;
+        padding: 15px;
+        border-top: 1px solid #e5e7eb;
+        text-align: right;
+        box-shadow: 0 -2px 6px rgba(0,0,0,0.05);
+    }
+</style>
 
 <div class="page-container">
 
@@ -69,6 +74,7 @@
                 <h5>Informations générales</h5>
 
                 <div class="form-grid">
+
                     <div>
                         <label class="form-label">Numéro interne</label>
                         {{ form.numero }}
@@ -84,9 +90,18 @@
                         {{ form.forme_juridique }}
                     </div>
 
+                    <!-- 🔥 RÉGIME D’IMPOSITION INTELLIGENT -->
                     <div>
-                        <label class="form-label">Régime d’imposition pour le suivi</label>
-                        {{ form.regime_imposition }}
+                        <label class="form-label">Régime d’imposition</label>
+
+                        {% if regime_imposition_auto %}
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-info">{{ regime_imposition_auto }}</span>
+                                <small class="text-muted ms-2">(déduit du module IS {{ current_year }})</small>
+                            </div>
+                        {% else %}
+                            {{ form.regime_imposition }}
+                        {% endif %}
                     </div>
 
                     <div>
@@ -99,9 +114,8 @@
                         {{ form.periodicite }}
                     </div>
 
-                    <!-- 🔥 AJOUT DU CHAMP USER -->
                     <div>
-                        <label class="form-label">Utilisateur du client pour la paie</label>
+                        <label class="form-label">Utilisateur associé</label>
                         {{ form.user }}
                     </div>
 
@@ -113,18 +127,36 @@
                 <h5>TVA</h5>
 
                 <div class="form-grid">
+
+                    <!-- 🔥 RÉGIME TVA INTELLIGENT -->
                     <div>
-                        <label class="form-label">Régime TVA pour le suivi comptable</label>
-                        {{ form.regime_tva }}
+                        <label class="form-label">Régime TVA</label>
+
+                        {% if tva_multiple %}
+                            <span class="badge bg-warning text-dark">
+                                Plusieurs régimes détectés – vérifier l’historique
+                            </span>
+
+                        {% elif regime_tva_auto %}
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-info">{{ regime_tva_auto }}</span>
+                                <small class="text-muted ms-2">(année {{ current_year }})</small>
+                            </div>
+
+                        {% else %}
+                            {{ form.regime_tva }}
+                        {% endif %}
                     </div>
 
                     <div>
                         <label class="form-label">Jour d’échéance TVA</label>
                         {{ form.jour_echeance_tva }}
                     </div>
+
                 </div>
 
-                <a class="btn btn-outline-secondary btn-history"
+                <!-- HISTORIQUE TVA -->
+                <a class="btn btn-outline-secondary btn-history mt-3"
                    data-bs-toggle="collapse"
                    href="#historiqueTVA">
                     Historique TVA (toutes les années)
@@ -133,40 +165,25 @@
                 <div class="collapse mt-2" id="historiqueTVA">
                     <div class="list-group">
                         {% for tca in client.tvaclientannee_set.all|dictsortreversed:"annee.annee" %}
-                            {% if tca.annee %}
-                                <a href="{% url 'tva_historique_client' client.id tca.annee.id %}"
-                                   class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <a href="{% url 'tva_historique_client' client.id tca.annee.id %}"
+                               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
 
-                                    <div class="d-flex align-items-center gap-2">
-                                        <strong>Année {{ tca.annee.annee }}</strong>
+                                <div class="d-flex align-items-center gap-2">
+                                    <strong>Année {{ tca.annee.annee }}</strong>
 
-                                        {% if tca.module %}
-                                            {% if tca.module.type == "CA3M" %}
-                                                <span class="badge bg-primary">Mensuel</span>
-                                            {% elif tca.module.type == "CA3T" %}
-                                                <span class="badge bg-purple">Trimestriel</span>
-                                            {% elif tca.module.type == "CA12" %}
-                                                <span class="badge bg-success">Annuel</span>
-                                            {% elif tca.module.type == "FR" %}
-                                                <span class="badge bg-secondary">Franchise</span>
-                                            {% elif tca.module.type == "EXO" %}
-                                                <span class="badge bg-warning text-dark">Exonéré</span>
-                                            {% endif %}
-                                        {% endif %}
-                                    </div>
-
-                                    <span class="badge bg-primary">Voir</span>
-                                </a>
-                            {% else %}
-                                <div class="list-group-item text-danger">
-                                    ⚠ Erreur : TVAClientAnnee sans année associée
+                                    {% if tca.module %}
+                                        <span class="badge bg-primary">{{ tca.module.type }}</span>
+                                    {% endif %}
                                 </div>
-                            {% endif %}
+
+                                <span class="badge bg-primary">Voir</span>
+                            </a>
                         {% empty %}
                             <p class="text-muted mt-2">Aucune année TVA configurée.</p>
                         {% endfor %}
                     </div>
                 </div>
+
             </div>
 
             <!-- SECTION 3 : Notes internes -->
@@ -177,43 +194,52 @@
 
         </div>
 
-        <!-- COLONNE DROITE -->
-        <div class="col-lg-5 col-md-12">
+<!-- COLONNE DROITE -->
+<div class="col-lg-5 col-md-12">
 
-            <!-- SECTION 4 : Modules activés -->
-            <div class="form-section">
-                <h5>Modules activés</h5>
+    <!-- SECTION 4 : Modules activés -->
+    <div class="form-section">
+        <h5>Modules activés</h5>
 
-                <div class="form-grid">
-                    <label class="form-label">{{ form.module_saisie }} Saisie comptable</label>
-                    <label class="form-label">{{ form.module_paie }} Module Paie</label>
-                </div>
-
-                <div class="mt-3">
-                    <a href="{% url 'dp_saisie' client.id %}" class="btn btn-outline-secondary w-100">
-                        📁 Dossier Permanent
-                    </a>
-                </div>
-            </div>
-
-            <!-- SECTION 5 : Archivage -->
-            <div class="form-section">
-                <h5>Archivage</h5>
-                <label class="form-label">{{ form.archive }} Archivé</label>
-            </div>
-
-            <!-- BOUTON NOTES PRIVÉES -->
-            <div class="form-section">
-                <a href="{% url 'client_notes' client.id %}" class="btn btn-outline-secondary w-100">
-                    📝 Notes privées
-                </a>
-            </div>
-
+        <div class="form-grid">
+            <label class="form-label">{{ form.module_saisie }} Saisie comptable</label>
+            <label class="form-label">{{ form.module_paie }} Module Paie</label>
         </div>
 
     </div>
 
+    <!-- SECTION 5 : Archivage -->
+    <div class="form-section">
+        <h5>Archivage</h5>
+        <label class="form-label">{{ form.archive }} Archivé</label>
+    </div>
+
+    <!-- NOTES PRIVÉES -->
+    <div class="form-section">
+            <a href="{% url 'dp_saisie' client.id %}" class="btn btn-outline-secondary w-100">
+                📁 Dossier Permanent
+            </a>
+
+
+         <div class="mt-3">
+            <a href="{% url 'suivi_comptable' client.id current_year %}" 
+               class="btn btn-outline-secondary w-100">
+                📊 Suivi comptable
+            </a>
+        </div>
+
+         <div class="mt-3">
+
+
+        <a href="{% url 'client_notes' client.id %}" class="btn btn-outline-secondary w-100">
+            📝 Notes privées
+        </a>
+    </div>
+
+
+
 </div>
+
 
     <!-- FOOTER FIXE -->
     <div class="page-footer-fixed">
@@ -221,5 +247,7 @@
     </div>
 
 </form>
+
+</section>
 
 {% endblock %}

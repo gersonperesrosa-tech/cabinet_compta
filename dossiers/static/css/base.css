@@ -1396,3 +1396,9 @@ main {
 }
 
 
+.archived-row {
+    opacity: 0.45;
+    pointer-events: none; /* désactive tous les clics */
+}
+
+

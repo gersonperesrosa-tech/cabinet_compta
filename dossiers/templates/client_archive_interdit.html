@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container py-5">
+
+    <div class="alert alert-warning text-center p-4 shadow-sm" style="max-width: 600px; margin: auto;">
+        <h2 class="mb-3">Client archivé</h2>
+        <p class="mb-4">
+            Ce client est archivé. Toutes les modifications sont désactivées.
+        </p>
+
+        <a href="{% url 'liste_clients' %}" class="btn btn-primary">
+            Retour à la liste des clients
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}

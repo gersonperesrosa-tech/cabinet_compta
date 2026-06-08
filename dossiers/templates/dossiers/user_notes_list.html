@@ -20,57 +20,64 @@
         </div>
     </div>
 
-<!-- Barre de recherche instantanée -->
-<div class="card p-3 mb-4">
-    <input type="text"
-           id="note-search"
-           class="form-control"
-           placeholder="Rechercher une note...">
-</div>
-</div>
-
-<!-- Liste des notes -->
-{% if notes %}
-    <div class="list-group" id="notes-list">
-
-        {% for note in notes %}
-            <div class="list-group-item note-item">
-
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <div class="fw-bold note-title">{{ note.titre|default:"Sans titre" }}</div>
-                        <div class="text-muted small">{{ note.created_at|date:"d/m/Y H:i" }}</div>
-
-                        {% if note.categorie %}
-                            <span class="badge bg-secondary mt-1">{{ note.categorie.nom }}</span>
-                        {% endif %}
-                    </div>
-
-                    <div class="text-end">
-                        <a href="{% url 'edit_user_note' note.id %}" class="btn btn-sm btn-outline-secondary">
-                            Modifier
-                        </a>
-                        <a href="{% url 'delete_user_note' note.id %}" class="btn btn-sm btn-outline-danger">
-                            Supprimer
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2 note-content">
-                    {{ note.contenu|truncatechars:200 }}
-                </div>
-
-            </div>
-        {% endfor %}
-
+    <!-- Barre de recherche -->
+    <div class="card p-3 mb-4">
+        <input type="text"
+               id="note-search"
+               class="form-control"
+               placeholder="Rechercher une note...">
     </div>
 
-{% else %}
-    <p class="text-muted"><em>Aucune note ne correspond à votre recherche…</em></p>
+    <!-- Liste des notes -->
+    {% if notes %}
+        <div class="list-group" id="notes-list">
+
+            {% for note in notes %}
+                <div class="list-group-item note-item">
+
+                    <div class="d-flex justify-content-between">
+<div class="note-header-line">
+    <span class="fw-bold note-title">{{ note.titre|default:"Sans titre" }}</span>
+
+    <span class="text-muted small">— {{ note.created_at|date:"d/m/Y H:i" }}</span>
+
+{% if note.categorie %}
+    <span class="badge bg-secondary ms-2 note-category">{{ note.categorie.nom }}</span>
 {% endif %}
+</div>
+
+                        <div class="text-end">
+
+<a href="{% url 'view_user_note' note.id %}" class="btn btn-sm btn-outline-primary">
+    Visualiser
+</a>
+
+                            <a href="{% url 'edit_user_note' note.id %}" class="btn btn-sm btn-outline-secondary">
+                                Modifier
+                            </a>
+                            <a href="{% url 'delete_user_note' note.id %}" class="btn btn-sm btn-outline-danger">
+                                Supprimer
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Aperçu HTML propre -->
+                    <div class="mt-2 note-content preview-html">
+                        {{ note.contenu|safe }}
+                    </div>
+
+                </div>
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+        <p class="text-muted"><em>Aucune note ne correspond à votre recherche…</em></p>
+    {% endif %}
 
 </div>
 
+<!-- Recherche dynamique -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const searchInput = document.getElementById("note-search");
@@ -79,26 +86,43 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const items = notesList.getElementsByClassName("note-item");
 
-    searchInput.addEventListener("keyup", function () {
-        const query = this.value.toLowerCase().trim();
+searchInput.addEventListener("keyup", function () {
+    const query = this.value.toLowerCase().trim();
 
-        for (let i = 0; i < items.length; i++) {
-            const item = items[i];
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
 
-            const title = item.querySelector(".note-title")?.textContent.toLowerCase() || "";
-            const content = item.querySelector(".note-content")?.textContent.toLowerCase() || "";
+        const title = item.querySelector(".note-title")?.textContent.toLowerCase() || "";
+        const content = item.querySelector(".note-content")?.textContent.toLowerCase() || "";
+        const category = item.querySelector(".note-category")?.textContent.toLowerCase() || "";
 
-            const text = title + " " + content;
+        const text = title + " " + content + " " + category;
 
-            if (text.includes(query)) {
-                item.style.display = "";
-            } else {
-                item.style.display = "none";
-            }
-        }
-    });
+        item.style.display = text.includes(query) ? "" : "none";
+    }
+});
 });
 </script>
 
+<!-- Style aperçu HTML -->
+<style>
+.preview-html {
+    max-height: 120px;
+    overflow: hidden;
+    position: relative;
+}
+
+.preview-html::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 40px;
+    width: 100%;
+    background: linear-gradient(to bottom, transparent, white);
+}
+</style>
+
+</section>
 
 {% endblock %}

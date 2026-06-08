@@ -130,6 +130,8 @@ urlpatterns = [
     path("mes-notes/<int:note_id>/modifier/", edit_user_note, name="edit_user_note"),
     path("mes-notes/<int:note_id>/supprimer/", delete_user_note, name="delete_user_note"),
     path("mes-notes/categories/ajouter/", add_user_note_categorie, name="add_user_note_categorie"),
+    path("note/<int:note_id>/", views.view_user_note, name="view_user_note"),
+
 
     # TODO LIST
     path('todo/', todo_list, name='todo_list'),
@@ -154,6 +156,8 @@ urlpatterns = [
     path("client/<int:client_id>/notes/", views.client_notes, name="client_notes"),
     path("notes/<int:note_id>/edit/", views.edit_note, name="edit_note"),
     path("notes/<int:note_id>/delete/", views.delete_note, name="delete_note"),
+    path("note-client/<int:note_id>/", views.view_note, name="view_note"),
+
 
     # Tags
     path("client/<int:client_id>/notes/add_tag/", views.add_tag, name="add_tag"),
@@ -222,11 +226,8 @@ urlpatterns = [
     # ============================
     # Page liste
     path('suivi-comptable/', views.liste_suivi_comptable, name='liste_suivi_comptable'),
+    path("suivi-comptable/<int:client_id>/<int:annee>/", views.suivi_comptable, name="suivi_comptable"),
 
-    # Popup AJAX
-    path('suivi-comptable/popup/<int:client_id>/<int:annee>/', 
-         views.popup_suivi_comptable, 
-         name='popup_suivi_comptable'),
 
     # Page client + année
     path('client/<int:client_id>/suivi-comptable/<int:annee>/', 
@@ -337,6 +338,13 @@ urlpatterns = [
     path("tva/gestion/exo/", views.tva_gestion_exo, name="tva_gestion_exo"),
     path("suivi-comptable/reset/<int:annee>/", reset_suivi_comptable, name="reset_suivi_comptable"),
 
+    # BOUTON POUR CHANGER LES STATUS EN VALIDE
+    path("tva/ca3m/valider/<int:annee_id>/", views.tva_valider_ca3m, name="tva_valider_ca3m"),
+    path("tva/ca3t/valider/<int:annee_id>/", views.tva_valider_ca3t, name="tva_valider_ca3t"),
+    path("tva/ca12/valider/<int:annee_id>/", views.tva_valider_ca12, name="tva_valider_ca12"),
+
+
+
     # ============================
     # MODULE FISCAL
     # ============================
@@ -388,6 +396,10 @@ urlpatterns = [
     path("client/search/", views.client_search, name="client_search"),
     path("client/hub/<int:client_id>/", views.client_hub, name="client_hub"),
 
+    # ============================
+    # ARCHIVAGE
+    # ============================
 
+    path("client/archive/interdit/", views.client_archive_interdit, name="client_archive_interdit"),
 
 ]

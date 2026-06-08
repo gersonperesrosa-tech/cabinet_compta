@@ -67,6 +67,19 @@
                 </td>
             </tr>
 
+            <!-- Total CVAE (NOUVEAU CHAMP) -->
+            <tr>
+                <td><strong>Total CVAE</strong></td>
+                <td>
+                    <input type="text"
+                           name="total_cvae"
+                           id="total_cvae"
+                           class="form-control fw-bold"
+                           value="{{ declaration.total_cvae|empty_dash }}">
+                </td>
+                <td></td>
+            </tr>
+
             <!-- Commentaire -->
             <tr>
                 <td><strong>Commentaire si CVAE > 1500 €</strong></td>
@@ -79,14 +92,6 @@
 
         </tbody>
     </table>
-
-    <!-- Total CVAE -->
-    <div class="p-3 mt-4 rounded" style="background:#f5f7fa; border:1px solid #dce1e7;">
-        <strong>Total CVAE :</strong>
-        <span id="total_cvae_display" style="font-size:1.2rem; font-weight:600;">
-            {{ total_cvae|floatformat:2 }} €
-        </span>
-    </div>
 
     <!-- Boutons bas de page -->
     <div class="d-flex justify-content-between align-items-center mt-4">
@@ -106,18 +111,20 @@
 
 </section>
 
+<!-- JS : Calcul dynamique du Total CVAE -->
 <script>
 function toNumber(value) {
-    if (!value) return 0;
-    return parseFloat(value.replace(",", "."));
+    if (!value || value.trim() === "") return 0;
+    return parseFloat(value.replace(",", ".").replace(" ", ""));
 }
 
 function updateTotalCVAE() {
     const acompte = toNumber(document.getElementById("acompte_cvae").value);
     const solde = toNumber(document.getElementById("solde_cvae").value);
+
     const total = acompte + solde;
 
-    document.getElementById("total_cvae_display").innerText =
+    document.getElementById("total_cvae").value =
         total.toFixed(2).replace(".", ",") + " €";
 }
 

@@ -1,4 +1,23 @@
-<option value="BLANC" {% if selected == "BLANC" %}selected{% endif %}>Blanc</option>
-<option value="JAUNE" {% if selected == "JAUNE" %}selected{% endif %}>A envoyer au client</option>
-<option value="VERT_CLAIR" {% if selected == "VERT_CLAIR" %}selected{% endif %}>Télétransmis</option>
-<option value="VERT_FONCE" {% if selected == "VERT_FONCE" %}selected{% endif %}>Accepté</option>
+<option value="BLANC" {% if selected == "BLANC" %}selected{% endif %}>
+    Blanc
+</option>
+
+<option value="ORANGE" {% if selected == "ORANGE" %}selected{% endif %}>
+    A envoyer client (orange)
+</option>
+
+<option value="JAUNE" {% if selected == "JAUNE" %}selected{% endif %}>
+    Envoyé client (jaune)
+</option>
+
+<option value="VERT_CLAIR" {% if selected == "VERT_CLAIR" %}selected{% endif %}>
+    Télétransmis (vert clair)
+</option>
+
+<option value="VERT_FONCE" {% if selected == "VERT_FONCE" %}selected{% endif %}>
+    Accepté (vert foncé)
+</option>
+
+<option value="NA" {% if selected == "NA" %}selected{% endif %}>
+    N/A (gris)
+</option>

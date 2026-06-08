@@ -83,6 +83,19 @@
                 </td>
             </tr>
 
+            <!-- Total IS (NOUVEAU CHAMP) -->
+            <tr>
+                <td><strong>Total IS</strong></td>
+                <td>
+                    <input type="text"
+                           name="total_is"
+                           id="total_is"
+                           class="form-control fw-bold"
+                           value="{{ declaration.total_is|empty_dash }}">
+                </td>
+                <td></td>
+            </tr>
+
             <!-- Commentaire -->
             <tr>
                 <td><strong>Commentaire si IS > 3000 €</strong></td>
@@ -95,14 +108,6 @@
 
         </tbody>
     </table>
-
-    <!-- Total IS -->
-    <div class="p-3 mt-4 rounded" style="background:#f5f7fa; border:1px solid #dce1e7;">
-        <strong>Total IS :</strong>
-        <span id="total_is_display" style="font-size:1.2rem; font-weight:600;">
-            {{ total_is|floatformat:2 }} €
-        </span>
-    </div>
 
     <!-- Boutons bas de page -->
     <div class="d-flex justify-content-between align-items-center mt-4">
@@ -122,25 +127,27 @@
 
 </form>
 
+<!-- JS : Calcul dynamique du Total IS -->
 <script>
 function toNumber(value) {
-    if (!value || value === "-") return 0;
-    return parseFloat(value.replace(",", "."));
+    if (!value || value === "-" || value.trim() === "") return 0;
+    return parseFloat(value.replace(",", ".").replace(" ", ""));
 }
 
 function updateTotalIS() {
-    let total_acomptes = 0;
+    let total = 0;
 
+    // Acomptes
     document.querySelectorAll("input[id^='acompte_']").forEach(input => {
-        total_acomptes += toNumber(input.value);
+        total += toNumber(input.value);
     });
 
-    const solde = toNumber(document.getElementById("solde").value);
+    // Solde
+    total += toNumber(document.getElementById("solde").value);
 
-    const total_is = total_acomptes + solde;
-
-    document.getElementById("total_is_display").innerText =
-        total_is.toFixed(2).replace(".", ",") + " €";
+    // Affichage dans le champ Total IS
+    document.getElementById("total_is").value =
+        total.toFixed(2).replace(".", ",") + " €";
 }
 
 document.getElementById("solde").addEventListener("input", updateTotalIS);

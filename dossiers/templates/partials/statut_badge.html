@@ -1,10 +1,43 @@
-{% if statut == "BLANC" %}
-    <span class="badge" style="background:#ffffff; color:#000;"></span>
-{% elif statut == "JAUNE" %}
-    <span class="badge" style="background:#fff3cd; color:#856404;">A envoyer</span>
-{% elif statut == "VERT_CLAIR" %}
-    <span class="badge" style="background:#c8f7c5; color:#2e7d32;">Télétransmis</span>
-{% elif statut == "VERT_FONCE" %}
-    <span class="badge" style="background:#2e7d32; color:#white;">Accepté</span>
-{% endif %}
+{% comment %}
+STATUTS :
+- BLANC
+- ORANGE
+- JAUNE
+- VERT_CLAIR
+- VERT_FONCE
+- NA
+{% endcomment %}
 
+{% if statut == "BLANC" %}
+    <span class="badge" style="background:#ffffff; color:#000; border:0px solid #ccc;">
+        
+    </span>
+
+{% elif statut == "ORANGE" %}
+    <span class="badge" style="background:#ffcc80; color:#8a4b00;">
+        A envoyer client
+    </span>
+
+{% elif statut == "JAUNE" %}
+    <span class="badge" style="background:#fff3cd; color:#856404;">
+        Envoyé client
+    </span>
+
+{% elif statut == "VERT_CLAIR" %}
+    <span class="badge" style="background:#c8f7c5; color:#2e7d32;">
+        Télétransmis
+    </span>
+
+{% elif statut == "VERT_FONCE" %}
+    <span class="badge" style="background:#2e7d32; color:#fff;">
+        Accepté
+    </span>
+
+{% elif statut == "NA" %}
+    <span class="badge" style="background:#e0e0e0; color:#555;">
+        N/A
+    </span>
+
+{% else %}
+    <span class="badge bg-secondary">—</span>
+{% endif %}

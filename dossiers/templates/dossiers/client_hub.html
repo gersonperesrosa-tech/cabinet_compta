@@ -1,74 +1,98 @@
 {% extends "base.html" %}
 {% load custom_filters %}
-{% load custom_filters cloture_tags %}
 {% load cloture_tags %}
-
 
 {% block content %}
 
 <section class="section">
 
-
 <div class="container py-4">
 
-    <!-- TITRE PRINCIPAL -->
-    <h1 class="mb-4">
+    <!-- TITRE -->
+    <h1 class="mb-3">
         Dossier client : <strong>{{ client.nom }}</strong> — {{ annee }}
     </h1>
 
-<!-- INFORMATIONS CLIENT -->
-<h3 class="mt-4">Informations du client</h3>
+    <!-- BOUTONS D’ACTION -->
+    <div class="d-flex flex-wrap gap-2 mb-4">
 
-<table class="table table-bordered align-middle">
-    <tr>
-        <th style="width: 200px;">Numéro</th>
-        <td>{{ client.numero }}</td>
-    </tr>
-    <tr>
-        <th>Forme juridique</th>
-        <td>{{ client.forme_juridique }}</td>
-    </tr>
-    <tr>
-        <th>Régime d'imposition</th>
-        <td>{{ client.get_regime_imposition_display }}</td>
-    </tr>
-    <tr>
-        <th>Régime TVA</th>
-        <td>{{ client.get_regime_tva_display }}</td>
-    </tr>
-    <tr>
-        <th>Date de clôture</th>
-        <td>{{ client.date_cloture }}</td>
-    </tr>
-</table>
+        <a href="{% url 'fiche_client' client.id %}" class="btn btn-outline-secondary">
+            📄 Fiche client
+        </a>
+
+        <a href="{% url 'suivi_comptable' client.id annee %}" class="btn btn-outline-primary">
+            📊 Suivi comptable
+        </a>
+
+        {% if tva_modules.count == 1 %}
+            {% with tva=tva_modules.first %}
+                {% if tva.module.type == "CA3M" %}
+                    <a href="{% url 'tva_saisie_ca3m' tva.id %}" class="btn btn-outline-warning">
+                        🧾 Saisie TVA (CA3M)
+                    </a>
+                {% elif tva.module.type == "CA3T" %}
+                    <a href="{% url 'tva_saisie_ca3t' tva.id %}" class="btn btn-outline-warning">
+                        🧾 Saisie TVA (CA3T)
+                    </a>
+                {% elif tva.module.type == "CA12" %}
+                    <a href="{% url 'tva_saisie_ca12' tva.id %}" class="btn btn-outline-warning">
+                        🧾 Saisie TVA (CA12)
+                    </a>
+                {% endif %}
+            {% endwith %}
+        {% else %}
+            <a href="{% url 'tva_historique_client' client.id annee %}" class="btn btn-outline-warning">
+                🧾 TVA (plusieurs modules)
+            </a>
+        {% endif %}
+
+        <a href="{% url 'client_notes' client.id %}" class="btn btn-outline-dark">
+            📝 Notes privées
+        </a>
+
+    </div>
 
     <!-- =============================== -->
-    <!-- SUIVI COMPTABLE — TABLEAU HORIZONTAL -->
+    <!-- INFORMATIONS CLIENT -->
+    <!-- =============================== -->
+
+    <h3>Informations du client</h3>
+
+    <table class="table table-bordered align-middle">
+        <tr><th>Numéro</th><td>{{ client.numero }}</td></tr>
+        <tr><th>Forme juridique</th><td>{{ client.forme_juridique }}</td></tr>
+        <tr><th>Régime d'imposition</th><td>{{ client.get_regime_imposition_display }}</td></tr>
+        <tr><th>Régime TVA</th><td>{{ client.get_regime_tva_display }}</td></tr>
+        <tr><th>Date de clôture</th><td>{{ client.date_cloture }}</td></tr>
+        <tr><th>Périodicité</th><td>{{ client.periodicite }}</td></tr>
+    </table>
+
+    <!-- =============================== -->
+    <!-- SUIVI COMPTABLE -->
     <!-- =============================== -->
 
     <h3 class="mt-5">Suivi comptable</h3>
 
-    <table class="table table-bordered align-middle text-center">
+    <table class="table table-bordered text-center align-middle">
         <thead class="table-light">
             <tr>
                 <th>Dernière MAJ</th>
                 <th>Dernier mois</th>
-                <th>Période</th>
+                <th>Périodicité</th>
                 <th>Vérifié</th>
                 <th>CA actuel</th>
                 <th>Saisie en cours</th>
                 <th>Saisie terminée</th>
             </tr>
         </thead>
-
         <tbody>
             {% if suivi_comptable %}
             <tr>
-                <td>{{ suivi_comptable.date_maj_compta }}</td>
-                <td>{{ suivi_comptable.dernier_mois_traite }}</td>
-                <td>{{ suivi_comptable.periode_traitement }}</td>
+                <td>{{ suivi_comptable.date_maj_compta|default:"—" }}</td>
+                <td>{{ suivi_comptable.dernier_mois_traite|default:"—" }}</td>
+                <td>{{ client.periodicite }}</td>
                 <td>{{ suivi_comptable.verifie|yesno:"Oui,Non" }}</td>
-                <td>{{ suivi_comptable.ca_actuel }} €</td>
+                <td>{{ suivi_comptable.ca_actuel|default:"—" }} €</td>
                 <td>{{ suivi_comptable.saisie_en_cours|yesno:"Oui,Non" }}</td>
                 <td>{{ suivi_comptable.saisie_terminee|yesno:"Oui,Non" }}</td>
             </tr>
@@ -78,30 +102,40 @@
         </tbody>
     </table>
 
+    <!-- =============================== -->
+    <!-- TVA – MODULES ET TABLEAUX -->
+    <!-- =============================== -->
+
+    <h3 class="mt-5">TVA – Régimes détectés</h3>
+
+    {% if tva_modules %}
+        <ul>
+            {% for tva in tva_modules %}
+                <li><strong>{{ tva.module.nom }}</strong> ({{ tva.module.type }})</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <em>Aucun module TVA pour {{ annee }}.</em>
+    {% endif %}
 
     <!-- =============================== -->
-    <!-- TVA — EXACTEMENT COMME PAGE CA3M -->
+    <!-- CA3M -->
     <!-- =============================== -->
+    {% if tva_ca3m %}
+    <h4 class="mt-4">Déclaration TVA – CA3 Mensuelle</h4>
 
-    {% if tva_client %}
-    <h3 class="mt-5">
-        Gestion TVA – Régime {{ tva_client.module.get_type_display }}
-    </h3>
-
-    {% if tva_declaration %}
-    <table class="table table-bordered align-middle mt-3">
-        <thead class="table-light text-center">
+    <table class="table table-bordered text-center align-middle">
+        <thead class="table-light">
             <tr>
                 <th>Jan</th><th>Fév</th><th>Mar</th><th>Avr</th><th>Mai</th><th>Juin</th>
                 <th>Juil</th><th>Août</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Déc</th>
             </tr>
         </thead>
-
         <tbody>
             <tr>
-                {% for montant, statut in tva_declaration.get_mensuels %}
+                {% for montant, statut in tva_ca3m.get_mensuels %}
                 <td>
-                    <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex justify-content-between">
                         <span>{{ montant|default:" " }}</span>
                         {% include "tva/partials/statut_badge.html" with statut=statut %}
                     </div>
@@ -110,109 +144,152 @@
             </tr>
         </tbody>
     </table>
-    {% else %}
-        <em>Aucune déclaration TVA pour {{ annee }}.</em>
     {% endif %}
-    {% endif %}
-
 
     <!-- =============================== -->
-    <!-- MODULES FISCAUX — EXACTEMENT COMME TES PAGES -->
+    <!-- CA3T -->
+    <!-- =============================== -->
+    {% if tva_ca3t %}
+    <h4 class="mt-4">Déclaration TVA – CA3 Trimestrielle</h4>
+
+    <table class="table table-bordered text-center align-middle">
+        <thead class="table-light">
+            <tr><th>T1</th><th>T2</th><th>T3</th><th>T4</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                {% for montant, statut in tva_ca3t.get_trimestres %}
+                <td>
+                    <div class="d-flex justify-content-between">
+                        <span>{{ montant|default:" " }}</span>
+                        {% include "tva/partials/statut_badge.html" with statut=statut %}
+                    </div>
+                </td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+    {% endif %}
+
+    <!-- =============================== -->
+    <!-- CA12 -->
+    <!-- =============================== -->
+    {% if tva_ca12 %}
+    <h4 class="mt-4">Déclaration TVA – CA12 Annuelle</h4>
+
+    <table class="table table-bordered text-center align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Acompte 1</th>
+                <th>Acompte 2</th>
+                <th>Solde</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <div class="d-flex justify-content-between">
+                        <span>{{ tva_ca12.acompte_1|default:" " }}</span>
+                        {% include "tva/partials/statut_badge.html" with statut=tva_ca12.statut_acompte_1 %}
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex justify-content-between">
+                        <span>{{ tva_ca12.acompte_2|default:" " }}</span>
+                        {% include "tva/partials/statut_badge.html" with statut=tva_ca12.statut_acompte_2 %}
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex justify-content-between">
+                        <span>{{ tva_ca12.solde|default:" " }}</span>
+                        {% include "tva/partials/statut_badge.html" with statut=tva_ca12.statut_solde %}
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    {% endif %}
+
+    <!-- =============================== -->
+    <!-- MODULES FISCAUX (sans DESDEB) -->
     <!-- =============================== -->
 
     <h3 class="mt-5">Modules fiscaux</h3>
 
-    <table class="table table-bordered align-middle text-center">
+    <table class="table table-bordered text-center align-middle">
         <thead class="table-light">
             <tr>
                 <th>IS</th>
                 <th>CFE</th>
                 <th>CVAE</th>
                 <th>TVS</th>
-                <th>DESDEB</th>
                 <th>Dividendes</th>
             </tr>
         </thead>
-
         <tbody>
             <tr>
-                <td>
-                    {{ is_decl.total_is|default:"—" }}
-                    {% if is_decl %}
-                        {% include "partials/statut_badge.html" with statut=is_decl.statut_acompte_1 %}
-                    {% endif %}
-                </td>
-
-                <td>
-                    {{ cfe_decl.total_cfe|default:"—" }}
-                    {% if cfe_decl %}
-                        {% include "partials/statut_badge.html" with statut=cfe_decl.statut_acompte %}
-                    {% endif %}
-                </td>
-
-                <td>
-                    {{ cvae_decl.total_cvae|default:"—" }}
-                    {% if cvae_decl %}
-                        {% include "partials/statut_badge.html" with statut=cvae_decl.statut_general %}
-                    {% endif %}
-                </td>
-
-                <td>
-                    {{ tvs_decl.montant|default:"—" }}
-                    {% if tvs_decl %}
-                        {% include "partials/statut_badge.html" with statut=tvs_decl.statut_general %}
-                    {% endif %}
-                </td>
-
-                <td>
-                    {{ desdeb_decl.responsable|default:"—" }}
-                    {% if desdeb_decl %}
-                        {% include "partials/statut_badge.html" with statut=desdeb_decl.statut_general %}
-                    {% endif %}
-                </td>
-
-                <td>
-                    {{ dividendes_decl.montant|default:"—" }}
-                    {% if dividendes_decl %}
-                        {% include "partials/statut_badge.html" with statut=dividendes_decl.statut_general %}
-                    {% endif %}
-                </td>
+                <td>{{ is_decl.total_is|default:"—" }}</td>
+                <td>{{ cfe_decl.total_cfe|default:"—" }}</td>
+                <td>{{ cvae_decl.total_cvae|default:"—" }}</td>
+                <td>{{ tvs_decl.total_tvs|default:"—" }}</td>
+                <td>{{ dividendes_decl.montant|default:"—" }}</td>
             </tr>
         </tbody>
     </table>
 
     <!-- =============================== -->
-    <!-- CLOTURE — EXACTEMENT COMME TA VUE GLOBALE -->
+    <!-- DESDEB – Ligne complète -->
     <!-- =============================== -->
 
-    <h3 class="mt-5">Clôture {{ annee }}</h3>
+<h3 class="mt-5">DESDEB</h3>
 
-    <table class="table table-bordered align-middle text-center">
-        <thead class="table-light">
-            <tr>
-                <th>Révision</th>
-                <th>Plaquettes</th>
-                <th>CA12</th>
-                <th>IS/CI</th>
-                <th>Déclarations</th>
-                <th>Mission</th>
-                <th>Juridique</th>
-            </tr>
-        </thead>
+{% if desdeb_decl %}
+<table class="table table-bordered align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>Responsable</th>
+            <th>Retour client</th>
 
-        <tbody>
-            <tr>
-                <td>{{ revision.statut_general|badge|safe }}</td>
-                <td>{{ plaquettes.statut_general|badge|safe }}</td>
-                <td>{{ ca12.statut_general|badge|safe }}</td>
-                <td>{{ isci.statut_general|badge|safe }}</td>
-                <td>{{ declarations.statut_general|badge|safe }}</td>
-                <td>{{ mission.statut_general|badge|safe }}</td>
-                <td>{{ juridique.statut_general|badge|safe }}</td>
-            </tr>
-        </tbody>
-    </table>
+            <th>Janvier</th>
+            <th>Février</th>
+            <th>Mars</th>
+            <th>Avril</th>
+            <th>Mai</th>
+            <th>Juin</th>
+            <th>Juillet</th>
+            <th>Août</th>
+            <th>Septembre</th>
+            <th>Octobre</th>
+            <th>Novembre</th>
+            <th>Décembre</th>
+        </tr>
+    </thead>
 
+    <tbody>
+        <tr>
+            <td>{{ desdeb_decl.responsable|default:"—" }}</td>
+            <td>{{ desdeb_decl.retour_client|default:"—" }}</td>
+
+            <td>{{ desdeb_decl.ref_janvier|default:"—" }} {% include "partials/statut_badge.html" with statut=desdeb_decl.statut_janvier %}</td>
+            <td>{{ desdeb_decl.ref_fevrier|default:"—" }} {% include "partials/statut_badge.html" with statut=desdeb_decl.statut_fevrier %}</td>
+            <td>{{ desdeb_decl.ref_mars|default:"—" }} {% include "partials/statut_badge.html" with statut=desdeb_decl.statut_mars %}</td>
+            <td>{{ desdeb_decl.ref_avril|default:"—" }} {% include "partials/statut_badge.html" with statut=desdeb_decl.statut_avril %}</td>
+            <td>{{ desdeb_decl.ref_mai|default:"—" }} {% include "partials/statut_badge.html" with statut=desdeb_decl.statut_mai %}</td>
+            <td>{{ desdeb_decl.ref_juin|default:"—" }} {% include "partials/statut_badge.html" with statut=desdeb_decl.statut_juin %}</td>
+            <td>{{ desdeb_decl.ref_juillet|default:"—" }} {% include "partials/statut_badge.html" with statut=desdeb_decl.statut_juillet %}</td>
+            <td>{{ desdeb_decl.ref_aout|default:"—" }} {% include "partials/statut_badge.html" with statut=desdeb_decl.statut_aout %}</td>
+            <td>{{ desdeb_decl.ref_septembre|default:"—" }} {% include "partials/statut_badge.html" with statut=desdeb_decl.statut_septembre %}</td>
+            <td>{{ desdeb_decl.ref_octobre|default:"—" }} {% include "partials/statut_badge.html" with statut=desdeb_decl.statut_octobre %}</td>
+            <td>{{ desdeb_decl.ref_novembre|default:"—" }} {% include "partials/statut_badge.html" with statut=desdeb_decl.statut_novembre %}</td>
+            <td>{{ desdeb_decl.ref_decembre|default:"—" }} {% include "partials/statut_badge.html" with statut=desdeb_decl.statut_decembre %}</td>
+        </tr>
+    </tbody>
+</table>
+{% else %}
+<p><em>Aucune donnée DESDEB pour {{ annee }}.</em></p>
+{% endif %}
 </div>
+
+</section>
 
 {% endblock %}

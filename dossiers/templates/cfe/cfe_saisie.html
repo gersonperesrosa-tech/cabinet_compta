@@ -67,6 +67,19 @@
                 </td>
             </tr>
 
+            <!-- Total CFE (NOUVEAU CHAMP) -->
+            <tr>
+                <td><strong>Total CFE</strong></td>
+                <td>
+                    <input type="text"
+                           name="total_cfe"
+                           id="total_cfe"
+                           class="form-control fw-bold"
+                           value="{{ declaration.total_cfe|empty_dash }}">
+                </td>
+                <td></td>
+            </tr>
+
             <!-- Mode de paiement -->
             <tr>
                 <td><strong>Mode de paiement</strong></td>
@@ -120,14 +133,6 @@
         </tbody>
     </table>
 
-    <!-- Total CFE -->
-    <div class="p-3 mt-4 rounded" style="background:#f5f7fa; border:1px solid #dce1e7;">
-        <strong>Total CFE :</strong>
-        <span id="total_cfe_display" style="font-size:1.2rem; font-weight:600;">
-            {{ declaration.total_cfe|floatformat:2 }} €
-        </span>
-    </div>
-
     <!-- Boutons -->
     <div class="d-flex justify-content-between align-items-center mt-4">
 
@@ -146,10 +151,11 @@
 
 </form>
 
+<!-- JS : Calcul dynamique du Total CFE -->
 <script>
 function toNumber(value) {
-    if (!value) return 0;
-    return parseFloat(value.replace(",", "."));
+    if (!value || value.trim() === "") return 0;
+    return parseFloat(value.replace(",", ".").replace(" ", ""));
 }
 
 function updateTotalCFE() {
@@ -158,7 +164,7 @@ function updateTotalCFE() {
 
     const total = acompte + solde;
 
-    document.getElementById("total_cfe_display").innerText =
+    document.getElementById("total_cfe").value =
         total.toFixed(2).replace(".", ",") + " €";
 }
 

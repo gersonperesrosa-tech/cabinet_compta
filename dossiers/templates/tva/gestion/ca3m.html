@@ -4,13 +4,13 @@
 
 <section class="section">
 
-    <!-- HEADER : Titre + Recherche + Sélecteur d'année -->
+<!-- HEADER : Titre + Recherche + Sélecteur d'année -->
 <div class="d-flex justify-content-between align-items-center mb-4">
 
     <!-- Titre -->
     <h1 class="m-0" style="line-height: 1;">Gestion TVA – Régime Mensuel (CA3M)</h1>
 
-    <!-- Recherche + Sélecteur -->
+    <!-- Recherche + Sélecteur + Boutons -->
     <div class="d-flex align-items-center gap-3">
 
         <!-- Barre de recherche dynamique -->
@@ -34,6 +34,16 @@
             </select>
         </form>
 
+        <!-- Bouton : Valider télétransmissions -->
+        <form method="POST" action="{% url 'tva_valider_ca3m' annee.id %}" class="m-0">
+            {% csrf_token %}
+            <button class="btn btn-outline-success"
+                    style="height: 38px;">
+                Valider télétransmissions
+            </button>
+        </form>
+
+        <!-- Bouton : Reset suivi comptable -->
         <button id="resetSuiviBtn"
                 class="btn btn-outline-danger"
                 style="height: 38px;">
@@ -68,42 +78,58 @@
             </tr>
         </thead>
 
-        <tbody>
-            {% for tca in tca_list %}
-            <tr>
+<tbody>
+    {% for tca in tca_list %}
 
-                <!-- N° client -->
-                <td>{{ tca.client.numero }}</td>
+    <tr class="{% if tca.client.archive %}archived-row{% endif %}">
 
-                <!-- NOM DU CLIENT → LIEN VERS LA SAISIE -->
-                <td class="client-name">
-                    <a href="{% url 'tva_saisie_ca3m' tca.id %}"
-                       class="text-decoration-none fw-semibold">
-                        {{ tca.client.nom }}
-                    </a>
-                </td>
+        <!-- N° client -->
+        <td>{{ tca.client.numero }}</td>
 
-                <!-- Échéance -->
-                <td>{{ tca.client.jour_echeance_tva|default_if_none:"" }}</td>
+        <!-- NOM DU CLIENT -->
+        <td class="client-name">
 
-                <!-- Colonnes mensuelles -->
-                {% for montant, statut in tca.declaration.get_mensuels %}
-                <td>
-                    <div class="d-flex align-items-center justify-content-between">
-                        <span>{{ montant|default:" " }}</span>
-                        {% include "tva/partials/statut_badge.html" with statut=statut %}
-                    </div>
-                </td>
-                {% endfor %}
+            {% if tca.client.archive %}
+                <!-- 🔒 Client archivé → pas de lien -->
+                <span class="fw-semibold text-muted">
+                    {{ tca.client.nom }}
+                </span>
 
-                <!-- Suivi comptable -->
-                <td>
-                    {% include "tva/partials/pastille_suivi.html" with suivi=tca.suivi %}
-                </td>
+            {% else %}
+                <!-- 🔗 Client actif → lien normal -->
+                <a href="{% url 'tva_saisie_ca3m' tca.id %}"
+                   class="text-decoration-none fw-semibold">
+                    {{ tca.client.nom }}
+                </a>
+            {% endif %}
 
-            </tr>
-            {% endfor %}
-        </tbody>
+        </td>
+
+        <!-- Échéance -->
+        <td>{{ tca.client.jour_echeance_tva|default_if_none:"" }}</td>
+
+        <!-- Colonnes mensuelles -->
+        {% for montant, statut in tca.declaration.get_mensuels %}
+        <td>
+            <div class="d-flex align-items-center justify-content-end gap-2">
+                <span class="text-end" style="min-width: 70px; display: inline-block;">
+                    {{ montant|default:" " }}
+                </span>
+                {% include "tva/partials/statut_badge.html" with statut=statut %}
+            </div>
+        </td>
+        {% endfor %}
+
+        <!-- Suivi comptable -->
+        <td>
+            {% include "tva/partials/pastille_suivi.html" with suivi=tca.suivi %}
+        </td>
+
+    </tr>
+
+    {% endfor %}
+</tbody>
+
     </table>
 
 </section>

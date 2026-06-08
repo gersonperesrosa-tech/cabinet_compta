@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+.viewer-container {
+    width: 100%;
+    max-width: 1500px;
+    margin: auto;
+    background: white;
+    padding: 50px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.08);
+}
+
+.viewer-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+.viewer-meta {
+    color: #6c757d;
+    margin-bottom: 20px;
+}
+
+.viewer-content {
+    font-size: 1.15rem;
+    line-height: 1.7;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Visualisation de la note</h2>
+
+        <div class="d-flex gap-2">
+            <a href="{% url 'edit_note' note.id %}" class="btn btn-primary">Modifier</a>
+            <a href="{% url 'client_notes' note.client.id %}" class="btn btn-outline-secondary">Retour</a>
+        </div>
+    </div>
+
+    <div class="viewer-container">
+
+        <div class="viewer-title">
+            {{ note.categorie.nom|default:"Note" }}
+        </div>
+
+        <div class="viewer-meta">
+            {{ note.created_at|date:"d/m/Y H:i" }}
+        </div>
+
+        <div class="viewer-content">
+            {{ note.contenu|safe }}
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

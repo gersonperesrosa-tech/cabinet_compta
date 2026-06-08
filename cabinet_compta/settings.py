@@ -45,6 +45,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+MIDDLEWARE += [
+    'dossiers.middleware.ClientArchiveMiddleware',
+]
+
 ROOT_URLCONF = 'cabinet_compta.urls'
 
 TEMPLATES = [

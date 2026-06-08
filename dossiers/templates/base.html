@@ -97,6 +97,8 @@
 </style>
 
     {% block extra_css %}{% endblock %}
+{% block extra_head %}{% endblock %}
+
 </head>
 
 
@@ -758,7 +760,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 <script src="{% static 'js/table-sort.js' %}"></script>
-
+    {% block extra_js %}{% endblock %}
 
 </body>
 </html>

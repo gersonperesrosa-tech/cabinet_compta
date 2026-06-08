@@ -9,7 +9,7 @@ from django.http import HttpResponse
 
 from .models import Client, SuiviComptable, TVA, IS
 from .forms import ClientForm, SuiviComptableForm, TVAForm, ISForm, ClotureClientForm
-from .models import TVAAnnee, TVAModule, TVAClientAnnee, TVADeclaration, TVSDeclaration, DESDEBDeclaration, DividendesDeclaration, DPDeclaration, NoteTag, NoteCategorie, ClientNote, KanbanColumn, KanbanCard, KanbanTag, KanbanCardTag, ClotureAnnee, ClotureClient, NotificationPaie, NotificationPaieLu
+from .models import TVAAnnee, TVAModule, TVAClientAnnee, TVADeclaration, TVSDeclaration, TVSVehicule, DESDEBDeclaration, DividendesDeclaration, DPDeclaration, NoteTag, NoteCategorie, ClientNote, KanbanColumn, KanbanCard, KanbanTag, KanbanCardTag, ClotureAnnee, ClotureClient, NotificationPaie, NotificationPaieLu
 
 
 def home(request):
@@ -141,33 +141,6 @@ def archives_clients(request):
 #   SUIVI COMPTABLE (multi‑annuel)
 # ----------------------------------------------------
 
-@login_required
-def suivi_comptable(request, client_id, annee):
-    client = get_object_or_404(Client, id=client_id)
-
-    annees_disponibles = list(range(2020, 2031))
-
-    suivi = SuiviComptable.objects.filter(client=client, annee=annee).first()
-    if not suivi:
-        suivi = SuiviComptable.objects.create(client=client, annee=annee)
-
-    if request.method == 'POST':
-        form = SuiviComptableForm(request.POST, instance=suivi)
-        if form.is_valid():
-            obj = form.save(commit=False)
-            obj.saisi_par = request.user.username
-            obj.save()
-            return redirect('suivi_comptable', client_id=client.id, annee=annee)
-    else:
-        form = SuiviComptableForm(instance=suivi)
-
-    return render(request, 'dossiers/suivi_comptable.html', {
-        'form': form,
-        'client': client,
-        'suivi': suivi,
-        'annee': annee,
-        'annees_disponibles': annees_disponibles,
-    })
 
 
 # ----------------------------------------------------
@@ -711,27 +684,72 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Client
 from .forms import ClientForm
-
+from datetime import date
 
 @login_required
 def fiche_client(request, client_id):
     client = get_object_or_404(Client, id=client_id)
 
     # --- Sécurité d'accès ---
-    if request.user.is_staff or request.user.is_superuser:
-        pass
-    elif client.user != request.user:
-        return redirect("access_denied")
+    if not (request.user.is_staff or request.user.is_superuser):
+        if client.user != request.user:
+            return redirect("access_denied")
 
-    # --- Traitement du formulaire ---
+    current_year = date.today().year
+
+    # ----------------------------------------------------
+    # 1) RÉGIME D’IMPOSITION (IS)
+    # ----------------------------------------------------
+    module_is = ClientModuleFiscal.objects.filter(
+        client=client,
+        module__nom="IS",   # ✔ CORRECTION ICI
+        annee__annee=current_year
+    ).first()
+
+    if module_is:
+        # Si tu veux un champ dans ISDeclaration, tu peux aller le chercher ici
+        regime_imposition_auto = "IS"   # ou module_is.is_declaration.xxx
+    else:
+        regime_imposition_auto = None
+
+    # ----------------------------------------------------
+    # 2) RÉGIME TVA (année en cours)
+    # ----------------------------------------------------
+    tva_modules = TVAClientAnnee.objects.filter(
+        client=client,
+        annee__annee=current_year
+    )
+
+    if tva_modules.count() == 1:
+        regime_tva_auto = tva_modules.first().module.type  # ou .module.nom selon ton modèle TVA
+        tva_multiple = False
+
+    elif tva_modules.count() > 1:
+        regime_tva_auto = None
+        tva_multiple = True
+
+    else:
+        regime_tva_auto = None
+        tva_multiple = False
+
+    # ----------------------------------------------------
+    # 3) TRAITEMENT DU FORMULAIRE
+    # ----------------------------------------------------
     if request.method == "POST":
         form = ClientForm(request.POST, instance=client)
 
         if form.is_valid():
             client = form.save(commit=False)
 
-            # Gestion du module Paie
+            # Module Paie
             client.module_paie = "module_paie" in request.POST
+
+            # Si info automatique → on remplace la saisie manuelle
+            if regime_imposition_auto:
+                client.regime_imposition = regime_imposition_auto
+
+            if regime_tva_auto:
+                client.regime_tva = regime_tva_auto
 
             client.save()
             return redirect("liste_clients")
@@ -739,9 +757,19 @@ def fiche_client(request, client_id):
     else:
         form = ClientForm(instance=client)
 
+    # ----------------------------------------------------
+    # 4) RENDER
+    # ----------------------------------------------------
     return render(request, "clients/fiche_client.html", {
         "form": form,
         "client": client,
+
+        # Infos automatiques
+        "regime_imposition_auto": regime_imposition_auto,
+        "regime_tva_auto": regime_tva_auto,
+        "tva_multiple": tva_multiple,
+
+        "current_year": current_year,
     })
 
 # ----------------------------------------------------
@@ -911,50 +939,58 @@ def liste_suivi_comptable(request):
     })
 
 # ----------------------------------------------------
-#   SUIVI COMPTABLE : PAGE POPUP
+#   SUIVI COMPTABLE : PAGE
 # ----------------------------------------------------
 
 @login_required
-def popup_suivi_comptable(request, client_id, annee):
+def suivi_comptable(request, client_id, annee):
     client = get_object_or_404(Client, id=client_id)
-    suivi = SuiviComptable.objects.filter(client=client, annee=annee).first()
 
+    annees_disponibles = list(range(2020, 2031))
+
+    # Récupération ou création automatique
+    suivi = SuiviComptable.objects.filter(client=client, annee=annee).first()
     if not suivi:
         suivi = SuiviComptable.objects.create(client=client, annee=annee)
+
+    # Nettoyage décimaux FR → EN
+    def clean_decimal(value):
+        if not value:
+            return None
+        return value.replace(" ", "").replace("\xa0", "").replace(",", ".")
 
     if request.method == "POST":
         form = SuiviComptableForm(request.POST, instance=suivi)
 
-        # Fonction pour nettoyer les décimaux FR → EN
-        def clean_decimal(value):
-            if not value:
-                return None
-            return value.replace(" ", "").replace("\xa0", "").replace(",", ".")
-
         if form.is_valid():
             obj = form.save(commit=False)
 
-            # 🔥 Mettre à jour l'année depuis le formulaire
+            # Mise à jour de l'année
             annee_form = request.POST.get("annee")
             if annee_form:
                 obj.annee = int(annee_form)
 
-            # 🔥 AJOUT DES 3 NOUVEAUX CHAMPS
+            # Champs supplémentaires
             obj.ca_actuel = clean_decimal(request.POST.get("ca_actuel"))
             obj.saisie_en_cours = "saisie_en_cours" in request.POST
             obj.saisie_terminee = "saisie_terminee" in request.POST
 
+            obj.saisi_par = request.POST.get("saisi_par") or request.user.username
             obj.save()
-            return JsonResponse({"success": True})
+
+            return redirect("suivi_comptable", client_id=client.id, annee=obj.annee)
 
     else:
         form = SuiviComptableForm(instance=suivi)
 
-    return render(request, "dossiers/popup_suivi_comptable.html", {
+    return render(request, "dossiers/suivi_comptable.html", {
+        "form": form,
         "client": client,
         "suivi": suivi,
-        "form": form,
+        "annee": annee,
+        "annees_disponibles": annees_disponibles,
     })
+
 
 # ----------------------------------------------------
 #   TVA CA3M CREATION D ANNEE SUIVANTE
@@ -1156,6 +1192,23 @@ def tva_exoneres(request):
 # ----------------------------------------------------
 #   NOUVELLE STRUCTURE MODULES TVA
 # ----------------------------------------------------
+
+def _valider_statuts(obj, champs_statuts):
+    """
+    Remplace tous les statuts VERT_CLAIR -> VERT_FONCE
+    pour les champs donnés.
+    """
+    changed = False
+
+    for field in champs_statuts:
+        if getattr(obj, field) == "VERT_CLAIR":
+            setattr(obj, field, "VERT_FONCE")
+            changed = True
+
+    if changed:
+        obj.save()
+
+    return changed
 
 
 @login_required
@@ -1628,6 +1681,35 @@ def tva_gestion_ca3m(request):
         "tca_list": tca_list,
     })
 
+
+@login_required
+def tva_valider_ca3m(request, annee_id):
+    annee = get_object_or_404(TVAAnnee, id=annee_id)
+
+    # Tous les clients CA3M de cette année
+    tca_list = TVAClientAnnee.objects.filter(
+        annee=annee,
+        module__type="CA3M"
+    )
+
+    if request.method == "POST":
+        for tca in tca_list:
+            declaration = TVADeclaration.objects.filter(tva_client_annee=tca).first()
+            if declaration:
+                for field in [
+                    "statut_janvier", "statut_fevrier", "statut_mars",
+                    "statut_avril", "statut_mai", "statut_juin",
+                    "statut_juillet", "statut_aout", "statut_septembre",
+                    "statut_octobre", "statut_novembre", "statut_decembre",
+                ]:
+                    if getattr(declaration, field) == "VERT_CLAIR":
+                        setattr(declaration, field, "VERT_FONCE")
+                declaration.save()
+
+        messages.success(request, "Toutes les télétransmissions CA3M ont été validées.")
+        return redirect("tva_gestion_ca3m")
+
+
 from django.contrib.auth.decorators import login_required
 from dossiers.models import SuiviComptable
 
@@ -1665,6 +1747,29 @@ def tva_gestion_ca3t(request):
         "annees": TVAAnnee.objects.all().order_by("-annee"),
         "tca_list": tca_list,
     })
+
+@login_required
+def tva_valider_ca3t(request, annee_id):
+    annee = get_object_or_404(TVAAnnee, id=annee_id)
+
+    # Tous les clients CA3T de cette année
+    tca_list = TVAClientAnnee.objects.filter(
+        annee=annee,
+        module__type="CA3T"
+    )
+
+    if request.method == "POST":
+        for tca in tca_list:
+            declaration = TVADeclaration.objects.filter(tva_client_annee=tca).first()
+            if declaration:
+                champs = ["statut_t1", "statut_t2", "statut_t3", "statut_t4"]
+                _valider_statuts(declaration, champs)
+
+        messages.success(request, "Toutes les télétransmissions CA3T ont été validées.")
+        return redirect("tva_gestion_ca3t")
+
+    return redirect("tva_gestion_ca3t")
+
 
 from django.contrib.auth.decorators import login_required
 from dossiers.models import SuiviComptable
@@ -1723,6 +1828,29 @@ def tva_gestion_ca12(request):
         "annees": TVAAnnee.objects.all().order_by("-annee"),
         "tca_list": tca_list,
     })
+
+@login_required
+def tva_valider_ca12(request, annee_id):
+    annee = get_object_or_404(TVAAnnee, id=annee_id)
+
+    # Tous les clients CA12 de cette année
+    tca_list = TVAClientAnnee.objects.filter(
+        annee=annee,
+        module__type="CA12"
+    )
+
+    if request.method == "POST":
+        for tca in tca_list:
+            declaration = TVADeclaration.objects.filter(tva_client_annee=tca).first()
+            if declaration:
+                champs = ["statut_acompte_1", "statut_acompte_2", "statut_solde"]
+                _valider_statuts(declaration, champs)
+
+        messages.success(request, "Toutes les télétransmissions CA12 ont été validées.")
+        return redirect("tva_gestion_ca12")
+
+    return redirect("tva_gestion_ca12")
+
 
 from dossiers.models import SuiviComptable
 from django.contrib.auth.decorators import login_required
@@ -1931,58 +2059,59 @@ def is_saisie(request, client_module_id):
     cm = get_object_or_404(ClientModuleFiscal, id=client_module_id)
     declaration, created = ISDeclaration.objects.get_or_create(client_module=cm)
 
-    def clean_decimal(value):
-        if not value or value.strip() == "":
-            return 0
-        value = value.replace(" ", "").replace(",", ".")
-        try:
-            return float(value)
-        except:
-            return 0
-
-    # Pré-remplissage N-2 et N-1
+    # -----------------------------
+    # Pré-remplissage N-1 et N-2
+    # -----------------------------
     annee_actuelle = cm.annee.annee
-    annee_n_1 = annee_actuelle - 1
-    annee_n_2 = annee_actuelle - 2
 
     prev_1 = ISDeclaration.objects.filter(
         client_module__client=cm.client,
-        client_module__annee__annee=annee_n_1
+        client_module__annee__annee=annee_actuelle - 1
     ).first()
 
     prev_2 = ISDeclaration.objects.filter(
         client_module__client=cm.client,
-        client_module__annee__annee=annee_n_2
+        client_module__annee__annee=annee_actuelle - 2
     ).first()
 
     if request.method == "GET":
-        if not declaration.is_n_1:
-            declaration.is_n_1 = prev_1.total_is() if prev_1 else 0
-        if not declaration.is_n_2:
-            declaration.is_n_2 = prev_2.total_is() if prev_2 else 0
+        if not declaration.is_n_1 and prev_1:
+            declaration.is_n_1 = prev_1.total_is or ""
+        if not declaration.is_n_2 and prev_2:
+            declaration.is_n_2 = prev_2.total_is or ""
         declaration.save()
 
+    # -----------------------------
+    # Enregistrement POST
+    # -----------------------------
     if request.method == "POST":
 
-        declaration.is_n_2 = clean_decimal(request.POST.get("is_n_2"))
-        declaration.is_n_1 = clean_decimal(request.POST.get("is_n_1"))
+        # IS N-2 / N-1
+        declaration.is_n_2 = request.POST.get("is_n_2") or ""
+        declaration.is_n_1 = request.POST.get("is_n_1") or ""
 
+        # Acomptes 1 → 4
         for i in range(1, 5):
-            declaration.__setattr__(f"acompte_{i}", clean_decimal(request.POST.get(f"acompte_{i}")))
-            declaration.__setattr__(f"statut_acompte_{i}", request.POST.get(f"statut_acompte_{i}"))
+            declaration.__setattr__(f"acompte_{i}", request.POST.get(f"acompte_{i}") or "")
+            declaration.__setattr__(f"statut_acompte_{i}", request.POST.get(f"statut_acompte_{i}") or "")
 
-        declaration.solde = clean_decimal(request.POST.get("solde"))
-        declaration.statut_solde = request.POST.get("statut_solde")
+        # Solde
+        declaration.solde = request.POST.get("solde") or ""
+        declaration.statut_solde = request.POST.get("statut_solde") or ""
 
-        declaration.commentaire_plus_3000 = request.POST.get("commentaire_plus_3000")
+        # Total IS (nouveau champ)
+        declaration.total_is = request.POST.get("total_is") or ""
+
+        # Commentaire
+        declaration.commentaire_plus_3000 = request.POST.get("commentaire_plus_3000") or ""
 
         declaration.save()
         messages.success(request, "Déclaration IS enregistrée.")
         return redirect("is_gestion", annee_id=cm.annee.id)
 
-    total_is = declaration.total_is()
-
-    # Construction propre des acomptes pour le template
+    # -----------------------------
+    # Construction des acomptes pour le template
+    # -----------------------------
     acompte_values = []
     for i in range(1, 5):
         acompte_values.append({
@@ -1995,54 +2124,44 @@ def is_saisie(request, client_module_id):
         "client_module": cm,
         "declaration": declaration,
         "acompte_values": acompte_values,
-        "total_is": total_is,
-
     })
-
 
 @login_required
 def is_gestion(request, annee_id):
-    # Liste des années pour le sélecteur
+
     annees = AnneeFiscale.objects.order_by("annee")
 
-    # Si l'utilisateur change l'année via GET
     annee_param = request.GET.get("annee")
     if annee_param:
         annee = get_object_or_404(AnneeFiscale, annee=annee_param)
     else:
         annee = get_object_or_404(AnneeFiscale, id=annee_id)
 
-    # Récupération des clients du module IS pour cette année
     cms = ClientModuleFiscal.objects.filter(
         module__nom="IS",
         annee=annee
     ).select_related("client")
 
-    # Ajouter la déclaration IS + calcul du total IS
     for cm in cms:
         cm.declaration, _ = ISDeclaration.objects.get_or_create(client_module=cm)
         d = cm.declaration
 
-        # Calcul du total IS (A1 + A2 + A3 + A4 + Solde)
-        total = 0
-        for val in [
-            d.acompte_1,
-            d.acompte_2,
-            d.acompte_3,
-            d.acompte_4,
-            d.solde,
-        ]:
-            if val:
-                total += val
+        cm.total_is = d.total_is or ""
 
-        cm.total_is = total
+        cm.acomptes = [
+            {
+                "numero": i,
+                "montant": getattr(d, f"acompte_{i}", "") or "",
+                "statut": getattr(d, f"statut_acompte_{i}", "") or "",
+            }
+            for i in range(1, 5)
+        ]
 
     return render(request, "is/is_gestion.html", {
         "annee": annee,
         "annees": annees,
         "cms": cms,
         "annee_selectionnee": annee,
-
     })
 
 # ----------------------------------------------------
@@ -2062,12 +2181,14 @@ from .models import CFEDeclaration
 def cfe_gestion(request, annee_id):
     annees = AnneeFiscale.objects.order_by("annee")
 
+    # Année sélectionnée
     annee_param = request.GET.get("annee")
     if annee_param:
         annee = get_object_or_404(AnneeFiscale, annee=annee_param)
     else:
         annee = get_object_or_404(AnneeFiscale, id=annee_id)
 
+    # Tous les clients ayant le module CFE
     cms = ClientModuleFiscal.objects.filter(
         module__nom="CFE",
         annee=annee
@@ -2076,14 +2197,15 @@ def cfe_gestion(request, annee_id):
     for cm in cms:
         cm.declaration, _ = CFEDeclaration.objects.get_or_create(client_module=cm)
         d = cm.declaration
-        cm.total_cfe = (d.acompte_cfe or 0) + (d.solde_cfe or 0)
+
+        # Total CFE (texte)
+        cm.total_cfe = d.total_cfe or ""
 
     return render(request, "cfe/cfe_gestion.html", {
         "annee": annee,
         "annees": annees,
         "cms": cms,
         "annee_selectionnee": annee,
-
     })
 
 @login_required
@@ -2091,41 +2213,43 @@ def cfe_saisie(request, client_module_id):
     cm = get_object_or_404(ClientModuleFiscal, id=client_module_id)
     declaration, created = CFEDeclaration.objects.get_or_create(client_module=cm)
 
-    def clean_decimal(value):
-        if not value or value.strip() == "":
-            return 0
-        value = value.replace(" ", "").replace(",", ".")
-        try:
-            return float(value)
-        except:
-            return 0
-
-    # --- Pré-remplissage CFE N-1 ---
+    # -----------------------------
+    # Pré-remplissage CFE N-1
+    # -----------------------------
     annee_actuelle = cm.annee.annee
-    annee_n_1 = annee_actuelle - 1
 
     prev = CFEDeclaration.objects.filter(
         client_module__client=cm.client,
-        client_module__annee__annee=annee_n_1
+        client_module__annee__annee=annee_actuelle - 1
     ).first()
 
     if request.method == "GET":
-        if not declaration.cfe_n_1:
-            declaration.cfe_n_1 = prev.total_cfe if prev else 0
+        if not declaration.cfe_n_1 and prev:
+            declaration.cfe_n_1 = prev.total_cfe or ""
         declaration.save()
 
-    # --- Traitement POST ---
+    # -----------------------------
+    # Enregistrement POST
+    # -----------------------------
     if request.method == "POST":
-        declaration.cfe_n_1 = clean_decimal(request.POST.get("cfe_n_1"))
-        declaration.acompte_cfe = clean_decimal(request.POST.get("acompte_cfe"))
-        declaration.solde_cfe = clean_decimal(request.POST.get("solde_cfe"))
 
-        declaration.statut_acompte = request.POST.get("statut_acompte")
-        declaration.statut_solde = request.POST.get("statut_solde")
+        # Champs montants (texte)
+        declaration.cfe_n_1 = request.POST.get("cfe_n_1") or ""
+        declaration.acompte_cfe = request.POST.get("acompte_cfe") or ""
+        declaration.solde_cfe = request.POST.get("solde_cfe") or ""
+
+        # Nouveau champ : Total CFE
+        declaration.total_cfe = request.POST.get("total_cfe") or ""
+
+        # Statuts (mêmes que IS)
+        declaration.statut_acompte = request.POST.get("statut_acompte") or ""
+        declaration.statut_solde = request.POST.get("statut_solde") or ""
+        declaration.statut_1447c = request.POST.get("statut_1447c") or ""
+
+        # Informations complémentaires
         declaration.mode_paiement = request.POST.get("mode_paiement", "")
         declaration.degrevement = request.POST.get("degrevement", "")
         declaration.formulaire_1447c = request.POST.get("formulaire_1447c", "")
-        declaration.statut_1447c = request.POST.get("statut_1447c")
         declaration.commentaire_plus_3000 = request.POST.get("commentaire_plus_3000", "")
 
         declaration.save()
@@ -2151,50 +2275,48 @@ def cvae_saisie(request, client_module_id):
     cm = get_object_or_404(ClientModuleFiscal, id=client_module_id)
     declaration, created = CVAEDeclaration.objects.get_or_create(client_module=cm)
 
-    # --- Pré-remplissage CVAE N-1 ---
+    # -----------------------------
+    # Pré-remplissage CVAE N-1
+    # -----------------------------
     annee_actuelle = cm.annee.annee
-    annee_n_1 = annee_actuelle - 1
 
     prev = CVAEDeclaration.objects.filter(
         client_module__client=cm.client,
-        client_module__annee__annee=annee_n_1
+        client_module__annee__annee=annee_actuelle - 1
     ).first()
 
     if request.method == "GET":
-        if not declaration.cvae_n_1:
-            declaration.cvae_n_1 = prev.total_cvae() if prev else 0
+        if not declaration.cvae_n_1 and prev:
+            declaration.cvae_n_1 = prev.total_cvae or ""
         declaration.save()
 
-    # --- Nettoyage ---
-    def clean_decimal(value):
-        if not value or value.strip() == "":
-            return 0
-        value = value.replace(" ", "").replace(",", ".")
-        try:
-            return float(value)
-        except:
-            return 0
-
-    # --- POST ---
+    # -----------------------------
+    # Enregistrement POST
+    # -----------------------------
     if request.method == "POST":
-        declaration.cvae_n_1 = clean_decimal(request.POST.get("cvae_n_1"))
-        declaration.acompte_cvae = clean_decimal(request.POST.get("acompte_cvae"))
-        declaration.solde_cvae = clean_decimal(request.POST.get("solde_cvae"))
 
-        declaration.statut_acompte_cvae = request.POST.get("statut_acompte_cvae")
-        declaration.statut_solde_cvae = request.POST.get("statut_solde_cvae")
+        # Champs montants (texte)
+        declaration.cvae_n_1 = request.POST.get("cvae_n_1") or ""
+        declaration.acompte_cvae = request.POST.get("acompte_cvae") or ""
+        declaration.solde_cvae = request.POST.get("solde_cvae") or ""
+
+        # Nouveau champ : Total CVAE
+        declaration.total_cvae = request.POST.get("total_cvae") or ""
+
+        # Statuts (mêmes que IS)
+        declaration.statut_acompte_cvae = request.POST.get("statut_acompte_cvae") or ""
+        declaration.statut_solde_cvae = request.POST.get("statut_solde_cvae") or ""
+
+        # Commentaire
         declaration.commentaire_plus_1500 = request.POST.get("commentaire_plus_1500", "")
 
         declaration.save()
         messages.success(request, "Déclaration CVAE enregistrée avec succès.")
         return redirect("cvae_gestion", annee_id=cm.annee.id)
 
-    total_cvae = declaration.total_cvae()
-
     return render(request, "cvae/cvae_saisie.html", {
         "client_module": cm,
         "declaration": declaration,
-        "total_cvae": total_cvae,
         "annee_selectionnee": cm.annee,
     })
 
@@ -2205,29 +2327,32 @@ from django.db.models import Prefetch
 @login_required
 def cvae_gestion(request, annee_id):
 
-    # 1) Si l'utilisateur change l'année via le SELECT
+    # Gestion du changement d'année via GET
     if "annee" in request.GET:
         nouvelle_annee = request.GET.get("annee")
         try:
             annee_obj = AnneeFiscale.objects.get(annee=nouvelle_annee)
             return redirect("cvae_gestion", annee_id=annee_obj.id)
         except AnneeFiscale.DoesNotExist:
-            pass  # on ignore si l'année n'existe pas
+            pass
 
-    # 2) Sinon on continue normalement
+    # Année sélectionnée
     annee = get_object_or_404(AnneeFiscale, id=annee_id)
     annees = AnneeFiscale.objects.all().order_by("-annee")
 
+    # Tous les clients ayant le module CVAE
     cms = (
         ClientModuleFiscal.objects
         .filter(annee=annee, module__nom="CVAE")
         .select_related("client", "annee")
-        .prefetch_related("cvae_declaration")
     )
 
+    # S'assurer que chaque client a une déclaration CVAE
     for cm in cms:
-        if not hasattr(cm, "cvae_declaration"):
-            cm.cvae_declaration, _ = CVAEDeclaration.objects.get_or_create(client_module=cm)
+        cm.declaration, _ = CVAEDeclaration.objects.get_or_create(client_module=cm)
+
+        # Total CVAE (texte)
+        cm.total_cvae = cm.declaration.total_cvae or ""
 
     return render(request, "cvae/cvae_gestion.html", {
         "annee": annee,
@@ -2245,53 +2370,73 @@ def tvs_saisie(request, client_module_id):
     cm = get_object_or_404(ClientModuleFiscal, id=client_module_id)
     declaration, created = TVSDeclaration.objects.get_or_create(client_module=cm)
 
-    # --- Pré-remplissage TVS N-1 (logique harmonisée) ---
+    # -----------------------------
+    # Pré-remplissage TVS N-1
+    # -----------------------------
     annee_actuelle = cm.annee.annee
-    annee_n_1 = annee_actuelle - 1
 
     prev = TVSDeclaration.objects.filter(
         client_module__client=cm.client,
-        client_module__annee__annee=annee_n_1
+        client_module__annee__annee=annee_actuelle - 1
     ).first()
 
     if request.method == "GET":
-        if not declaration.tvs_n_1:
-            declaration.tvs_n_1 = prev.montant if prev else 0
+        if not declaration.tvs_n_1 and prev:
+            declaration.tvs_n_1 = prev.total_tvs or ""
         declaration.save()
 
-    # --- Nettoyage des décimaux ---
-    def clean_decimal(value):
-        if not value or value.strip() == "":
-            return 0
-        value = value.replace(" ", "").replace(",", ".")
-        try:
-            return float(value)
-        except:
-            return 0
-
-    # --- POST ---
+    # -----------------------------
+    # POST : Enregistrement
+    # -----------------------------
     if request.method == "POST":
-        declaration.tvs_n_1 = clean_decimal(request.POST.get("tvs_n_1"))
-        declaration.vehicule = "vehicule" in request.POST
+
+        # Champs globaux
+        declaration.tvs_n_1 = request.POST.get("tvs_n_1") or ""
         declaration.soumis_tvs_n = "soumis_tvs_n" in request.POST
-
         declaration.formulaire = request.POST.get("formulaire", "")
-        declaration.montant = clean_decimal(request.POST.get("montant"))
-
-        declaration.statut_tvs = request.POST.get("statut_tvs")
-        declaration.info_vehicule = request.POST.get("info_vehicule", "")
-
-        declaration.date_achat = request.POST.get("date_achat") or None
-        declaration.date_cession = request.POST.get("date_cession") or None
+        declaration.total_tvs = request.POST.get("total_tvs") or ""
+        declaration.statut_tvs = request.POST.get("statut_tvs") or ""
+        declaration.commentaire_global = request.POST.get("commentaire_global", "")
 
         declaration.save()
+
+        # -----------------------------
+        # Gestion des véhicules
+        # -----------------------------
+        # On supprime tout et on recrée (simple et robuste)
+        declaration.vehicules.all().delete()
+
+        lignes = int(request.POST.get("vehicules_count", 0))
+
+        for i in range(1, lignes + 1):
+            TVSVehicule.objects.create(
+                declaration=declaration,
+                marque=request.POST.get(f"marque_{i}", ""),
+                modele=request.POST.get(f"modele_{i}", ""),
+                immatriculation=request.POST.get(f"immatriculation_{i}", ""),
+                date_achat=request.POST.get(f"date_achat_{i}") or None,
+                date_cession=request.POST.get(f"date_cession_{i}") or None,
+                puissance_fiscale=request.POST.get(f"puissance_{i}", ""),
+                montant_tvs=request.POST.get(f"montant_tvs_{i}", ""),
+                statut_tvs=request.POST.get(f"statut_tvs_{i}", ""),
+                commentaire=request.POST.get(f"commentaire_{i}", ""),
+            )
+
         messages.success(request, "Déclaration TVS enregistrée avec succès.")
         return redirect("tvs_gestion", annee_id=cm.annee.id)
+
+    # -----------------------------
+    # Préparation des véhicules pour le template
+    # -----------------------------
+    vehicules = declaration.vehicules.all()
 
     return render(request, "tvs/tvs_saisie.html", {
         "client_module": cm,
         "declaration": declaration,
+        "vehicules": vehicules,
+        "vehicules_count": vehicules.count(),
     })
+
 
 @login_required
 def tvs_gestion(request, annee_id):
@@ -2305,20 +2450,21 @@ def tvs_gestion(request, annee_id):
         except AnneeFiscale.DoesNotExist:
             pass
 
-    # Affichage normal
+    # Année sélectionnée
     annee = get_object_or_404(AnneeFiscale, id=annee_id)
     annees = AnneeFiscale.objects.all().order_by("-annee")
 
+    # Clients ayant le module TVS
     cms = (
         ClientModuleFiscal.objects
         .filter(annee=annee, module__nom="TVS")
         .select_related("client", "annee")
-        .prefetch_related("tvs_declaration")
     )
 
     for cm in cms:
-        if not hasattr(cm, "tvs_declaration"):
-            cm.tvs_declaration, _ = TVSDeclaration.objects.get_or_create(client_module=cm)
+        cm.declaration, _ = TVSDeclaration.objects.get_or_create(client_module=cm)
+        cm.vehicules = cm.declaration.vehicules.all()
+        cm.total_tvs = cm.declaration.total_tvs or ""
 
     return render(request, "tvs/tvs_gestion.html", {
         "annee": annee,
@@ -2538,9 +2684,18 @@ def dividendes_gestion(request, annee_id):
 @login_required
 def dp_saisie(request, client_id):
     client = get_object_or_404(Client, id=client_id)
+
+    if client.archive:
+        return redirect("client_archive_interdit")
+
     declaration, created = DPDeclaration.objects.get_or_create(client=client)
 
     if request.method == "POST":
+        # Nouveaux champs
+        declaration.etat = request.POST.get("etat")
+        declaration.status = request.POST.get("status")
+
+        # Champs existants
         declaration.dossier_deontologie = request.POST.get("dossier_deontologie")
         declaration.acceptation_lab = request.POST.get("acceptation_lab")
         declaration.piece_identite = request.POST.get("piece_identite")
@@ -2560,8 +2715,9 @@ def dp_saisie(request, client_id):
 
 @login_required
 def dp_gestion(request):
-    clients = Client.objects.all().order_by("nom")
+    clients = Client.objects.filter(archive=False).order_by("nom")
 
+    # On s'assure que chaque client a un DP
     for client in clients:
         if not hasattr(client, "dp"):
             client.dp, _ = DPDeclaration.objects.get_or_create(client=client)
@@ -2728,26 +2884,26 @@ def user_space(request):
     # 2) KPIs COMPTABILITÉ (ANNÉE EN COURS)
     # ----------------------------------------------------
 
-    # Clients concernés : périodicité mensuel / régulier
+    # Clients concernés : uniquement périodicité mensuelle
     clients_concernes_qs = Client.objects.filter(
-        periodicite__in=["MENSUEL", "REGULIER"]
+        periodicite="MENSUEL"
     )
     kpi_total_clients = clients_concernes_qs.count()
-
+    
     # Suivi comptable pour l'année en cours
     suivis_qs = SuiviComptable.objects.filter(
         annee=current_year,
         client__in=clients_concernes_qs
     )
-
+    
     kpi_terminees = suivis_qs.filter(saisie_terminee=True).count()
     kpi_en_cours = suivis_qs.filter(saisie_en_cours=True, saisie_terminee=False).count()
-
+    
     # Non commencée
     kpi_non_commencees = kpi_total_clients - kpi_terminees - kpi_en_cours
     if kpi_non_commencees < 0:
         kpi_non_commencees = 0
-
+    
     # Pourcentage
     kpi_pourcentage_terminees = (
         round((kpi_terminees / kpi_total_clients) * 100, 1)
@@ -3002,6 +3158,12 @@ def edit_note(request, note_id):
     })
 
 @login_required
+def view_note(request, note_id):
+    note = get_object_or_404(ClientNote, id=note_id, user=request.user)
+    return render(request, "notes/view_note.html", {"note": note})
+
+
+@login_required
 def delete_note(request, note_id):
     note = get_object_or_404(ClientNote, id=note_id, user=request.user)
     client_id = note.client.id
@@ -3168,6 +3330,12 @@ def delete_user_note(request, note_id):
     note = get_object_or_404(UserNote, id=note_id, user=request.user)
     note.delete()
     return redirect("user_notes")
+
+@login_required
+def view_user_note(request, note_id):
+    note = get_object_or_404(UserNote, id=note_id, user=request.user)
+    return render(request, "dossiers/view_user_note.html", {"note": note})
+
 
 # ----------------------------------------------------
 #   MODULE KANBAN
@@ -3758,12 +3926,12 @@ def client_search(request):
 @login_required
 def client_hub(request, client_id):
     from datetime import date
-    annee = date.today().year
 
+    annee = date.today().year
     client = get_object_or_404(Client, id=client_id)
 
     # -------------------------
-    # Suivi comptable
+    # SUIVI COMPTABLE
     # -------------------------
     suivi_comptable = SuiviComptable.objects.filter(
         client=client,
@@ -3771,22 +3939,26 @@ def client_hub(request, client_id):
     ).first()
 
     # -------------------------
-    # TVA
+    # TVA — MODULES
     # -------------------------
-    tva_annee = TVAAnnee.objects.filter(annee=annee).first()
-    tva_client = None
-    tva_declaration = None
+    tva_modules = TVAClientAnnee.objects.filter(
+        client=client,
+        annee__annee=annee
+    ).select_related("module")
 
-    if tva_annee:
-        tva_client = TVAClientAnnee.objects.filter(
-            client=client,
-            annee=tva_annee
-        ).first()
+    tva_ca3m = None
+    tva_ca3t = None
+    tva_ca12 = None
 
-        if tva_client:
-            tva_declaration = TVADeclaration.objects.filter(
-                tva_client_annee=tva_client
-            ).first()
+    for tva in tva_modules:
+        if tva.module.type == "CA3M":
+            tva_ca3m = TVADeclaration.objects.filter(tva_client_annee=tva).first()
+
+        elif tva.module.type == "CA3T":
+            tva_ca3t = TVADeclaration.objects.filter(tva_client_annee=tva).first()
+
+        elif tva.module.type == "CA12":
+            tva_ca12 = TVADeclaration.objects.filter(tva_client_annee=tva).first()
 
     # -------------------------
     # MODULES FISCAUX
@@ -3805,8 +3977,16 @@ def client_hub(request, client_id):
         if not cmf:
             return None, None
 
-        declaration = getattr(cmf, f"{nom.lower()}_declaration", None)
-        return cmf, declaration
+        mapping = {
+            "IS": getattr(cmf, "is_declaration", None),
+            "CFE": getattr(cmf, "cfe_declaration", None),
+            "CVAE": getattr(cmf, "cvae_declaration", None),
+            "TVS": getattr(cmf, "tvs_declaration", None),
+            "DESDEB": getattr(cmf, "desdeclaration", None),  # ✔ CORRECT
+            "Dividendes": getattr(cmf, "dividendes_declaration", None),
+        }
+
+        return cmf, mapping.get(nom)
 
     is_module, is_decl = get_fiscal_module("IS")
     cfe_module, cfe_decl = get_fiscal_module("CFE")
@@ -3815,44 +3995,30 @@ def client_hub(request, client_id):
     desdeb_module, desdeb_decl = get_fiscal_module("DESDEB")
     dividendes_module, dividendes_decl = get_fiscal_module("Dividendes")
 
-    # -------------------------
-    # CLOTURE
-    # -------------------------
-    cloture = ClotureAnnee.objects.filter(annee=annee).first()
-
-    revision = plaquettes = ca12 = isci = declarations = mission = juridique = None
-
-    if cloture:
-        revision = ModuleRevision.objects.filter(cloture=cloture, client=client).first()
-        plaquettes = ModulePlaquettesLiasse.objects.filter(cloture=cloture, client=client).first()
-        ca12 = ModuleCA12.objects.filter(cloture=cloture, client=client).first()
-        isci = ModuleISCI.objects.filter(cloture=cloture, client=client).first()
-        declarations = ModuleDeclarations.objects.filter(cloture=cloture, client=client).first()
-        mission = ModuleMission.objects.filter(cloture=cloture, client=client).first()
-        juridique = ModuleJuridique.objects.filter(cloture=cloture, client=client).first()
-
     return render(request, "dossiers/client_hub.html", {
         "client": client,
         "annee": annee,
 
         "suivi_comptable": suivi_comptable,
 
-        "tva_client": tva_client,
-        "tva_declaration": tva_declaration,
+        "tva_modules": tva_modules,
+        "tva_ca3m": tva_ca3m,
+        "tva_ca3t": tva_ca3t,
+        "tva_ca12": tva_ca12,
 
         "is_decl": is_decl,
         "cfe_decl": cfe_decl,
         "cvae_decl": cvae_decl,
         "tvs_decl": tvs_decl,
+
         "desdeb_decl": desdeb_decl,
         "dividendes_decl": dividendes_decl,
-
-        "revision": revision,
-        "plaquettes": plaquettes,
-        "ca12": ca12,
-        "isci": isci,
-        "declarations": declarations,
-        "mission": mission,
-        "juridique": juridique,
     })
 
+
+    # -------------------------
+    # ARCHIVAGE
+    # -------------------------
+
+def client_archive_interdit(request):
+    return render(request, "client_archive_interdit.html")

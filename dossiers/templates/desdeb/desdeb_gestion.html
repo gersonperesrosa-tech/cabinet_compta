@@ -48,20 +48,29 @@
         </tr>
     </thead>
 
-    <tbody>
+<tbody>
     {% for cm in cms %}
         {% with decl=cm.desdeclaration %}
-        <tr>
+
+        <tr class="{% if cm.client.archive %}archived-row{% endif %}">
 
             <!-- N° client -->
             <td>{{ cm.client.numero }}</td>
 
-            <!-- NOM DU CLIENT → LIEN VERS LA SAISIE -->
+            <!-- NOM DU CLIENT -->
             <td>
-                <a href="{% url 'desdeb_saisie' cm.id %}"
-                   class="text-decoration-none fw-semibold">
-                    {{ cm.client.nom }}
-                </a>
+                {% if cm.client.archive %}
+                    <!-- 🔒 Client archivé → pas de lien -->
+                    <span class="fw-semibold text-muted">
+                        {{ cm.client.nom }}
+                    </span>
+                {% else %}
+                    <!-- 🔗 Client actif → lien normal -->
+                    <a href="{% url 'desdeb_saisie' cm.id %}"
+                       class="text-decoration-none fw-semibold">
+                        {{ cm.client.nom }}
+                    </a>
+                {% endif %}
             </td>
 
             <!-- Responsable -->
@@ -79,9 +88,10 @@
             {% endfor %}
 
         </tr>
+
         {% endwith %}
     {% endfor %}
-    </tbody>
+</tbody>
 </table>
 
 </section>

@@ -9,117 +9,134 @@
 <form method="POST">
     {% csrf_token %}
 
-    <table class="table table-bordered align-middle mt-4">
-        <thead>
+<!-- =============================== -->
+<!--   INFORMATIONS GLOBALES TVS     -->
+<!-- =============================== -->
+
+<div class="row mt-4 g-3">
+
+    <!-- TVS N-1 -->
+    <div class="col-md-6">
+        <label class="form-label fw-bold">TVS N‑1</label>
+        <input type="text"
+               name="tvs_n_1"
+               class="form-control"
+               value="{{ declaration.tvs_n_1|empty_dash }}">
+    </div>
+
+    <!-- Soumis TVS N -->
+    <div class="col-md-6 d-flex align-items-end">
+        <div>
+            <label class="form-label fw-bold">Soumis à TVS en N</label><br>
+            <input type="checkbox"
+                   name="soumis_tvs_n"
+                   {% if declaration.soumis_tvs_n %}checked{% endif %}>
+        </div>
+    </div>
+
+    <!-- Formulaire -->
+    <div class="col-md-6">
+        <label class="form-label fw-bold">Formulaire</label>
+        <input type="text"
+               name="formulaire"
+               class="form-control"
+               value="{{ declaration.formulaire|empty_dash }}">
+    </div>
+
+    <!-- Total TVS -->
+    <div class="col-md-6">
+        <label class="form-label fw-bold">Total TVS</label>
+        <input type="text"
+               name="total_tvs"
+               id="total_tvs"
+               class="form-control fw-bold"
+               value="{{ declaration.total_tvs|empty_dash }}">
+    </div>
+
+    <!-- Statut global -->
+    <div class="col-md-6">
+        <label class="form-label fw-bold">Statut TVS</label>
+        <select name="statut_tvs" class="form-select">
+            {% include "partials/statut_options.html" with selected=declaration.statut_tvs %}
+        </select>
+    </div>
+
+    <!-- Commentaire global -->
+    <div class="col-12">
+        <label class="form-label fw-bold">Commentaire global</label>
+        <textarea name="commentaire_global"
+                  class="form-control"
+                  rows="3">{{ declaration.commentaire_global|empty_dash }}</textarea>
+    </div>
+
+</div>
+
+
+    <!-- =============================== -->
+    <!--        TABLEAU VEHICULES        -->
+    <!-- =============================== -->
+
+    <h3 class="mt-5">Véhicules soumis à la TVS</h3>
+
+    <input type="hidden" name="vehicules_count" value="{{ vehicules_count }}" id="vehicules_count">
+
+    <table class="table table-bordered align-middle mt-3">
+        <thead class="table-light">
             <tr>
-                <th>Élément</th>
-                <th>Valeur</th>
-                <th>Statut</th>
+                <th>Marque</th>
+                <th>Modèle</th>
+                <th>Immatriculation</th>
+                <th>Achat</th>
+                <th>Cession</th>
+                <th>Puissance</th>
+                <th>Montant TVS</th>
+                <th>Commentaire</th>
+                <th style="width:50px;"></th>
             </tr>
         </thead>
 
-        <tbody>
+        <tbody id="vehicules_table">
 
-            <!-- TVS N-1 -->
+            {% for v in vehicules %}
             <tr>
-                <td><strong>TVS N‑1</strong></td>
-                <td>
-                    <input type="text"
-                           name="tvs_n_1"
-                           class="form-control"
-                           value="{{ declaration.tvs_n_1|empty_dash }}">
-                </td>
-                <td></td>
-            </tr>
+                <td><input type="text" name="marque_{{ forloop.counter }}" class="form-control" value="{{ v.marque }}"></td>
+                <td><input type="text" name="modele_{{ forloop.counter }}" class="form-control" value="{{ v.modele }}"></td>
+                <td><input type="text" name="immatriculation_{{ forloop.counter }}" class="form-control" value="{{ v.immatriculation }}"></td>
 
-            <!-- Véhicule -->
-            <tr>
-                <td><strong>Véhicule</strong></td>
-                <td>
-                    <input type="checkbox"
-                           name="vehicule"
-                           {% if declaration.vehicule %}checked{% endif %}>
-                </td>
-                <td></td>
-            </tr>
+                <td><input type="date" name="date_achat_{{ forloop.counter }}" class="form-control" value="{{ v.date_achat|date:'Y-m-d' }}"></td>
+                <td><input type="date" name="date_cession_{{ forloop.counter }}" class="form-control" value="{{ v.date_cession|date:'Y-m-d' }}"></td>
 
-            <!-- Soumis TVS N -->
-            <tr>
-                <td><strong>Soumis à TVS en N</strong></td>
-                <td>
-                    <input type="checkbox"
-                           name="soumis_tvs_n"
-                           {% if declaration.soumis_tvs_n %}checked{% endif %}>
-                </td>
-                <td></td>
-            </tr>
+                <td><input type="text" name="puissance_{{ forloop.counter }}" class="form-control" value="{{ v.puissance_fiscale }}"></td>
 
-            <!-- Formulaire -->
-            <tr>
-                <td><strong>Formulaire</strong></td>
-                <td>
-                    <input type="text"
-                           name="formulaire"
-                           class="form-control"
-                           value="{{ declaration.formulaire|empty_dash }}">
-                </td>
-                <td></td>
-            </tr>
+                <td><input type="text" name="montant_tvs_{{ forloop.counter }}" class="form-control" value="{{ v.montant_tvs }}"></td>
 
-            <!-- Montant -->
-            <tr>
-                <td><strong>Montant</strong></td>
-                <td>
-                    <input type="text"
-                           name="montant"
-                           id="montant"
-                           class="form-control"
-                           value="{{ declaration.montant|empty_dash }}">
-                </td>
-                <td>
-                    <select name="statut_tvs" class="form-select">
-                        {% include "partials/statut_options.html" with selected=declaration.statut_tvs %}
-                    </select>
+                <td><input type="text" name="commentaire_{{ forloop.counter }}" class="form-control" value="{{ v.commentaire }}"></td>
+
+                <td class="text-center">
+                    <button type="button"
+                            class="btn btn-sm btn-outline-danger"
+                            onclick="deleteVehiculeRow(this)">
+                        🗑️
+                    </button>
                 </td>
             </tr>
-
-            <!-- Informations véhicule -->
-            <tr>
-                <td><strong>Informations véhicule</strong></td>
-                <td colspan="2">
-                    <input type="text"
-                           name="info_vehicule"
-                           class="form-control"
-                           value="{{ declaration.info_vehicule|empty_dash }}">
-                </td>
-            </tr>
-
-            <!-- Date achat -->
-            <tr>
-                <td><strong>Date d'achat</strong></td>
-                <td colspan="2">
-                    <input type="date"
-                           name="date_achat"
-                           class="form-control"
-                           value="{{ declaration.date_achat|date:'Y-m-d' }}">
-                </td>
-            </tr>
-
-            <!-- Date cession -->
-            <tr>
-                <td><strong>Date de cession</strong></td>
-                <td colspan="2">
-                    <input type="date"
-                           name="date_cession"
-                           class="form-control"
-                           value="{{ declaration.date_cession|date:'Y-m-d' }}">
-                </td>
-            </tr>
+            {% endfor %}
 
         </tbody>
     </table>
 
-    <!-- Boutons bas de page -->
+    <!-- Bouton Ajouter un véhicule -->
+    <div class="mt-3">
+        <button type="button" class="btn btn-outline-primary" onclick="addVehiculeRow()">
+            + Ajouter un véhicule
+        </button>
+    </div>
+
+
+    <!-- =============================== -->
+    <!--         BOUTONS BAS DE PAGE     -->
+    <!-- =============================== -->
+
     <div class="d-flex justify-content-between mt-4">
         <a href="{% url 'fiscal_clients_module' client_module.annee.id client_module.module.id %}"
            class="btn btn-outline-secondary">
@@ -134,5 +151,77 @@
 </form>
 
 </section>
+
+
+<!-- =============================== -->
+<!--     TEMPLATE LIGNE VEHICULE     -->
+<!-- =============================== -->
+
+<table style="display:none;">
+    <tbody>
+        <tr id="vehicule_template">
+            <td><input type="text" name="marque_INDEX" class="form-control"></td>
+            <td><input type="text" name="modele_INDEX" class="form-control"></td>
+            <td><input type="text" name="immatriculation_INDEX" class="form-control"></td>
+
+            <td><input type="date" name="date_achat_INDEX" class="form-control"></td>
+            <td><input type="date" name="date_cession_INDEX" class="form-control"></td>
+
+            <td><input type="text" name="puissance_INDEX" class="form-control"></td>
+
+            <td><input type="text" name="montant_tvs_INDEX" class="form-control"></td>
+
+            <td><input type="text" name="commentaire_INDEX" class="form-control"></td>
+
+            <td class="text-center">
+                <button type="button"
+                        class="btn btn-sm btn-outline-danger"
+                        onclick="deleteVehiculeRow(this)">
+                    🗑️
+                </button>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+
+<!-- =============================== -->
+<!--           SCRIPT JS             -->
+<!-- =============================== -->
+
+<script>
+function addVehiculeRow() {
+    let countInput = document.getElementById("vehicules_count");
+    let current = parseInt(countInput.value);
+    let next = current + 1;
+
+    countInput.value = next;
+
+    let template = document.getElementById("vehicule_template").outerHTML;
+    template = template.replace(/_INDEX/g, "_" + next);
+
+    document.getElementById("vehicules_table").insertAdjacentHTML("beforeend", template);
+}
+
+function deleteVehiculeRow(button) {
+    // Supprimer la ligne
+    const row = button.closest("tr");
+    row.remove();
+
+    // Réindexer toutes les lignes restantes
+    const rows = document.querySelectorAll("#vehicules_table tr");
+    let index = 1;
+
+    rows.forEach(r => {
+        r.querySelectorAll("input, select").forEach(field => {
+            field.name = field.name.replace(/_\d+$/, "_" + index);
+        });
+        index++;
+    });
+
+    // Mettre à jour le compteur
+    document.getElementById("vehicules_count").value = rows.length;
+}
+</script>
 
 {% endblock %}
