@@ -1,119 +1,110 @@
 {% extends "base_paie_client.html" %}
 
-{% block title %}Salariés{% endblock %}
-
 {% block content %}
 <section class="section">
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<h1 class="mb-4">Liste des Salariés</h1>
 
-    <!-- Titre -->
-    <h1 class="m-0">Liste des salariés</h1>
-
-    <!-- Barre de recherche + filtres -->
-    <div class="d-flex align-items-center gap-3 flex-grow-1 justify-content-center">
-
-        <!-- Barre de recherche -->
-        <input type="text" id="searchInput" class="form-control w-50"
-               placeholder="Rechercher un salarié...">
-
-        <!-- Boutons filtre -->
-        <div class="d-flex gap-2">
-            <button class="btn btn-outline-primary" id="filterActifs">Actifs</button>
-            <button class="btn btn-outline-secondary" id="filterTous">Tous</button>
-        </div>
-
-    </div>
-
-    <!-- Boutons à droite -->
-    <div class="d-flex gap-2">
-        <a href="{% url 'paie:client_liste_mois' %}" class="btn btn-primary">
-            Mois de paie
-        </a>
-
-        <a href="{% url 'paie:paie_client_dashboard' %}" class="btn btn-outline-secondary">
-            Retour au dashboard
-        </a>
-    </div>
-
-</div>
-
-
-{% if salaries %}
 <table class="table table-hover align-middle">
     <thead>
         <tr>
             <th>Nom</th>
             <th>Prénom</th>
             <th>Date de naissance</th>
-            <th>N° Sécurité sociale</th>
-            <th>Mutuelle</th>
+            <th>Contrat</th>
+            <th>Temps de travail</th>
             <th>Salaire de base</th>
-            <th>Date entrée</th>
-            <th>Date sortie</th>
             <th>Actif</th>
+            <th class="text-end">Actions</th>
         </tr>
     </thead>
 
     <tbody>
         {% for s in salaries %}
         <tr>
+
             <td>{{ s.nom }}</td>
             <td>{{ s.prenom }}</td>
-            <td>{{ s.date_naissance|date:"d/m/Y" }}</td>
-            <td>{{ s.numero_securite_sociale }}</td>
-            <td>{{ s.mutuelle|default:"-" }}</td>
-            <td>{{ s.salaire_base }} €</td>
-            <td>{{ s.date_entree|date:"d/m/Y" }}</td>
-            <td>{{ s.date_sortie|date:"d/m/Y"|default:"-" }}</td>
+
+            <td>
+                {% if s.date_naissance %}
+                    {{ s.date_naissance|date:"d/m/Y" }}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+
+            <!-- 🔥 Type de contrat -->
+<td>
+    {% if s.cdd %}
+        <span class="badge bg-warning text-dark">CDD</span>
+    {% endif %}
+
+    {% if s.apprenti %}
+        <span class="badge bg-primary ms-1">Apprenti</span>
+    {% endif %}
+
+    {% if not s.cdd and not s.apprenti %}
+        <span class="badge bg-success">CDI</span>
+    {% endif %}
+</td>
+
+            <!-- 🔥 Temps de travail -->
+            <td>
+                {% if s.temps_partiel %}
+                    <span class="badge text-white" style="background-color:#6f42c1;">Temps partiel</span>
+                {% else %}
+                    <span class="badge bg-info text-dark">Temps plein</span>
+                {% endif %}
+            </td>
+
+            <td>{{ s.salaire_base|default:"-" }}</td>
+
             <td>
                 {% if s.actif %}
                     <span class="badge bg-success">Actif</span>
                 {% else %}
-                    <span class="badge bg-secondary">Inactif</span>
+                    <span class="badge bg-secondary">Sorti</span>
                 {% endif %}
             </td>
+
+            <td class="text-end">
+                <a href="{% url 'paie:client_fiche_salarie' s.id %}"
+                   class="btn btn-sm btn-outline-primary">
+                    Voir la fiche
+                </a>
+            </td>
+
         </tr>
         {% endfor %}
     </tbody>
 </table>
 
-{% else %}
-    <p class="text-muted">Aucun salarié trouvé.</p>
-{% endif %}
+</section>
+
+<!-- Tri dynamique sur toutes les colonnes -->
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+document.querySelectorAll("table thead th").forEach((header, index) => {
+    header.style.cursor = "pointer";
 
-    const searchInput = document.getElementById("searchInput");
-    const filterActifsBtn = document.getElementById("filterActifs");
-    const filterTousBtn = document.getElementById("filterTous");
-    const rows = document.querySelectorAll("table tbody tr");
+    header.addEventListener("click", () => {
+        const table = header.closest("table");
+        const tbody = table.querySelector("tbody");
+        const rows = Array.from(tbody.querySelectorAll("tr"));
 
-    // --- FILTRE PAR NOM ---
-    searchInput.addEventListener("keyup", function () {
-        const query = this.value.toLowerCase();
+        const isAsc = header.classList.toggle("asc");
 
-        rows.forEach(row => {
-            const nom = row.querySelector("td").innerText.toLowerCase();
-            row.style.display = nom.includes(query) ? "" : "none";
+        rows.sort((a, b) => {
+            const aVal = (a.cells[index].innerText || "").toLowerCase();
+            const bVal = (b.cells[index].innerText || "").toLowerCase();
+
+            if (aVal < bVal) return isAsc ? -1 : 1;
+            if (aVal > bVal) return isAsc ? 1 : -1;
+            return 0;
         });
-    });
 
-    // --- FILTRE ACTIFS ---
-    filterActifsBtn.addEventListener("click", function () {
-        rows.forEach(row => {
-            const actifBadge = row.querySelector("td:last-child .badge");
-            const isActif = actifBadge && actifBadge.classList.contains("bg-success");
-            row.style.display = isActif ? "" : "none";
-        });
+        rows.forEach(row => tbody.appendChild(row));
     });
-
-    // --- FILTRE TOUS ---
-    filterTousBtn.addEventListener("click", function () {
-        rows.forEach(row => row.style.display = "");
-        searchInput.value = "";
-    });
-
 });
 </script>
 

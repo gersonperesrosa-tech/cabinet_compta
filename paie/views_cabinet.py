@@ -82,6 +82,27 @@ def supprimer_salarie(request, salarie_id):
     salarie.delete()
     return redirect("paie:cabinet_liste_salaries_client", client_id=client_id)
 
+def cabinet_fiche_salarie(request, salarie_id):
+    salarie = get_object_or_404(Salarie, id=salarie_id)
+
+    return render(request, "paie/cabinet/salaries/fiche_salarie.html", {
+        "salarie": salarie
+    })
+
+def cabinet_salarie_remunerations(request, salarie_id):
+    salarie = get_object_or_404(Salarie, id=salarie_id)
+
+    variables = VariablePaie.objects.filter(
+        salarie=salarie
+    ).select_related("paie_mois").order_by("-paie_mois__annee", "-paie_mois__mois")
+
+    return render(request, "paie/cabinet/salaries/remunerations.html", {
+        "salarie": salarie,
+        "variables": variables,
+    })
+
+
+
 # ----------------------------------------------------
 #   VARIABLES DE PAIE
 # ----------------------------------------------------
@@ -382,3 +403,28 @@ def liste_mois_client(request, client_id):
 
 from django.template.loader import get_template
 from django.http import HttpResponse
+
+# ----------------------------------------------------
+#  FORCER LA VALIDATION DU MOIS
+# ----------------------------------------------------
+
+@login_required
+def forcer_validation_mois(request, paie_mois_id):
+    paie_mois = get_object_or_404(PaieMois, id=paie_mois_id)
+
+    # Forcer BS uniquement si non validé partenaire
+    if not paie_mois.bs_fait:
+        paie_mois.bs_fait = True
+        paie_mois.date_bs_fait = timezone.now()
+        paie_mois.bs_force = True
+
+    # Forcer DSN uniquement si non validée partenaire
+    if not paie_mois.dsn_faite:
+        paie_mois.dsn_faite = True
+        paie_mois.date_dsn_faite = timezone.now()
+        paie_mois.dsn_force = True
+
+    paie_mois.save()
+
+    messages.success(request, "Validation forcée appliquée (uniquement ce qui manquait).")
+    return redirect("paie:liste_mois_client", client_id=paie_mois.client.id)

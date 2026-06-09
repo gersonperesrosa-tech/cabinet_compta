@@ -30,7 +30,16 @@
     {% for c in clients %}
     <tr>
         <td>{{ c.numero }}</td>
-        <td>{{ c.nom }}</td>
+<td>
+    <strong>{{ c.nom }}</strong>
+
+{% if c.mois_valide_client %}
+    <span class="badge bg-warning text-dark ms-2">
+        Mois {{ c.mois_valide_client.mois|add:"0"|slice:"-2" }}/{{ c.mois_valide_client.annee }}
+        validé par le client
+    </span>
+{% endif %}
+</td>
         <td>{{ c.forme_juridique|default:"-" }}</td>
 
         <td>

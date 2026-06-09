@@ -5,72 +5,96 @@
 
 <div class="container-fluid mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-<div>
-    <h1 class="mb-3">Modifier {{ salarie.prenom }} {{ salarie.nom }}</h1>
-</div>
+        <div>
+            <h1 class="mb-3">Modifier {{ salarie.prenom }} {{ salarie.nom }}</h1>
+        </div>
 
-    <a href="{% url 'paie:cabinet_liste_salaries_client' client.id %}" class="btn btn-outline-secondary mb-3">
-        ← Retour à la liste des salariés
-    </a>
-</div>
-
-
-    <form method="post">
-        {% csrf_token %}
-
-<div class="row g-3">
-
-    <div class="col-md-6">
-        <label class="form-label">{{ form.nom.label }}</label>
-        {{ form.nom }}
+        <a href="{% url 'paie:cabinet_liste_salaries_client' client.id %}" class="btn btn-outline-secondary mb-3">
+            ← Retour à la liste des salariés
+        </a>
     </div>
 
-    <div class="col-md-6">
-        <label class="form-label">{{ form.prenom.label }}</label>
-        {{ form.prenom }}
+<form method="post" class="card shadow-sm p-4">
+    {% csrf_token %}
+
+    <div class="row g-3">
+
+        <div class="col-md-6">
+            <label class="form-label">{{ form.nom.label }}</label>
+            {{ form.nom }}
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">{{ form.prenom.label }}</label>
+            {{ form.prenom }}
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">{{ form.date_naissance.label }}</label>
+            {{ form.date_naissance }}
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">{{ form.numero_securite_sociale.label }}</label>
+            {{ form.numero_securite_sociale }}
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">{{ form.mutuelle.label }}</label>
+            {{ form.mutuelle }}
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">{{ form.salaire_base.label }}</label>
+            {{ form.salaire_base }}
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">{{ form.date_entree.label }}</label>
+            {{ form.date_entree }}
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">{{ form.date_sortie.label }}</label>
+            {{ form.date_sortie }}
+        </div>
+
+
+        <div class="col-md-3">
+            <label class="form-label d-block">{{ form.actif.label }}</label>
+            {{ form.actif }}
+        </div>
+
+
+        <div class="col-md-3">
+            <label class="form-label d-block">{{ form.cdd.label|upper }}</label>
+            {{ form.cdd }}
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label d-block">{{ form.apprenti.label }}</label>
+            {{ form.apprenti }}
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label d-block">{{ form.temps_partiel.label }}</label>
+            {{ form.temps_partiel }}
+        </div>
+
+        <div class="col-md-12">
+            <label class="form-label">{{ form.commentaire.label }}</label>
+            {{ form.commentaire }}
+        </div>
+
+
     </div>
 
-    <div class="col-md-6">
-        <label class="form-label">{{ form.date_naissance.label }}</label>
-        {{ form.date_naissance }}
-    </div>
-
-    <div class="col-md-6">
-        <label class="form-label">{{ form.numero_securite_sociale.label }}</label>
-        {{ form.numero_securite_sociale }}
-    </div>
-
-    <div class="col-md-6">
-        <label class="form-label">{{ form.mutuelle.label }}</label>
-        {{ form.mutuelle }}
-    </div>
-
-    <div class="col-md-6">
-        <label class="form-label">{{ form.salaire_base.label }}</label>
-        {{ form.salaire_base }}
-    </div>
-
-    <div class="col-md-6">
-        <label class="form-label">{{ form.date_entree.label }}</label>
-        {{ form.date_entree }}
-    </div>
-
-    <div class="col-md-6">
-        <label class="form-label">{{ form.date_sortie.label }}</label>
-        {{ form.date_sortie }}
-    </div>
-
-    <div class="col-md-6">
-        <label class="form-label d-block">{{ form.actif.label }}</label>
-        {{ form.actif }}
-    </div>
-
-</div>
-        <div class="d-flex justify-content-end gap-2 mt-4">
+    <div class="d-flex justify-content-end gap-2 mt-4">
         <a href="{% url 'paie:cabinet_liste_salaries_client' client.id %}" class="btn btn-secondary mt-3">Annuler</a>
-
         <button type="submit" class="btn btn-primary mt-3">Mettre à jour</button>
-    </form>
+    </div>
+
+</form>
 
 </div>
 {% endblock %}

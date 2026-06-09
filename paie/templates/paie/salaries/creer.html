@@ -5,13 +5,13 @@
 
 <div class="container-fluid mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-<div>
-      <h1 class="mb-3">Ajouter un salarié pour {{ client.nom }}</h1>
-</div>
-  <a href="{% url 'paie:cabinet_liste_salaries_client' client.id %}" class="btn btn-outline-secondary mb-3">
-        ← Retour à la liste des salariés
-    </a>
-</div>
+        <div>
+            <h1 class="mb-3">Ajouter un salarié pour {{ client.nom }}</h1>
+        </div>
+        <a href="{% url 'paie:cabinet_liste_salaries_client' client.id %}" class="btn btn-outline-secondary mb-3">
+            ← Retour à la liste des salariés
+        </a>
+    </div>
 
 <form method="post" class="card shadow-sm p-4">
     {% csrf_token %}
@@ -58,10 +58,31 @@
             {{ form.date_sortie }}
         </div>
 
-        <div class="col-md-6">
+        <div class="col-md-3">
             <label class="form-label d-block">{{ form.actif.label }}</label>
             {{ form.actif }}
         </div>
+
+        <div class="col-md-3">
+            <label class="form-label d-block">{{ form.cdd.label|upper }}</label>
+            {{ form.cdd }}
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label d-block">{{ form.apprenti.label }}</label>
+            {{ form.apprenti }}
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label d-block">{{ form.temps_partiel.label }}</label>
+            {{ form.temps_partiel }}
+        </div>
+
+        <div class="col-md-12">
+            <label class="form-label">{{ form.commentaire.label }}</label>
+            {{ form.commentaire }}
+        </div>
+
 
     </div>
 

@@ -21,6 +21,11 @@ class Salarie(models.Model):
     mutuelle = models.CharField(max_length=200, blank=True)
     salaire_base = models.CharField(max_length=100, blank=True)
 
+    commentaire = models.TextField(blank=True)
+    cdd = models.BooleanField(default=False)
+    apprenti = models.BooleanField(default=False)
+    temps_partiel = models.BooleanField(default=False)
+
     def __str__(self):
         return f"{self.prenom} {self.nom} ({self.client.nom})"
 
@@ -43,13 +48,16 @@ class PaieMois(models.Model):
     date_bs_fait = models.DateTimeField(null=True, blank=True)
     date_dsn_faite = models.DateTimeField(null=True, blank=True)
 
+    # 🔥 Nouveau : suivi séparé des validations forcées
+    bs_force = models.BooleanField(default=False)
+    dsn_force = models.BooleanField(default=False)
+
     class Meta:
         unique_together = ("client", "annee", "mois")
         ordering = ["-annee", "-mois"]
         verbose_name = "Paie mois"
         verbose_name_plural = "Paie mois"
 
-    # Format long : Janvier, Février, ...
     @property
     def mois_nom(self):
         mois_noms = [
@@ -58,7 +66,6 @@ class PaieMois(models.Model):
         ]
         return mois_noms[self.mois]
 
-    # Format court : Jan, Fév, Mar, ...
     @property
     def mois_nom_court(self):
         mois_noms = [

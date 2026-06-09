@@ -80,6 +80,28 @@ def liste_salaries(request):
 
     return render(request, "paie/client/salaries.html", {"salaries": salaries})
 
+def client_fiche_salarie(request, salarie_id):
+    salarie = get_object_or_404(Salarie, id=salarie_id)
+
+    return render(request, "paie/client/salaries/fiche_salarie.html", {
+        "salarie": salarie
+    })
+
+
+def client_salarie_remunerations(request, salarie_id):
+    salarie = get_object_or_404(Salarie, id=salarie_id)
+
+    variables = VariablePaie.objects.filter(
+        salarie=salarie
+    ).select_related("paie_mois").order_by("-paie_mois__annee", "-paie_mois__mois")
+
+    return render(request, "paie/client/salaries/remunerations.html", {
+        "salarie": salarie,
+        "variables": variables,
+    })
+
+
+
 # ----------------------------------------------------
 #   VARIABLES
 # ----------------------------------------------------

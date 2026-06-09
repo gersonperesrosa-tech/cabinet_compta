@@ -56,29 +56,46 @@
             </td>
 
             <!-- BS / DSN -->
-            <td>
-                <div class="d-flex gap-2">
+<td>
+    <div class="d-flex gap-2">
 
-                    {% if m.bs_fait %}
-                        <span class="badge bg-success text-start">
-                            BS fait<br>
-                            <small>{{ m.date_bs_fait|date:"d/m/Y H:i" }}</small>
-                        </span>
-                    {% else %}
-                        <span class="badge bg-secondary">BS non fait</span>
-                    {% endif %}
+        {# --- BS --- #}
+        {% if m.bs_fait %}
+            {% if m.bs_force %}
+                <span class="badge bg-info text-start">
+                    BS validé par le cabinet<br>
+                    {{ m.date_bs_fait|date:"d/m/Y H:i" }}
+                </span>
+            {% else %}
+                <span class="badge bg-success text-start">
+                    BS fait<br>
+                    {{ m.date_bs_fait|date:"d/m/Y H:i" }}
+                </span>
+            {% endif %}
+        {% else %}
+            <span class="badge bg-secondary">BS non fait</span>
+        {% endif %}
 
-                    {% if m.dsn_faite %}
-                        <span class="badge bg-primary text-start">
-                            DSN faite<br>
-                            <small>{{ m.date_dsn_faite|date:"d/m/Y H:i" }}</small>
-                        </span>
-                    {% else %}
-                        <span class="badge bg-secondary">DSN non faite</span>
-                    {% endif %}
+        {# --- DSN --- #}
+        {% if m.dsn_faite %}
+            {% if m.dsn_force %}
+                <span class="badge bg-info text-start">
+                    DSN validée par le cabinet<br>
+                    {{ m.date_dsn_faite|date:"d/m/Y H:i" }}
+                </span>
+            {% else %}
+                <span class="badge bg-primary text-start">
+                    DSN faite<br>
+                    {{ m.date_dsn_faite|date:"d/m/Y H:i" }}
+                </span>
+            {% endif %}
+        {% else %}
+            <span class="badge bg-secondary">DSN non faite</span>
+        {% endif %}
 
-                </div>
-            </td>
+    </div>
+</td>
+
 
             <!-- Actions -->
             <td class="text-center">

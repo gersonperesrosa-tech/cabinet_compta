@@ -29,18 +29,21 @@
 
 <div class="row g-3 mb-4">
 
+    <!-- Nom -->
     <div class="col-md-4">
         <div class="list-group-item p-3 border rounded">
             <strong>Nom :</strong> {{ salarie.nom }}
         </div>
     </div>
 
+    <!-- Prénom -->
     <div class="col-md-4">
         <div class="list-group-item p-3 border rounded">
             <strong>Prénom :</strong> {{ salarie.prenom }}
         </div>
     </div>
 
+    <!-- Date de naissance -->
     <div class="col-md-4">
         <div class="list-group-item p-3 border rounded">
             <strong>Date de naissance :</strong>
@@ -48,6 +51,7 @@
         </div>
     </div>
 
+    <!-- Numéro de sécu -->
     <div class="col-md-4">
         <div class="list-group-item p-3 border rounded">
             <strong>Numéro de sécurité sociale :</strong>
@@ -55,6 +59,7 @@
         </div>
     </div>
 
+    <!-- Date entrée -->
     <div class="col-md-4">
         <div class="list-group-item p-3 border rounded">
             <strong>Date d'entrée :</strong>
@@ -62,6 +67,7 @@
         </div>
     </div>
 
+    <!-- Date sortie -->
     <div class="col-md-4">
         <div class="list-group-item p-3 border rounded">
             <strong>Date de sortie :</strong>
@@ -69,6 +75,7 @@
         </div>
     </div>
 
+    <!-- Actif -->
     <div class="col-md-4">
         <div class="list-group-item p-3 border rounded">
             <strong>Actif :</strong>
@@ -80,6 +87,7 @@
         </div>
     </div>
 
+    <!-- Mutuelle -->
     <div class="col-md-4">
         <div class="list-group-item p-3 border rounded">
             <strong>Mutuelle :</strong>
@@ -87,10 +95,44 @@
         </div>
     </div>
 
+    <!-- Salaire de base -->
     <div class="col-md-4">
         <div class="list-group-item p-3 border rounded">
             <strong>Salaire de base :</strong>
             {{ salarie.salaire_base|default:"-" }}
+        </div>
+    </div>
+
+    <!-- 🔥 Statuts (CDD / Apprenti / Temps partiel) -->
+    <div class="col-md-12">
+        <div class="list-group-item p-3 border rounded">
+            <strong>Statut :</strong><br>
+
+            {% if salarie.cdd %}
+                <span class="badge bg-warning text-dark me-1">CDD</span>
+            {% endif %}
+
+            {% if salarie.apprenti %}
+                <span class="badge bg-primary me-1">Apprenti</span>
+            {% endif %}
+
+            {% if salarie.temps_partiel %}
+                <span class="badge text-white me-1" style="background-color:#6f42c1;">
+                    Temps partiel
+                </span>
+            {% endif %}
+
+            {% if not salarie.cdd and not salarie.apprenti and not salarie.temps_partiel %}
+                <span class="text-muted">Aucun</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 🔥 Commentaire -->
+    <div class="col-md-12">
+        <div class="list-group-item p-3 border rounded" style="min-height: 90px;">
+            <strong>Commentaire :</strong><br>
+            <span class="text-muted">{{ salarie.commentaire|default:"Aucun" }}</span>
         </div>
     </div>
 

@@ -14,15 +14,20 @@ class SalarieForm(forms.ModelForm):
             "numero_securite_sociale": forms.TextInput(attrs={"class": "form-control"}),
             "mutuelle": forms.TextInput(attrs={"class": "form-control"}),
             "salaire_base": forms.TextInput(attrs={"class": "form-control"}),
+
             "date_naissance": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
             "date_entree": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
             "date_sortie": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
 
             "actif": forms.CheckboxInput(attrs={"class": "form-check-input"}),
 
- 
+            "commentaire": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "cdd": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            "apprenti": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            "temps_partiel": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
 
+    # Formats multiples pour les dates
     date_naissance = forms.DateField(required=False, input_formats=["%Y-%m-%d", "%d/%m/%Y"])
     date_entree = forms.DateField(required=False, input_formats=["%Y-%m-%d", "%d/%m/%Y"])
     date_sortie = forms.DateField(required=False, input_formats=["%Y-%m-%d", "%d/%m/%Y"])

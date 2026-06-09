@@ -66,20 +66,36 @@
 <td>
     <div class="d-flex gap-2">
 
+        {# --- BS --- #}
         {% if m.bs_fait %}
-            <span class="badge bg-success text-start">
-                BS fait<br>
-                <small>{{ m.date_bs_fait|date:"d/m/Y H:i" }}</small>
-            </span>
+            {% if m.bs_force %}
+                <span class="badge bg-info text-start">
+                    BS validé par le cabinet<br>
+                    {{ m.date_bs_fait|date:"d/m/Y H:i" }}
+                </span>
+            {% else %}
+                <span class="badge bg-success text-start">
+                    BS fait<br>
+                    {{ m.date_bs_fait|date:"d/m/Y H:i" }}
+                </span>
+            {% endif %}
         {% else %}
             <span class="badge bg-secondary">BS non fait</span>
         {% endif %}
 
+        {# --- DSN --- #}
         {% if m.dsn_faite %}
-            <span class="badge bg-primary text-start">
-                DSN faite<br>
-                <small>{{ m.date_dsn_faite|date:"d/m/Y H:i" }}</small>
-            </span>
+            {% if m.dsn_force %}
+                <span class="badge bg-info text-start">
+                    DSN validée par le cabinet<br>
+                    {{ m.date_dsn_faite|date:"d/m/Y H:i" }}
+                </span>
+            {% else %}
+                <span class="badge bg-primary text-start">
+                    DSN faite<br>
+                    {{ m.date_dsn_faite|date:"d/m/Y H:i" }}
+                </span>
+            {% endif %}
         {% else %}
             <span class="badge bg-secondary">DSN non faite</span>
         {% endif %}
@@ -94,8 +110,6 @@
                         Ouvrir
                     </a>
 
-
-
     {% if m.bs_fait or m.dsn_faite or m.client_valide %}
         <a href="{% url 'paie:devalider_mois' m.id %}"
            class="btn btn-sm btn-outline-danger"
@@ -103,6 +117,14 @@
             Dévalider
         </a>
     {% endif %}
+
+{% if not m.bs_fait or not m.dsn_faite %}
+    <a href="{% url 'paie:forcer_validation_mois' m.id %}"
+       class="btn btn-sm btn-outline-warning"
+       onclick="return confirm('Forcer la validation BS + DSN pour ce mois ?');">
+        Forcer validation
+    </a>
+{% endif %}
 
 
             </tr>

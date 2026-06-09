@@ -98,18 +98,41 @@
 <tbody>
     {% for ligne in lignes %}
     <tr>
-        <td>{{ ligne.salarie.nom }}</td>
-        <td>{{ ligne.salarie.prenom }}</td>
 
+<!-- 🔥 NOM + BADGES (aligné à gauche) -->
+<td class="text-start">
+    <strong>{{ ligne.salarie.nom }}</strong>
 
-        <td>{{ ligne.variables.heures_sup_25|default:"-" }}</td>
-        <td>{{ ligne.variables.primes|default:"-" }}</td>
-        <td>{{ ligne.variables.conges_debut|default:"-" }}</td>
-        <td>{{ ligne.variables.absences_maladie|default:"-" }}</td>
-        <td>{{ ligne.variables.absences_autres|default:"-" }}</td>
-        <td>{{ ligne.variables.acomptes|default:"-" }}</td>
-        <td>{{ ligne.variables.autres_infos|default:"-" }}</td>
+    {% if ligne.salarie.cdd %}
+        <span class="badge bg-warning text-dark ms-1">CDD</span>
+    {% endif %}
 
+    {% if ligne.salarie.apprenti %}
+        <span class="badge bg-primary ms-1">Apprenti</span>
+    {% endif %}
+
+    {% if ligne.salarie.temps_partiel %}
+        <span class="badge text-white ms-1" style="background-color:#6f42c1;">
+            Temps partiel
+        </span>
+    {% endif %}
+</td>
+
+<!-- Prénom (aligné à gauche) -->
+<td class="text-start">
+    {{ ligne.salarie.prenom }}
+</td>
+
+<!-- Variables -->
+<td>{{ ligne.variables.heures_sup_25|default:"-" }}</td>
+<td>{{ ligne.variables.primes|default:"-" }}</td>
+<td>{{ ligne.variables.conges_debut|default:"-" }}</td>
+<td>{{ ligne.variables.absences_maladie|default:"-" }}</td>
+<td>{{ ligne.variables.absences_autres|default:"-" }}</td>
+<td>{{ ligne.variables.acomptes|default:"-" }}</td>
+<td>{{ ligne.variables.autres_infos|default:"-" }}</td>
+
+        <!-- Actif -->
         <td>
             {% if ligne.salarie.actif %}
                 <span class="badge bg-success">Actif</span>
@@ -118,12 +141,14 @@
             {% endif %}
         </td>
 
+        <!-- Actions -->
         <td class="text-end">
             <a href="{% url 'paie:partenaire_detail_salarie_mois' paie_mois.id ligne.salarie.id %}"
                class="btn btn-sm btn-outline-secondary">
                 Voir ce salarié
             </a>
         </td>
+
     </tr>
     {% endfor %}
 </tbody>
@@ -164,6 +189,32 @@ document.addEventListener("DOMContentLoaded", function () {
         searchInput.value = "";
     });
 
+});
+</script>
+
+<!-- Tri dynamique sur toutes les colonnes -->
+<script>
+document.querySelectorAll("table thead th").forEach((header, index) => {
+    header.style.cursor = "pointer";
+
+    header.addEventListener("click", () => {
+        const table = header.closest("table");
+        const tbody = table.querySelector("tbody");
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+
+        const isAsc = header.classList.toggle("asc");
+
+        rows.sort((a, b) => {
+            const aVal = (a.cells[index].innerText || "").toLowerCase();
+            const bVal = (b.cells[index].innerText || "").toLowerCase();
+
+            if (aVal < bVal) return isAsc ? -1 : 1;
+            if (aVal > bVal) return isAsc ? 1 : -1;
+            return 0;
+        });
+
+        rows.forEach(row => tbody.appendChild(row));
+    });
 });
 </script>
 

@@ -40,27 +40,31 @@
     </a>
 
     {% if salaries %}
-        <table class="table table-hover align-middle">
-            <thead>
-                <tr>
-                    <th>Nom</th>
-                    <th>Prénom</th>
-                    <th>Date de naissance</th>
-                    <th>N° Sécurité sociale</th>
-                    <th>Mutuelle</th>
-                    <th>Date d'entrée</th>
-                    <th>Date de sortie</th>
-                    <th>Salaire de base</th>
-                    <th>Actif</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Prénom</th>
+            <th>Date de naissance</th>
+            <th>Contrat</th>
+            <th>Temps de travail</th>
+            <th>Salaire de base</th>
+            <th>Actif</th>
+            <th class="text-end">Actions</th>
+        </tr>
+    </thead>
 
 <tbody>
     {% for s in salaries %}
     <tr>
-        <td>{{ s.nom }}</td>
-        <td>{{ s.prenom }}</td>
+
+        <!-- 🔥 NOM + BADGES (aligné à gauche) -->
+        <td class="text-start">
+            <strong>{{ s.nom }}</strong>
+        </td>
+
+        <!-- 🔥 PRÉNOM (aligné à gauche) -->
+        <td class="text-start">{{ s.prenom }}</td>
 
         <td>
             {% if s.date_naissance %}
@@ -70,28 +74,30 @@
             {% endif %}
         </td>
 
-        <td>{{ s.numero_securite_sociale|default:"-" }}</td>
+        <!-- Contrat -->
+<td>
+    {% if s.cdd %}
+        <span class="badge bg-warning text-dark">CDD</span>
+    {% endif %}
 
-        <!-- 🆕 Mutuelle -->
-        <td>{{ s.mutuelle|default:"-" }}</td>
+    {% if s.apprenti %}
+        <span class="badge bg-primary ms-1">Apprenti</span>
+    {% endif %}
 
+    {% if not s.cdd and not s.apprenti %}
+        <span class="badge bg-success">CDI</span>
+    {% endif %}
+</td>
+
+        <!-- Temps de travail -->
         <td>
-            {% if s.date_entree %}
-                {{ s.date_entree|date:"d/m/Y" }}
+            {% if s.temps_partiel %}
+                <span class="badge text-white" style="background-color:#6f42c1;">Temps partiel</span>
             {% else %}
-                -
+                <span class="badge bg-info text-dark">Temps plein</span>
             {% endif %}
         </td>
 
-        <td>
-            {% if s.date_sortie %}
-                {{ s.date_sortie|date:"d/m/Y" }}
-            {% else %}
-                -
-            {% endif %}
-        </td>
-
-        <!-- 🆕 Salaire de base -->
         <td>{{ s.salaire_base|default:"-" }}</td>
 
         <td>
@@ -103,6 +109,12 @@
         </td>
 
         <td class="text-end">
+
+            <a href="{% url 'paie:cabinet_fiche_salarie' s.id %}"
+               class="btn btn-sm btn-outline-secondary">
+                Visualiser
+            </a>
+
             <a href="{% url 'paie:cabinet_modifier_salarie' s.id %}"
                class="btn btn-sm btn-outline-primary">
                 Modifier
@@ -114,11 +126,12 @@
                 Supprimer
             </a>
         </td>
+
     </tr>
     {% endfor %}
 </tbody>
 
-        </table>
+</table>
 
     {% else %}
         <p class="text-muted">Aucun salarié enregistré pour ce client.</p>
@@ -127,73 +140,68 @@
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+// ===============================
+// 🔍 RECHERCHE EN TEMPS RÉEL
+// ===============================
+const searchInput = document.getElementById("searchInput");
+const table = document.querySelector("table");
+const tbody = table.querySelector("tbody");
 
-    const searchInput = document.getElementById("searchInput");
-    const filterActifsBtn = document.getElementById("filterActifs");
-    const filterTousBtn = document.getElementById("filterTous");
-    const rows = document.querySelectorAll("table tbody tr");
+searchInput.addEventListener("keyup", function () {
+    const filter = this.value.toLowerCase();
+    const rows = tbody.querySelectorAll("tr");
 
-    // --- FILTRE PAR NOM + PRÉNOM ---
-    searchInput.addEventListener("keyup", function () {
-        const query = this.value.toLowerCase();
-
-        rows.forEach(row => {
-            const nom = row.querySelector("td:nth-child(1)").innerText.toLowerCase();
-            const prenom = row.querySelector("td:nth-child(2)").innerText.toLowerCase();
-
-            const match = nom.includes(query) || prenom.includes(query);
-            row.style.display = match ? "" : "none";
-        });
+    rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(filter) ? "" : "none";
     });
-
-    // --- FILTRE ACTIFS ---
-    filterActifsBtn.addEventListener("click", function () {
-        rows.forEach(row => {
-            const actifCell = row.querySelector("td:nth-child(9) .badge");
-            const isActif = actifCell && actifCell.classList.contains("bg-success");
-
-            row.style.display = isActif ? "" : "none";
-        });
-
-        // On vide la recherche pour éviter les conflits
-        searchInput.value = "";
-    });
-
-    // --- FILTRE TOUS ---
-    filterTousBtn.addEventListener("click", function () {
-        rows.forEach(row => row.style.display = "");
-        searchInput.value = "";
-    });
-
 });
-</script>
 
-<!-- Tri dynamique sur toutes les colonnes -->
-<script>
-document.querySelectorAll("table thead th").forEach((header, index) => {
+
+// ===============================
+// 🔽 TRI DES COLONNES
+// ===============================
+document.querySelectorAll("th").forEach((header, index) => {
+    if (index === 7) return; // On ignore la colonne "Actions"
+
     header.style.cursor = "pointer";
 
     header.addEventListener("click", () => {
-        const table = header.closest("table");
-        const tbody = table.querySelector("tbody");
-        const rows = Array.from(tbody.querySelectorAll("tr"));
-
-        const isAsc = header.classList.toggle("asc");
-
-        rows.sort((a, b) => {
-            const aVal = (a.cells[index].innerText || "").toLowerCase();
-            const bVal = (b.cells[index].innerText || "").toLowerCase();
-
-            if (aVal < bVal) return isAsc ? -1 : 1;
-            if (aVal > bVal) return isAsc ? 1 : -1;
-            return 0;
-        });
-
-        rows.forEach(row => tbody.appendChild(row));
+        sortTable(index);
     });
 });
-</script>
 
+let sortDirection = true; // true = asc, false = desc
+
+function sortTable(colIndex) {
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+
+    rows.sort((a, b) => {
+        const cellA = a.children[colIndex].innerText.trim().toLowerCase();
+        const cellB = b.children[colIndex].innerText.trim().toLowerCase();
+
+        // Gestion des dates (jj/mm/aaaa)
+        const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
+        if (dateRegex.test(cellA) && dateRegex.test(cellB)) {
+            const [dA, mA, yA] = cellA.split("/").map(Number);
+            const [dB, mB, yB] = cellB.split("/").map(Number);
+            const dateA = new Date(yA, mA - 1, dA);
+            const dateB = new Date(yB, mB - 1, dB);
+            return sortDirection ? dateA - dateB : dateB - dateA;
+        }
+
+        // Tri texte classique
+        if (cellA < cellB) return sortDirection ? -1 : 1;
+        if (cellA > cellB) return sortDirection ? 1 : -1;
+        return 0;
+    });
+
+    // On inverse le sens du tri pour le prochain clic
+    sortDirection = !sortDirection;
+
+    // Réinjection dans le tableau
+    rows.forEach(row => tbody.appendChild(row));
+}
+</script>
 
 {% endblock %}

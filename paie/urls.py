@@ -16,6 +16,9 @@ urlpatterns = [
     path("client/mois/<int:mois_id>/salarie/<int:salarie_id>/", views_client.variables_salarie, name="client_variables_salarie"),
     path("client/salaries/", views_client.liste_salaries, name="client_salaries"),
     path("dashboard-client/", views_client.paie_client_dashboard, name="paie_client_dashboard"),
+    
+    path("client/salarie/<int:salarie_id>/", views_client.client_fiche_salarie, name="client_fiche_salarie"),
+    path("client/salarie/<int:salarie_id>/remunerations/", views_client.client_salarie_remunerations, name="client_salarie_remunerations"),
 
 
     # ----------------------------------------------------
@@ -52,6 +55,9 @@ urlpatterns = [
     path("cabinet/client/<int:client_id>/salaries/ajouter/", views_cabinet.creer_salarie, name="cabinet_creer_salarie"),
     path("cabinet/salarie/<int:salarie_id>/modifier/", views_cabinet.modifier_salarie, name="cabinet_modifier_salarie"),
     path("cabinet/salarie/<int:salarie_id>/supprimer/", views_cabinet.supprimer_salarie, name="cabinet_supprimer_salarie"),
+    path("cabinet/salarie/<int:salarie_id>/", views_cabinet.cabinet_fiche_salarie, name="cabinet_fiche_salarie"),
+    path("cabinet/salarie/<int:salarie_id>/remunerations/", views_cabinet.cabinet_salarie_remunerations, name="cabinet_salarie_remunerations"),
+
 
     # ----------------------------------------------------
     #   VARIABLES DE PAIE (gestion côté cabinet)
@@ -82,6 +88,8 @@ urlpatterns = [
     path("client/<int:client_id>/mois/", views_cabinet.liste_mois_client, name="liste_mois_client"),
     path("mes-mois/", views_client.client_liste_mois, name="client_liste_mois"),
     path("cabinet/client/<int:client_id>/mois/creer-suivant/", views_cabinet.creer_mois_suivant, name="cabinet_creer_mois_suivant"),
+    path("cabinet/mois/<int:paie_mois_id>/forcer-validation/", views_cabinet.forcer_validation_mois, name="forcer_validation_mois"),
+
 
 
 

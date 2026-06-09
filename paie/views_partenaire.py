@@ -12,14 +12,22 @@ from dossiers.notifications import (
 
 @login_required
 def partenaire_liste_clients(request):
-    # Tous les clients ayant le module paie actif
     clients = Client.objects.filter(module_paie=True).order_by("nom")
 
     for c in clients:
+
         # Dernier mois traité (BS + DSN faites)
         c.dernier_mois_traite = (
             PaieMois.objects
             .filter(client=c, bs_fait=True, dsn_faite=True)
+            .order_by("-annee", "-mois")
+            .first()
+        )
+
+        # 🔥 Dernier mois validé par le client mais PAS par le partenaire
+        c.mois_valide_client = (
+            PaieMois.objects
+            .filter(client=c, client_valide=True, bs_fait=False)
             .order_by("-annee", "-mois")
             .first()
         )
@@ -154,9 +162,11 @@ def partenaire_bs_fait(request, paie_mois_id):
     if request.method == "POST":
         paie_mois.bs_fait = True
         paie_mois.date_bs_fait = timezone.now()
-        paie_mois.save()
 
-        # 📧 Envoi email BS
+        # 🔥 Si le cabinet avait forcé le BS → on annule uniquement ce flag
+        paie_mois.bs_force = False
+
+        paie_mois.save()
         envoyer_notifications_bs(paie_mois)
 
     return redirect("paie:partenaire_variables_mois", paie_mois_id=paie_mois.id)
@@ -169,9 +179,11 @@ def partenaire_dsn_faite(request, paie_mois_id):
     if request.method == "POST":
         paie_mois.dsn_faite = True
         paie_mois.date_dsn_faite = timezone.now()
-        paie_mois.save()
 
-        # 📧 Envoi email DSN
+        # 🔥 Si le cabinet avait forcé la DSN → on annule uniquement ce flag
+        paie_mois.dsn_force = False
+
+        paie_mois.save()
         envoyer_notifications_dsn(paie_mois)
 
     return redirect("paie:partenaire_variables_mois", paie_mois_id=paie_mois.id)

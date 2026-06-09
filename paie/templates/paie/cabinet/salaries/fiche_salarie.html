@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Fiche salarié – {{ salarie.prenom }} {{ salarie.nom }}</h2>
+
+    <!-- 🔥 Bouton retour vers la liste des salariés -->
+    <a href="{% url 'paie:cabinet_liste_salaries_client' salarie.client.id %}"
+       class="btn btn-outline-secondary">
+        ← Retour aux salariés
+    </a>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+
+        <h5 class="mb-3">Informations générales</h5>
+
+        <div class="row g-3">
+
+            <div class="col-md-4">
+                <div class="p-3 border rounded">
+                    <strong>Nom :</strong> {{ salarie.nom }}
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="p-3 border rounded">
+                    <strong>Prénom :</strong> {{ salarie.prenom }}
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="p-3 border rounded">
+                    <strong>Date de naissance :</strong>
+                    {{ salarie.date_naissance|date:"d/m/Y"|default:"-" }}
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="p-3 border rounded">
+                    <strong>Numéro de sécurité sociale :</strong>
+                    {{ salarie.numero_securite_sociale|default:"-" }}
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="p-3 border rounded">
+                    <strong>Date d'entrée :</strong>
+                    {{ salarie.date_entree|date:"d/m/Y"|default:"-" }}
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="p-3 border rounded">
+                    <strong>Date de sortie :</strong>
+                    {{ salarie.date_sortie|date:"d/m/Y"|default:"-" }}
+                </div>
+            </div>
+
+            <!-- Contrat -->
+            <div class="col-md-4">
+                <div class="p-3 border rounded">
+                    <strong>Contrat :</strong><br>
+                    {% if salarie.cdd %}
+                        <span class="badge bg-warning text-dark">CDD</span>
+                    {% elif salarie.apprenti %}
+                        <span class="badge bg-primary">Apprenti</span>
+                    {% else %}
+                        <span class="badge bg-success">CDI</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Temps de travail -->
+            <div class="col-md-4">
+                <div class="p-3 border rounded">
+                    <strong>Temps de travail :</strong><br>
+                    {% if salarie.temps_partiel %}
+                        <span class="badge text-white" style="background-color:#6f42c1;">Temps partiel</span>
+                    {% else %}
+                        <span class="badge bg-info text-dark">Temps plein</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Salaire -->
+            <div class="col-md-4">
+                <div class="p-3 border rounded">
+                    <strong>Salaire de base :</strong>
+                    {{ salarie.salaire_base|default:"-" }}
+                </div>
+            </div>
+
+            <!-- Commentaire -->
+            <div class="col-md-12">
+                <div class="p-3 border rounded">
+                    <strong>Commentaire :</strong><br>
+                    <span class="text-muted">{{ salarie.commentaire|default:"Aucun" }}</span>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="text-end mt-4">
+            <a href="{% url 'paie:cabinet_salarie_remunerations' salarie.id %}"
+               class="btn btn-primary">
+                Rémunérations
+            </a>
+        </div>
+
+    </div>
+</div>
+
+</section>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Rémunérations – {{ salarie.prenom }} {{ salarie.nom }}</h2>
+
+    <!-- 🔥 Bouton retour vers la fiche du salarié -->
+    <a href="{% url 'paie:cabinet_fiche_salarie' salarie.id %}"
+       class="btn btn-outline-secondary">
+        ← Retour à la fiche salarié
+    </a>
+</div>
+
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th>Mois</th>
+            <th>Heures sup</th>
+            <th>Primes</th>
+            <th>Congés</th>
+            <th>Maladie</th>
+            <th>Autres absences</th>
+            <th>Acomptes</th>
+            <th>Autres infos</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for v in variables %}
+        <tr>
+            <td>{{ v.paie_mois.mois_nom_court }} {{ v.paie_mois.annee }}</td>
+            <td>{{ v.heures_sup_25|default:"-" }}</td>
+            <td>{{ v.primes|default:"-" }}</td>
+            <td>{{ v.conges_debut|default:"-" }}</td>
+            <td>{{ v.absences_maladie|default:"-" }}</td>
+            <td>{{ v.absences_autres|default:"-" }}</td>
+            <td>{{ v.acomptes|default:"-" }}</td>
+            <td>{{ v.autres_infos|default:"-" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</section>
+{% endblock %}
