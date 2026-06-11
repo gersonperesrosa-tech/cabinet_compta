@@ -109,10 +109,11 @@ EMAIL_HOST = "smtp-relay.brevo.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-EMAIL_HOST_USER = "a8f386001@smtp-brevo.com"
-EMAIL_HOST_PASSWORD = "jKY04nDNEPG2Xaf9"
+# ⚠️ À REMPLIR AVEC TES INFOS SENDINBLUE
+EMAIL_HOST_USER = os.environ.get("BREVO_SMTP_LOGIN")
+EMAIL_HOST_PASSWORD = os.environ.get("BREVO_SMTP_PASSWORD")
 
-DEFAULT_FROM_EMAIL = "gerson.peresdarosa@expertea-provence.fr"
+DEFAULT_FROM_EMAIL = os.environ.get("EMAIL_SENDER")
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
