@@ -4,7 +4,7 @@ import dj_database_url
 from dotenv import load_dotenv
 
 # Charger le fichier .env
-load_dotenv()
+load_dotenv(BASE_DIR / ".env")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
