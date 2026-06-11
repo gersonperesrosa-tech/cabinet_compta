@@ -25,6 +25,7 @@
             <th>Utilisateur</th>
             <th>Email</th>
             <th>Groupe</th>
+            <th>Client associé</th>   <!-- 🔥 Nouvelle colonne -->
             <th>Actif</th>
             <th>Dernière connexion</th>
             <th>Actions</th>
@@ -68,6 +69,15 @@
                 {% endfor %}
             </td>
 
+            <!-- 🔥 Client associé (affichage simple) -->
+            <td>
+                {% if u.client %}
+                    {{ u.client.numero }} – {{ u.client.nom }}
+                {% else %}
+                    <span class="text-muted">—</span>
+                {% endif %}
+            </td>
+
             <!-- Actif -->
             <td>
                 {% if u.is_active %}
@@ -98,7 +108,7 @@
 </table>
 
 </section>
-<!-- Tri dynamique sur toutes les colonnes -->
+
 <script>
 document.querySelectorAll("table thead th").forEach((header, index) => {
     header.style.cursor = "pointer";
