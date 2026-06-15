@@ -492,17 +492,10 @@
         <a class="nav-link text-white d-flex align-items-center gap-2
            {% if request.resolver_match.url_name == 'gestion_revisions' and request.GET.annee == latest_cloture_year|stringformat:"s" %}active{% endif %}"
            href="{% url 'gestion_revisions' %}?annee={{ latest_cloture_year }}">
-            <span class="sidebar-text">Révisions</span>
+            <span class="sidebar-text">Révisions, Plaquettes et Liasses</span>
         </a>
         {% endif %}
 
-        {% if latest_cloture_year %}
-<a class="nav-link text-white d-flex align-items-center gap-2
-   {% if request.resolver_match.url_name == 'gestion_plaquettes_liasse' and request.GET.annee == latest_cloture_year|stringformat:"s" %}active{% endif %}"
-   href="{% url 'gestion_plaquettes_liasse' %}?annee={{ latest_cloture_year }}">
-    <span class="sidebar-text">Plaquettes & Liasse</span>
-</a>
-        {% endif %}
 
 {% if latest_cloture_year %}
 <a class="nav-link text-white d-flex align-items-center gap-2

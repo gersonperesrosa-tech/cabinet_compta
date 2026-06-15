@@ -6,7 +6,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
 
     <h1 class="mb-4">
-        Gestion Révisions 
+        Gestion Révisions, Plaquettes et Liasses
         {% if selected_year %}
             ({{ selected_year }})
         {% else %}
@@ -43,6 +43,11 @@
             <th>Relance pièces</th>
             <th>Relevé bancaire</th>
             <th>Révision AD</th>
+
+            <!-- 🆕 NOUVELLES COLONNES -->
+            <th>Plaquette</th>
+            <th>Liasse</th>
+
             <th>Statut général</th>
         </tr>
     </thead>
@@ -85,6 +90,18 @@
             <td data-sort="{{ module.statut_revision_ad }}">
                 <span class="text-muted small">{{ module.revision_ad|truncate10 }}</span>
                 {{ module.statut_revision_ad|badge|safe }}
+            </td>
+
+            <!-- 🆕 Plaquette – Envoi -->
+            <td data-sort="{{ module.statut_plaquette_envoi_client }}">
+                <span class="text-muted small">{{ module.plaquette_envoi_client|truncate10 }}</span>
+                {{ module.statut_plaquette_envoi_client|badge|safe }}
+            </td>
+
+            <!-- 🆕 Liasse – Envoi -->
+            <td data-sort="{{ module.statut_liasse_envoi_client }}">
+                <span class="text-muted small">{{ module.liasse_envoi_client|truncate10 }}</span>
+                {{ module.statut_liasse_envoi_client|badge|safe }}
             </td>
 
             <!-- Statut général -->

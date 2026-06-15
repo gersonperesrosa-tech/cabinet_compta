@@ -179,9 +179,22 @@ def revision_detail(request, module_id):
         module.revision_ad = request.POST.get("revision_ad") or ""
         module.statut_revision_ad = request.POST.get("statut_revision_ad") or ""
 
+        # -------------------------------
+        # NOUVEAUX CHAMPS PLAQUETTE/LIASSE
+        # -------------------------------
+        module.plaquette_envoi_client = request.POST.get("plaquette_envoi_client") or ""
+        module.statut_plaquette_envoi_client = request.POST.get("statut_plaquette_envoi_client") or ""
+
+        module.liasse_envoi_client = request.POST.get("liasse_envoi_client") or ""
+        module.statut_liasse_envoi_client = request.POST.get("statut_liasse_envoi_client") or ""
+
+        # -------------------------------
+        # STATUT GÉNÉRAL
+        # -------------------------------
         module.statut_general = request.POST.get("statut_general") or ""
 
         module.save()
+
         annee = module.cloture.annee
         return redirect(f"/cloture/revisions/?annee={annee}")
 
@@ -189,7 +202,6 @@ def revision_detail(request, module_id):
         "module": module,
         "statuts": ClotureStatus.choices,
     })
-
 
 @login_required
 def gestion_revisions(request):

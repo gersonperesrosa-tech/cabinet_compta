@@ -41,43 +41,29 @@ class ClotureModuleBase(models.Model):
 
 
     # -------------------------
-    # Module Révision
+    # Module Révision + Plaquette et Liasse
     # -------------------------
 
 
 class ModuleRevision(ClotureModuleBase):
     pre_revision = models.TextField(blank=True, null=True)
-    statut_pre_revision = models.CharField(
-        max_length=50,
-        choices=ClotureStatus.choices,
-        blank=True,
-        null=True
-    )
+    statut_pre_revision = models.CharField(max_length=50, choices=ClotureStatus.choices, blank=True, null=True)
 
     relance_pieces = models.TextField(blank=True, null=True)
-    statut_relance_pieces = models.CharField(
-        max_length=50,
-        choices=ClotureStatus.choices,
-        blank=True,
-        null=True
-    )
+    statut_relance_pieces = models.CharField(max_length=50, choices=ClotureStatus.choices, blank=True, null=True)
 
     releve_bancaire = models.TextField(blank=True, null=True)
-    statut_releve_bancaire = models.CharField(
-        max_length=50,
-        choices=ClotureStatus.choices,
-        blank=True,
-        null=True
-    )
+    statut_releve_bancaire = models.CharField(max_length=50, choices=ClotureStatus.choices, blank=True, null=True)
 
     revision_ad = models.TextField(blank=True, null=True)
-    statut_revision_ad = models.CharField(
-        max_length=50,
-        choices=ClotureStatus.choices,
-        blank=True,
-        null=True
-    )
+    statut_revision_ad = models.CharField(max_length=50, choices=ClotureStatus.choices, blank=True, null=True)
 
+    # 🆕 AJOUTER CECI
+    plaquette_envoi_client = models.CharField(max_length=255, blank=True, null=True)
+    statut_plaquette_envoi_client = models.CharField(max_length=50, choices=ClotureStatus.choices, blank=True, null=True)
+
+    liasse_envoi_client = models.CharField(max_length=255, blank=True, null=True)
+    statut_liasse_envoi_client = models.CharField(max_length=50, choices=ClotureStatus.choices, blank=True, null=True)
 
 
 # -------------------------
@@ -180,38 +166,35 @@ class ModuleDeclarations(models.Model):
 
     # VA-1330 CVAE
     va1330_fait = models.CharField(max_length=255, blank=True, null=True)
-    statut_va1330_fait = models.CharField(max_length=50, choices=ClotureStatus.choices, default="non_commence")
+    statut_va1330_fait = models.CharField(max_length=50, choices=ClotureStatus.choices, blank=True, null=True, default="non_commence")
 
     va1330_envoi = models.CharField(max_length=255, blank=True, null=True)
-    statut_va1330_envoi = models.CharField(max_length=50, choices=ClotureStatus.choices, default="non_commence")
+    statut_va1330_envoi = models.CharField(max_length=50, choices=ClotureStatus.choices, blank=True, null=True, default="non_commence")
 
     # CVAE 1329DEF
     cvae1329_fait = models.CharField(max_length=255, blank=True, null=True)
-    statut_cvae1329_fait = models.CharField(max_length=50, choices=ClotureStatus.choices, default="non_commence")
+    statut_cvae1329_fait = models.CharField(max_length=50, choices=ClotureStatus.choices, blank=True, null=True, default="non_commence")
 
     cvae1329_envoi = models.CharField(max_length=255, blank=True, null=True)
-    statut_cvae1329_envoi = models.CharField(max_length=50, choices=ClotureStatus.choices, default="non_commence")
+    statut_cvae1329_envoi = models.CharField(max_length=50, choices=ClotureStatus.choices, blank=True, null=True, default="non_commence")
 
     # DECLOYER
     decloyer_fait = models.CharField(max_length=255, blank=True, null=True)
-    statut_decloyer_fait = models.CharField(max_length=50, choices=ClotureStatus.choices, default="non_commence")
+    statut_decloyer_fait = models.CharField(max_length=50, choices=ClotureStatus.choices, blank=True, null=True, default="non_commence")
 
     # DAS2
     das2_fait = models.CharField(max_length=255, blank=True, null=True)
-    statut_das2_fait = models.CharField(max_length=50, choices=ClotureStatus.choices, default="non_commence")
+    statut_das2_fait = models.CharField(max_length=50, choices=ClotureStatus.choices, blank=True, null=True, default="non_commence")
 
     # DRI
     dri_fait = models.CharField(max_length=255, blank=True, null=True)
-    statut_dri_fait = models.CharField(max_length=50, choices=ClotureStatus.choices, default="non_commence")
+    statut_dri_fait = models.CharField(max_length=50, choices=ClotureStatus.choices, blank=True, null=True, default="non_commence")
 
     dri_envoi = models.CharField(max_length=255, blank=True, null=True)
-    statut_dri_envoi = models.CharField(max_length=50, choices=ClotureStatus.choices, default="non_commence")
+    statut_dri_envoi = models.CharField(max_length=50, choices=ClotureStatus.choices, blank=True, null=True, default="non_commence")
 
     # Statut général
-    statut_general = models.CharField(max_length=50, choices=ClotureStatus.choices, default="non_commence")
-
-    def __str__(self):
-        return f"Déclarations – {self.client.nom} ({self.cloture.annee})"
+    statut_general = models.CharField(max_length=50, choices=ClotureStatus.choices, blank=True, null=True, default="non_commence")
 
 
 # -------------------------

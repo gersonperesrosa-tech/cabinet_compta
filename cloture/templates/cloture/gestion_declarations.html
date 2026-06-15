@@ -43,13 +43,10 @@
             <th>N°</th>
             <th>Client</th>
             <th>VA1330 fait</th>
-            <th>VA1330 envoi</th>
             <th>1329DEF fait</th>
-            <th>1329DEF envoi</th>
             <th>DECLOYER</th>
             <th>DAS2</th>
             <th>DRI fait</th>
-            <th>DRI envoi</th>
             <th>Statut général</th>
         </tr>
     </thead>
@@ -75,19 +72,9 @@
                 {{ module.statut_va1330_fait|badge|safe }}
             </td>
 
-            <!-- VA1330 envoi -->
-            <td data-sort="{{ module.statut_va1330_envoi }}">
-                {{ module.statut_va1330_envoi|badge|safe }}
-            </td>
-
             <!-- 1329DEF fait -->
             <td data-sort="{{ module.statut_cvae1329_fait }}">
                 {{ module.statut_cvae1329_fait|badge|safe }}
-            </td>
-
-            <!-- 1329DEF envoi -->
-            <td data-sort="{{ module.statut_cvae1329_envoi }}">
-                {{ module.statut_cvae1329_envoi|badge|safe }}
             </td>
 
             <!-- DECLOYER -->
@@ -103,11 +90,6 @@
             <!-- DRI fait -->
             <td data-sort="{{ module.statut_dri_fait }}">
                 {{ module.statut_dri_fait|badge|safe }}
-            </td>
-
-            <!-- DRI envoi -->
-            <td data-sort="{{ module.statut_dri_envoi }}">
-                {{ module.statut_dri_envoi|badge|safe }}
             </td>
 
             <!-- Statut général -->
