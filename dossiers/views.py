@@ -3030,9 +3030,9 @@ def user_space(request):
     except (TVAAnnee.DoesNotExist, TVAModule.DoesNotExist):
         pass
 
-    # ----------------------------------------------------
-    # 4) KPIs TVA (STATUT DU MOIS PRÉCÉDENT STRICT)
-    # ----------------------------------------------------
+# ----------------------------------------------------
+# 4) KPIs TVA (STATUT DU MOIS PRÉCÉDENT STRICT)
+# ----------------------------------------------------
 
     # Déterminer le mois TVA à analyser
     if today.month == 1:
@@ -3060,12 +3060,12 @@ def user_space(request):
     mois_label = mois_map[tva_month]
     champ_statut = f"statut_{mois_label}"
 
-    # Initialisation
-    tva_acceptes = 0
+    # Initialisation KPI
+    tva_blanc = 0
+    tva_orange = 0
+    tva_jaune = 0
     tva_teletransmis = 0
-    tva_a_envoyer = 0
-    tva_sans_pastille = 0
-    tva_rejetes = 0
+    tva_acceptes = 0   # VERT_FONCE
 
     try:
         tva_annee = TVAAnnee.objects.get(annee=tva_year)
@@ -3075,36 +3075,51 @@ def user_space(request):
             annee=tva_annee,
             module=module_ca3m
         )
-
+    
         declarations = TVADeclaration.objects.filter(
             tva_client_annee__in=clients_ca3m_qs
         )
 
+        # --- Comptage des statuts ---
         for decl in declarations:
-            statut = getattr(decl, champ_statut, "NONE") or "NONE"
+            statut = getattr(decl, champ_statut, "BLANC") or "BLANC"
 
-            if statut == "VERT_FONCE":
-                tva_acceptes += 1
+            if statut == "BLANC":
+                tva_blanc += 1
+
+            elif statut == "ORANGE":
+                tva_orange += 1
+
+            elif statut == "JAUNE":
+                tva_jaune += 1
+
             elif statut == "VERT_CLAIR":
                 tva_teletransmis += 1
-            elif statut == "JAUNE":
-                tva_a_envoyer += 1
-            elif statut == "BLANC":
-                tva_rejetes += 1
-            else:
-                tva_sans_pastille += 1
 
+            elif statut == "VERT_FONCE":
+                tva_acceptes += 1
+
+            elif statut == "NA":
+                # NA ignoré volontairement
+                pass
+
+            else:
+                # fallback sécurité
+                tva_blanc += 1
+
+        # --- Pourcentages ---
         def pct(val):
             return round((val / total_ca3m) * 100, 1) if total_ca3m > 0 else 0
 
-        pct_acceptes = pct(tva_acceptes)
+        pct_blanc = pct(tva_blanc)
+        pct_orange = pct(tva_orange)
+        pct_jaune = pct(tva_jaune)
         pct_teletransmis = pct(tva_teletransmis)
-        pct_a_envoyer = pct(tva_a_envoyer)
-        pct_sans_pastille = pct(tva_sans_pastille)
-        pct_rejetes = pct(tva_rejetes)
+        pct_acceptes = pct(tva_acceptes)
 
     except (TVAAnnee.DoesNotExist, TVAModule.DoesNotExist):
-        pct_acceptes = pct_teletransmis = pct_a_envoyer = pct_sans_pastille = pct_rejetes = 0
+        tva_blanc = tva_orange = tva_jaune = tva_teletransmis = tva_acceptes = 0
+        pct_blanc = pct_orange = pct_jaune = pct_teletransmis = pct_acceptes = 0
 
     # ----------------------------------------------------
     # 5) NOTIFICATIONS PAIE
@@ -3141,17 +3156,18 @@ def user_space(request):
 
         # TVA
         "tva_month_label": mois_label.capitalize(),
-        "tva_acceptes": tva_acceptes,
-        "tva_teletransmis": tva_teletransmis,
-        "tva_a_envoyer": tva_a_envoyer,
-        "tva_sans_pastille": tva_sans_pastille,
-        "tva_rejetes": tva_rejetes,
 
-        "pct_acceptes": pct_acceptes,
+        "tva_blanc": tva_blanc,
+        "tva_orange": tva_orange,
+        "tva_jaune": tva_jaune,
+        "tva_teletransmis": tva_teletransmis,
+        "tva_acceptes": tva_acceptes,
+
+        "pct_blanc": pct_blanc,
+        "pct_orange": pct_orange,
+        "pct_jaune": pct_jaune,
         "pct_teletransmis": pct_teletransmis,
-        "pct_a_envoyer": pct_a_envoyer,
-        "pct_sans_pastille": pct_sans_pastille,
-        "pct_rejetes": pct_rejetes,
+        "pct_acceptes": pct_acceptes,
 
         # Notifications paie
         "notifications_paie": notifications_paie,

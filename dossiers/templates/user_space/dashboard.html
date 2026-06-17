@@ -120,56 +120,86 @@
 
 <!-- CADRANT TVA -->
 <div class="card shadow-sm mb-4">
-<div class="card-header d-flex align-items-center"
-     style="background-color:white; border-bottom:3px solid #0dcaf0; font-size:1.30rem;">
-    <i class="bi bi-receipt text-info me-2"></i>
-    TVA – CA3 Mensuelle
-</div>
+    <div class="card-header d-flex align-items-center"
+         style="background-color:white; border-bottom:3px solid #0dcaf0; font-size:1.30rem;">
+        <i class="bi bi-receipt text-info me-2"></i>
+        TVA – CA3 Mensuelle
+    </div>
 
     <div class="card-body">
 
         <!-- KPIs -->
-        <div class="row text-center mb-3">
+        <div class="row text-center mb-4">
+
+            <!-- Total clients -->
             <div class="col-2">
-                <div class="fw-bold h5 mb-0">{{ total_ca3m }}</div>
+                <div class="fw-bold h4 mb-0">{{ total_ca3m }}</div>
                 <div class="text-muted small">Clients</div>
             </div>
+
+              <!-- Accepté (VERT_FONCE) -->
             <div class="col-2">
-                <div class="fw-bold h5 mb-0 text-success">{{ tva_acceptes }}</div>
-                <div class="text-muted small">Accepté</div>
+                <div class="fw-bold h4 mb-0" style="color:#2e7d32;">{{ tva_acceptes }}</div>
+                <div class="small">
+                    <span class="badge-mini" style="background:#2e7d32;"></span>Accepté
+                </div>
             </div>
+
+            <!-- Télétransmis (VERT_CLAIR) -->
             <div class="col-2">
-                <div class="fw-bold h5 mb-0 text-primary">{{ tva_teletransmis }}</div>
-                <div class="text-muted small">Télétransmis</div>
+                <div class="fw-bold h4 mb-0" style="color:#c8f7c5;">{{ tva_teletransmis }}</div>
+                <div class="small">
+                    <span class="badge-mini" style="background:#c8f7c5;"></span>Télétransmis
+                </div>
             </div>
+
+            <!-- Envoyé client (JAUNE) -->
             <div class="col-2">
-                <div class="fw-bold h5 mb-0 text-warning">{{ tva_a_envoyer }}</div>
-                <div class="text-muted small">À envoyer</div>
+                <div class="fw-bold h4 mb-0" style="color:#fff3cd;">{{ tva_jaune }}</div>
+                <div class="small">
+                    <span class="badge-mini" style="background:#fff3cd;"></span>Envoyé client
+                </div>
             </div>
+
+            <!-- À envoyer client (ORANGE) -->
             <div class="col-2">
-                <div class="fw-bold h5 mb-0 text-muted">{{ tva_sans_pastille }}</div>
-                <div class="text-muted small">Non commencé</div>
+                <div class="fw-bold h4 mb-0" style="color:#ffcc80;">{{ tva_orange }}</div>
+                <div class="small">
+                    <span class="badge-mini" style="background:#ffcc80;"></span>À envoyer client
+                </div>
             </div>
+
+          <!-- Non commencé (BLANC) -->
             <div class="col-2">
-                <div class="fw-bold h5 mb-0 text-danger">{{ tva_rejetes }}</div>
-                <div class="text-muted small">Rejeté</div>
+                <div class="fw-bold h4 mb-0" style="color:#bdbdbd;">{{ tva_blanc }}</div>
+                <div class="small">
+                    <span class="badge-mini" style="background:#ffffff; border:0;"></span>Non commencé
+                </div>
             </div>
+
+
+
+
+
         </div>
 
-        <!-- Donut -->
+        <!-- Donut + KPI principal -->
         <div class="row align-items-center">
             <div class="col-md-6 text-center">
-                <canvas id="tvaDonut" style="max-width:150px; max-height:150px;"></canvas>
+                <canvas id="tvaDonut" style="max-width:180px; max-height:180px;"></canvas>
             </div>
             <div class="col-md-6 text-center">
-                <div class="fw-bold display-6">{{ pct_acceptes }}%</div>
+                <div class="fw-bold display-6";">{{ pct_acceptes }}%</div>
                 <div class="text-muted small">Accepté</div>
             </div>
         </div>
 
     </div>
 </div>
-</div>
+
+
+    </div>
+
 
 
             <!-- ========================= -->
@@ -414,23 +444,29 @@ document.addEventListener("DOMContentLoaded", function () {
     new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Accepté', 'Télétransmis', 'À envoyer', 'Sans pastille', 'Rejeté'],
+            labels: [
+                'Non commencé',
+                'À envoyer client',
+                'Envoyé client',
+                'Télétransmis',
+                'Accepté'
+            ],
             datasets: [{
                 data: [
-                    {{ tva_acceptes }},
+                    {{ tva_blanc }},
+                    {{ tva_orange }},
+                    {{ tva_jaune }},
                     {{ tva_teletransmis }},
-                    {{ tva_a_envoyer }},
-                    {{ tva_sans_pastille }},
-                    {{ tva_rejetes }}
+                    {{ tva_acceptes }}
                 ],
                 backgroundColor: [
-                    '#198754',  // vert foncé
-                    '#0d6efd',  // bleu
-                    '#ffc107',  // jaune
-                    '#ced4da',  // gris
-                    '#dc3545'   // rouge
+                    '#e9ecef',  // Non commencé
+                    '#ffcc80',  // À envoyer client
+                    '#fff3cd',  // Envoyé client
+                    '#c8f7c5',  // Télétransmis
+                    '#2e7d32'   // Accepté
                 ],
-                borderWidth: 1
+                borderWidth: 2
             }]
         },
         options: {
