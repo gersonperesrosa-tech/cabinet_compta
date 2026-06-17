@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load custom_tags %}
+{% load dossiers_tags %}
 
 {% block content %}
 
@@ -26,7 +27,7 @@
                 <td><strong>TVA N‑1</strong></td>
                 <td>
                     <input type="text" name="tva_n_1" class="form-control"
-                           value="{{ declaration.tva_n_1|default_if_none:'' }}">
+                           value="{{ declaration.tva_n_1|format_tva|default_if_none:'' }}">
                     <div class="form-text">
                         Montant calculé automatiquement : {{ n_1_calcule|floatformat:2 }} €
                     </div>
@@ -39,7 +40,7 @@
                 <td><strong>Acompte 1</strong></td>
                 <td>
                     <input type="text" name="tva_acompte_1" class="form-control"
-                           value="{{ declaration.tva_acompte_1|default_if_none:'' }}">
+                           value="{{ declaration.tva_acompte_1|format_tva|default_if_none:'' }}">
                 </td>
                 <td>
                     <select name="statut_acompte_1" class="form-select">
@@ -58,7 +59,7 @@
                 <td><strong>Acompte 2</strong></td>
                 <td>
                     <input type="text" name="tva_acompte_2" class="form-control"
-                           value="{{ declaration.tva_acompte_2|default_if_none:'' }}">
+                           value="{{ declaration.tva_acompte_2|format_tva|default_if_none:'' }}">
                 </td>
                 <td>
                     <select name="statut_acompte_2" class="form-select">
@@ -77,7 +78,7 @@
                 <td><strong>Solde en N+1</strong></td>
                 <td>
                     <input type="text" name="tva_solde" class="form-control"
-                           value="{{ declaration.tva_solde|default_if_none:'' }}">
+                           value="{{ declaration.tva_solde|format_tva|default_if_none:'' }}">
                 </td>
                 <td>
                     <select name="statut_solde" class="form-select">
@@ -123,8 +124,6 @@
         </a>
 
         <div class="d-flex gap-2">
-
-
 
             <!-- Bouton droite : Enregistrer -->
             <button type="submit" class="btn btn-primary">

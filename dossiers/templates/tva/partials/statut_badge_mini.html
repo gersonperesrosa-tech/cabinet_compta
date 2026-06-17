@@ -1,0 +1,79 @@
+{% comment %}
+Pastille TVA — version mini (ronde, couleur uniquement)
+Statuts :
+BLANC, ORANGE, JAUNE, VERT_CLAIR, VERT_FONCE, ROUGE, NA
+{% endcomment %}
+
+{% if statut == "BLANC" %}
+    <span style="
+        display:inline-block;
+        width:14px;
+        height:14px;
+        border-radius:50%;
+        background:#ffffff;
+        border:0px solid #ccc;
+    "></span>
+
+{% elif statut == "ORANGE" %}
+    <span style="
+        display:inline-block;
+        width:14px;
+        height:14px;
+        border-radius:50%;
+        background:#ffcc80;
+    "></span>
+
+{% elif statut == "JAUNE" %}
+    <span style="
+        display:inline-block;
+        width:14px;
+        height:14px;
+        border-radius:50%;
+        background:#fff3cd;
+    "></span>
+
+{% elif statut == "VERT_CLAIR" %}
+    <span style="
+        display:inline-block;
+        width:14px;
+        height:14px;
+        border-radius:50%;
+        background:#c8f7c5;
+    "></span>
+
+{% elif statut == "VERT_FONCE" %}
+    <span style="
+        display:inline-block;
+        width:14px;
+        height:14px;
+        border-radius:50%;
+        background:#2e7d32;
+    "></span>
+
+{% elif statut == "ROUGE" %}
+    <span style="
+        display:inline-block;
+        width:14px;
+        height:14px;
+        border-radius:50%;
+        background:#ff6b6b;
+    "></span>
+
+{% elif statut == "NA" %}
+    <span style="
+        display:inline-block;
+        width:14px;
+        height:14px;
+        border-radius:50%;
+        background:#e0e0e0;
+    "></span>
+
+{% else %}
+    <span style="
+        display:inline-block;
+        width:14px;
+        height:14px;
+        border-radius:50%;
+        background:#bdbdbd;
+    "></span>
+{% endif %}

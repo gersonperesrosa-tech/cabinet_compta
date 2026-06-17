@@ -9,7 +9,24 @@ from django.http import HttpResponse
 
 from .models import Client, SuiviComptable, TVA, IS
 from .forms import ClientForm, SuiviComptableForm, TVAForm, ISForm, ClotureClientForm
-from .models import TVAAnnee, TVAModule, TVAClientAnnee, TVADeclaration, TVSDeclaration, TVSVehicule, DESDEBDeclaration, DividendesDeclaration, DPDeclaration, NoteTag, NoteCategorie, ClientNote, KanbanColumn, KanbanCard, KanbanTag, KanbanCardTag, ClotureAnnee, ClotureClient, NotificationPaie, NotificationPaieLu
+from .models import TVAAnnee, TVAModule, TVAClientAnnee, TVADeclaration, CVAEDeclaration, TVSDeclaration, TVSVehicule, DESDEBDeclaration, DividendesDeclaration, DPDeclaration, NoteTag, NoteCategorie, ClientNote, KanbanColumn, KanbanCard, KanbanTag, KanbanCardTag, ClotureAnnee, ClotureClient, NotificationPaie, NotificationPaieLu
+
+
+# Liste des statuts TVA autorisés
+TVA_ALLOWED_STATUTS = [
+    "BLANC",
+    "ORANGE",
+    "JAUNE",
+    "VERT_CLAIR",
+    "VERT_FONCE",
+    "ROUGE",
+    "NA",
+]
+
+def clean_statut(value):
+    if value in TVA_ALLOWED_STATUTS:
+        return value
+    return "BLANC"   # valeur par défaut propre
 
 
 def home(request):
@@ -44,11 +61,9 @@ def liste_clients(request):
 
     # --- Sécurité d'accès ---
     if request.user.is_superuser or request.user.is_staff:
-        # Staff / superuser → accès total
         clients = Client.objects.filter(archive=False)
 
     elif Client.objects.filter(user=request.user).exists():
-        # Client simple → accès uniquement à son client
         clients = Client.objects.filter(user=request.user, archive=False)
 
     else:
@@ -72,6 +87,24 @@ def liste_clients(request):
             to_attr="fiscal_actuel"
         )
     ).order_by(Lower("nom"))
+
+
+    # 🟩 AJOUT : régime TVA dynamique (CA3M / CA3T / CA12)
+    mapping_regime = {
+        "CA3M": "CA3M",
+        "CA3T": "CA3T",
+        "CA12": "CA12",
+        "FR": "FRANCHISE",
+        "EXO": "EXO",
+    }
+
+
+    for client in clients:
+        if hasattr(client, "tva_actuelle") and client.tva_actuelle:
+            module = client.tva_actuelle[0].module  # le module TVA de l'année en cours
+            client.regime_tva_auto = module.type  # ex : "CA3M"
+        else:
+            client.regime_tva_auto = "—"
 
     form = ClientForm()
 
@@ -922,10 +955,36 @@ def liste_suivi_comptable(request):
     annees = {}
     current_year = date.today().year
 
+    # 🟩 MAPPING pour affichage lisible
+    mapping_regime = {
+        "CA3M": "Mensuel",
+        "CA3T": "Trimestriel",
+        "CA12": "Annuel",
+        "FR": "Franchise",
+        "EXO": "Exo",
+    }
+
     for client in clients:
+
+        # 🔥 RÉGIME TVA DYNAMIQUE (comme dans la fiche client)
+        module_tva = (
+            TVAClientAnnee.objects
+            .filter(client=client)
+            .select_related("module")
+            .order_by("-annee")
+            .first()
+        )
+
+        if module_tva:
+            client.regime_tva_auto = mapping_regime.get(module_tva.module.type, "—")
+        else:
+            client.regime_tva_auto = "—"
+
+        # 🔥 Suivi comptable
         suivi = SuiviComptable.objects.filter(client=client).order_by("-annee").first()
         suivis[client.id] = suivi
 
+        # 🔥 Année affichée
         if suivi and suivi.annee:
             annees[client.id] = suivi.annee
         else:
@@ -947,6 +1006,29 @@ def suivi_comptable(request, client_id, annee):
     client = get_object_or_404(Client, id=client_id)
 
     annees_disponibles = list(range(2020, 2031))
+
+    # 🔥 RÉGIME TVA DYNAMIQUE (comme fiche client + liste suivi)
+    mapping_regime = {
+        "CA3M": "Mensuel",
+        "CA3T": "Trimestriel",
+        "CA12": "Annuel",
+        "FR": "Franchise",
+        "EXO": "Exo",
+
+    }
+
+    module_tva = (
+        TVAClientAnnee.objects
+        .filter(client=client)
+        .select_related("module")
+        .order_by("-annee")
+        .first()
+    )
+
+    if module_tva:
+        client.regime_tva_auto = mapping_regime.get(module_tva.module.type, "—")
+    else:
+        client.regime_tva_auto = "—"
 
     # Récupération ou création automatique
     suivi = SuiviComptable.objects.filter(client=client, annee=annee).first()
@@ -1308,19 +1390,19 @@ from .models import TVAClientAnnee, TVADeclaration
 def tva_saisie_ca3m(request, tva_client_annee_id):
     tca = get_object_or_404(TVAClientAnnee, id=tva_client_annee_id)
 
-    # On récupère ou crée la déclaration TVA
     declaration, created = TVADeclaration.objects.get_or_create(
         tva_client_annee=tca
     )
 
+    def to_decimal(value):
+        if value in ["", None]:
+            return None
+        try:
+            return Decimal(value.replace(",", "."))
+        except:
+            return None
+
     if request.method == "POST":
-        def to_decimal(value):
-            if value in ["", None]:
-                return None
-            try:
-                return Decimal(value.replace(",", "."))
-            except:
-                return None
 
         # MONTANTS
         declaration.tva_janvier = to_decimal(request.POST.get("tva_janvier"))
@@ -1336,25 +1418,22 @@ def tva_saisie_ca3m(request, tva_client_annee_id):
         declaration.tva_novembre = to_decimal(request.POST.get("tva_novembre"))
         declaration.tva_decembre = to_decimal(request.POST.get("tva_decembre"))
 
-        # STATUTS
-        declaration.statut_janvier = request.POST.get("statut_janvier")
-        declaration.statut_fevrier = request.POST.get("statut_fevrier")
-        declaration.statut_mars = request.POST.get("statut_mars")
-        declaration.statut_avril = request.POST.get("statut_avril")
-        declaration.statut_mai = request.POST.get("statut_mai")
-        declaration.statut_juin = request.POST.get("statut_juin")
-        declaration.statut_juillet = request.POST.get("statut_juillet")
-        declaration.statut_aout = request.POST.get("statut_aout")
-        declaration.statut_septembre = request.POST.get("statut_septembre")
-        declaration.statut_octobre = request.POST.get("statut_octobre")
-        declaration.statut_novembre = request.POST.get("statut_novembre")
-        declaration.statut_decembre = request.POST.get("statut_decembre")
+        # STATUTS (corrigés)
+        declaration.statut_janvier = clean_statut(request.POST.get("statut_janvier"))
+        declaration.statut_fevrier = clean_statut(request.POST.get("statut_fevrier"))
+        declaration.statut_mars = clean_statut(request.POST.get("statut_mars"))
+        declaration.statut_avril = clean_statut(request.POST.get("statut_avril"))
+        declaration.statut_mai = clean_statut(request.POST.get("statut_mai"))
+        declaration.statut_juin = clean_statut(request.POST.get("statut_juin"))
+        declaration.statut_juillet = clean_statut(request.POST.get("statut_juillet"))
+        declaration.statut_aout = clean_statut(request.POST.get("statut_aout"))
+        declaration.statut_septembre = clean_statut(request.POST.get("statut_septembre"))
+        declaration.statut_octobre = clean_statut(request.POST.get("statut_octobre"))
+        declaration.statut_novembre = clean_statut(request.POST.get("statut_novembre"))
+        declaration.statut_decembre = clean_statut(request.POST.get("statut_decembre"))
 
         declaration.save()
-
         messages.success(request, "Déclaration TVA mensuelle enregistrée.")
-
-        # 🔥 REDIRECTION VERS LA GESTION CA3M
         return redirect("tva_gestion_ca3m")
 
     return render(request, "tva/tva_saisie_ca3m.html", {
@@ -1366,20 +1445,21 @@ from django.contrib.auth.decorators import login_required
 from decimal import Decimal
 
 @login_required
+@login_required
 def tva_saisie_ca3t(request, tva_client_annee_id):
     tca = get_object_or_404(TVAClientAnnee, id=tva_client_annee_id)
     declaration, created = TVADeclaration.objects.get_or_create(tva_client_annee=tca)
 
-    if request.method == "POST":
+    def clean_decimal(value):
+        if not value:
+            return None
+        value = value.replace(",", ".")
+        try:
+            return Decimal(value)
+        except:
+            return None
 
-        def clean_decimal(value):
-            if not value:
-                return None
-            value = value.replace(",", ".")
-            try:
-                return Decimal(value)
-            except:
-                return None
+    if request.method == "POST":
 
         # Montants trimestriels
         declaration.ca3t_t1 = clean_decimal(request.POST.get("ca3t_t1"))
@@ -1387,16 +1467,14 @@ def tva_saisie_ca3t(request, tva_client_annee_id):
         declaration.ca3t_t3 = clean_decimal(request.POST.get("ca3t_t3"))
         declaration.ca3t_t4 = clean_decimal(request.POST.get("ca3t_t4"))
 
-        # Statuts trimestriels
-        declaration.statut_t1 = request.POST.get("statut_t1") or "NONE"
-        declaration.statut_t2 = request.POST.get("statut_t2") or "NONE"
-        declaration.statut_t3 = request.POST.get("statut_t3") or "NONE"
-        declaration.statut_t4 = request.POST.get("statut_t4") or "NONE"
+        # Statuts trimestriels (corrigés)
+        declaration.statut_t1 = clean_statut(request.POST.get("statut_t1"))
+        declaration.statut_t2 = clean_statut(request.POST.get("statut_t2"))
+        declaration.statut_t3 = clean_statut(request.POST.get("statut_t3"))
+        declaration.statut_t4 = clean_statut(request.POST.get("statut_t4"))
 
         declaration.save()
         messages.success(request, "Déclaration trimestrielle enregistrée.")
-
-        # 🔥 Redirection vers la gestion CA3T
         return redirect("tva_gestion_ca3t")
 
     return render(request, "tva/tva_saisie_ca3t.html", {
@@ -1455,14 +1533,13 @@ def tva_ca3t_save(request, client_id, annee):
     declaration.ca3t_t3 = clean_decimal(request.POST.get("montant_t3"))
     declaration.ca3t_t4 = clean_decimal(request.POST.get("montant_t4"))
 
-    # Statuts
-    declaration.statut_t1 = request.POST.get("statut_t1") or "NONE"
-    declaration.statut_t2 = request.POST.get("statut_t2") or "NONE"
-    declaration.statut_t3 = request.POST.get("statut_t3") or "NONE"
-    declaration.statut_t4 = request.POST.get("statut_t4") or "NONE"
+    # Statuts (corrigés)
+    declaration.statut_t1 = clean_statut(request.POST.get("statut_t1"))
+    declaration.statut_t2 = clean_statut(request.POST.get("statut_t2"))
+    declaration.statut_t3 = clean_statut(request.POST.get("statut_t3"))
+    declaration.statut_t4 = clean_statut(request.POST.get("statut_t4"))
 
     declaration.save()
-
     return HttpResponse("OK")
 
 @login_required
@@ -1507,20 +1584,18 @@ def tva_saisie_ca12(request, tva_client_annee_id):
         declaration.tva_n_1 = clean_decimal(request.POST.get("tva_n_1"))
 
         declaration.tva_acompte_1 = clean_decimal(request.POST.get("tva_acompte_1"))
-        declaration.statut_acompte_1 = request.POST.get("statut_acompte_1")
+        declaration.statut_acompte_1 = clean_statut(request.POST.get("statut_acompte_1"))
 
         declaration.tva_acompte_2 = clean_decimal(request.POST.get("tva_acompte_2"))
-        declaration.statut_acompte_2 = request.POST.get("statut_acompte_2")
+        declaration.statut_acompte_2 = clean_statut(request.POST.get("statut_acompte_2"))
 
         declaration.tva_solde = clean_decimal(request.POST.get("tva_solde"))
-        declaration.statut_solde = request.POST.get("statut_solde")
+        declaration.statut_solde = clean_statut(request.POST.get("statut_solde"))
 
         declaration.commentaire_tva_plus_1000 = request.POST.get("commentaire_tva_plus_1000")
 
         declaration.save()
         messages.success(request, "Déclaration annuelle enregistrée.")
-
-        # 🔥 REDIRECTION VERS LA GESTION CA12
         return redirect("tva_gestion_ca12")
 
     total_tva_annee = (
@@ -1654,25 +1729,35 @@ from django.contrib.auth.decorators import login_required
 def tva_gestion_ca3m(request):
     annee_id = request.GET.get("annee")
 
+    # Sélection de l'année
     if annee_id:
         annee = get_object_or_404(TVAAnnee, id=annee_id)
     else:
         annee = TVAAnnee.objects.order_by("-annee").first()
 
+    # Tous les clients CA3M
     tca_list = TVAClientAnnee.objects.filter(
         annee=annee,
         module__type="CA3M"
     ).select_related("client", "module")
 
+    # 🔍 Recherche dynamique
     search = request.GET.get("search")
     if search:
         tca_list = tca_list.filter(client__nom__icontains=search)
 
-    # 🔥 Ajout du suivi comptable
+    # 🔥 Ajout du suivi comptable + déclaration TVA
     for tca in tca_list:
+
+        # Suivi comptable
         tca.suivi = SuiviComptable.objects.filter(
             client=tca.client,
             annee=annee.annee
+        ).first()
+
+        # Déclaration TVA (⚠️ NE PAS utiliser tca.declaration)
+        tca.declaration_obj = TVADeclaration.objects.filter(
+            tva_client_annee=tca
         ).first()
 
     return render(request, "tva/gestion/ca3m.html", {
@@ -1686,7 +1771,6 @@ def tva_gestion_ca3m(request):
 def tva_valider_ca3m(request, annee_id):
     annee = get_object_or_404(TVAAnnee, id=annee_id)
 
-    # Tous les clients CA3M de cette année
     tca_list = TVAClientAnnee.objects.filter(
         annee=annee,
         module__type="CA3M"
@@ -1696,14 +1780,17 @@ def tva_valider_ca3m(request, annee_id):
         for tca in tca_list:
             declaration = TVADeclaration.objects.filter(tva_client_annee=tca).first()
             if declaration:
-                for field in [
+                champs = [
                     "statut_janvier", "statut_fevrier", "statut_mars",
                     "statut_avril", "statut_mai", "statut_juin",
                     "statut_juillet", "statut_aout", "statut_septembre",
                     "statut_octobre", "statut_novembre", "statut_decembre",
-                ]:
+                ]
+
+                for field in champs:
                     if getattr(declaration, field) == "VERT_CLAIR":
                         setattr(declaration, field, "VERT_FONCE")
+
                 declaration.save()
 
         messages.success(request, "Toutes les télétransmissions CA3M ont été validées.")
@@ -1735,11 +1822,16 @@ def tva_gestion_ca3t(request):
             Q(client__jour_echeance_tva__icontains=search)
         )
 
-    # 🔥 Ajout du suivi comptable
     for tca in tca_list:
+        # Suivi comptable
         tca.suivi = SuiviComptable.objects.filter(
             client=tca.client,
             annee=annee.annee
+        ).first()
+
+        # Déclaration TVA (⚠️ NE PAS utiliser tca.declaration)
+        tca.declaration_obj = TVADeclaration.objects.filter(
+            tva_client_annee=tca
         ).first()
 
     return render(request, "tva/gestion/ca3t.html", {
@@ -1752,7 +1844,6 @@ def tva_gestion_ca3t(request):
 def tva_valider_ca3t(request, annee_id):
     annee = get_object_or_404(TVAAnnee, id=annee_id)
 
-    # Tous les clients CA3T de cette année
     tca_list = TVAClientAnnee.objects.filter(
         annee=annee,
         module__type="CA3T"
@@ -1763,12 +1854,15 @@ def tva_valider_ca3t(request, annee_id):
             declaration = TVADeclaration.objects.filter(tva_client_annee=tca).first()
             if declaration:
                 champs = ["statut_t1", "statut_t2", "statut_t3", "statut_t4"]
-                _valider_statuts(declaration, champs)
+
+                for field in champs:
+                    if getattr(declaration, field) == "VERT_CLAIR":
+                        setattr(declaration, field, "VERT_FONCE")
+
+                declaration.save()
 
         messages.success(request, "Toutes les télétransmissions CA3T ont été validées.")
         return redirect("tva_gestion_ca3t")
-
-    return redirect("tva_gestion_ca3t")
 
 
 from django.contrib.auth.decorators import login_required
@@ -1776,7 +1870,6 @@ from dossiers.models import SuiviComptable
 
 @login_required
 def tva_gestion_ca12(request):
-    # Sélection de l'année
     annee_id = request.GET.get("annee")
 
     if annee_id:
@@ -1784,13 +1877,11 @@ def tva_gestion_ca12(request):
     else:
         annee = TVAAnnee.objects.order_by("-annee").first()
 
-    # Tous les clients CA12 pour cette année
     tca_list = TVAClientAnnee.objects.filter(
         annee=annee,
         module__type="CA12"
     ).select_related("client", "module")
 
-    # 🔍 Recherche dynamique
     search = request.GET.get("search")
     if search:
         tca_list = tca_list.filter(
@@ -1799,29 +1890,17 @@ def tva_gestion_ca12(request):
             Q(client__jour_echeance_tva__icontains=search)
         )
 
-    # 🔥 Ajout du suivi comptable + déclaration CA12 + total TVA année
     for tca in tca_list:
-
         # Suivi comptable
         tca.suivi = SuiviComptable.objects.filter(
             client=tca.client,
             annee=annee.annee
         ).first()
 
-        # Déclaration CA12
+        # Déclaration TVA (⚠️ NE PAS utiliser tca.declaration)
         tca.declaration_obj = TVADeclaration.objects.filter(
             tva_client_annee=tca
         ).first()
-
-        # Total TVA de l'année (A1 + A2 + Solde)
-        if tca.declaration_obj:
-            tca.total_tva_annee = (
-                (tca.declaration_obj.tva_acompte_1 or 0) +
-                (tca.declaration_obj.tva_acompte_2 or 0) +
-                (tca.declaration_obj.tva_solde or 0)
-            )
-        else:
-            tca.total_tva_annee = 0
 
     return render(request, "tva/gestion/ca12.html", {
         "annee": annee,
@@ -1833,7 +1912,6 @@ def tva_gestion_ca12(request):
 def tva_valider_ca12(request, annee_id):
     annee = get_object_or_404(TVAAnnee, id=annee_id)
 
-    # Tous les clients CA12 de cette année
     tca_list = TVAClientAnnee.objects.filter(
         annee=annee,
         module__type="CA12"
@@ -1844,12 +1922,15 @@ def tva_valider_ca12(request, annee_id):
             declaration = TVADeclaration.objects.filter(tva_client_annee=tca).first()
             if declaration:
                 champs = ["statut_acompte_1", "statut_acompte_2", "statut_solde"]
-                _valider_statuts(declaration, champs)
+
+                for field in champs:
+                    if getattr(declaration, field) == "VERT_CLAIR":
+                        setattr(declaration, field, "VERT_FONCE")
+
+                declaration.save()
 
         messages.success(request, "Toutes les télétransmissions CA12 ont été validées.")
         return redirect("tva_gestion_ca12")
-
-    return redirect("tva_gestion_ca12")
 
 
 from dossiers.models import SuiviComptable
@@ -2265,10 +2346,6 @@ def cfe_saisie(request, client_module_id):
 #   MODULE CVAE
 # ----------------------------------------------------
 
-from django.contrib.auth.decorators import login_required
-from .models import CVAEDeclaration, ClientModuleFiscal, AnneeFiscale
-from django.shortcuts import get_object_or_404, render, redirect
-from django.contrib import messages
 
 @login_required
 def cvae_saisie(request, client_module_id):
@@ -2298,13 +2375,15 @@ def cvae_saisie(request, client_module_id):
         # Champs montants (texte)
         declaration.cvae_n_1 = request.POST.get("cvae_n_1") or ""
         declaration.acompte_cvae = request.POST.get("acompte_cvae") or ""
+        declaration.acompte2_cvae = request.POST.get("acompte2_cvae") or ""   # ⭐ NOUVEAU
         declaration.solde_cvae = request.POST.get("solde_cvae") or ""
 
-        # Nouveau champ : Total CVAE
+        # Total CVAE (texte)
         declaration.total_cvae = request.POST.get("total_cvae") or ""
 
-        # Statuts (mêmes que IS)
+        # Statuts
         declaration.statut_acompte_cvae = request.POST.get("statut_acompte_cvae") or ""
+        declaration.statut_acompte2_cvae = request.POST.get("statut_acompte2_cvae") or ""  # ⭐ NOUVEAU
         declaration.statut_solde_cvae = request.POST.get("statut_solde_cvae") or ""
 
         # Commentaire
@@ -2320,9 +2399,6 @@ def cvae_saisie(request, client_module_id):
         "annee_selectionnee": cm.annee,
     })
 
-
-from django.contrib.auth.decorators import login_required
-from django.db.models import Prefetch
 
 @login_required
 def cvae_gestion(request, annee_id):
@@ -2360,6 +2436,7 @@ def cvae_gestion(request, annee_id):
         "cms": cms,
         "annee_selectionnee": annee,
     })
+
 
 # ----------------------------------------------------
 #   MODULE TVS
@@ -4022,3 +4099,48 @@ def client_hub(request, client_id):
 
 def client_archive_interdit(request):
     return render(request, "client_archive_interdit.html")
+
+    # -------------------------
+    # SEUILS
+    # -------------------------
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import SeuilFiscal
+from .forms import SeuilFiscalForm
+
+@login_required
+def seuils_list(request):
+    seuils = SeuilFiscal.objects.all().order_by("module", "code")
+    return render(request, "dossiers/seuils_list.html", {"seuils": seuils})
+
+@login_required
+def seuils_add(request):
+    if request.method == "POST":
+        form = SeuilFiscalForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("seuils_list")
+    else:
+        form = SeuilFiscalForm()
+
+    return render(request, "dossiers/seuils_form.html", {"form": form})
+
+@login_required
+def seuils_edit(request, pk):
+    seuil = get_object_or_404(SeuilFiscal, pk=pk)
+
+    if request.method == "POST":
+        form = SeuilFiscalForm(request.POST, instance=seuil)
+        if form.is_valid():
+            form.save()
+            return redirect("seuils_list")
+    else:
+        form = SeuilFiscalForm(instance=seuil)
+
+    return render(request, "dossiers/seuils_form.html", {"form": form})
+
+def seuils_delete(request, pk):
+    seuil = get_object_or_404(SeuilFiscal, pk=pk)
+    seuil.delete()
+    return redirect("seuils_list")

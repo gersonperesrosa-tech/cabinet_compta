@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+
+<h1 class="mb-4">Seuils fiscaux</h1>
+
+<a href="{% url 'seuils_add' %}" class="btn btn-primary mb-3">
+    Ajouter un seuil
+</a>
+
+<table class="table table-bordered align-middle">
+    <thead>
+        <tr>
+            <th>Module</th>
+            <th>Code</th>
+            <th>Valeur</th>
+            <th class="text-end">Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for s in seuils %}
+        <tr>
+            <td>{{ s.module }}</td>
+            <td>{{ s.code }}</td>
+            <td>{{ s.valeur }}</td>
+
+            <td class="text-end">
+
+                <!-- Bouton Modifier -->
+                <a href="{% url 'seuils_edit' s.id %}"
+                   class="btn btn-sm btn-outline-secondary me-1">
+                    Modifier
+                </a>
+
+                <!-- Bouton Supprimer -->
+                <a href="{% url 'seuils_delete' s.id %}"
+                   class="btn btn-sm btn-outline-danger"
+                   onclick="return confirm('Supprimer ce seuil fiscal ?');">
+                    Supprimer
+                </a>
+
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</section>
+{% endblock %}

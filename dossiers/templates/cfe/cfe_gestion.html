@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load custom_filters %}
+{% load dossiers_tags %}
 {% block content %}
 
 <section class="section">
@@ -76,15 +77,15 @@
         </td>
 
         <!-- CFE N-1 -->
-        <td class="text-end">
-            {{ cm.declaration.cfe_n_1|default:"—" }}
-        </td>
+<td class="text-end">
+    {% seuil_style "CFE" "N_1" cm.declaration.cfe_n_1 %}
+</td>
 
         <!-- Acompte -->
         <td>
             <div class="d-flex justify-content-end align-items-center gap-2">
                 <span class="text-end" style="min-width:70px; display:inline-block;">
-                    {{ cm.declaration.acompte_cfe|default:"—" }}
+                    {{ cm.declaration.acompte_cfe|default:"—"|format_tva }}
                 </span>
                 {% include "partials/statut_badge.html" with statut=cm.declaration.statut_acompte %}
             </div>
@@ -94,7 +95,7 @@
         <td>
             <div class="d-flex justify-content-end align-items-center gap-2">
                 <span class="text-end" style="min-width:70px; display:inline-block;">
-                    {{ cm.declaration.solde_cfe|default:"—" }}
+                    {{ cm.declaration.solde_cfe|default:"—"|format_tva }}
                 </span>
                 {% include "partials/statut_badge.html" with statut=cm.declaration.statut_solde %}
             </div>
@@ -102,19 +103,19 @@
 
         <!-- Total CFE -->
         <td style="background:#e9fbe8;" class="text-end fw-bold">
-            {{ cm.total_cfe|default:"—" }}
+            {{ cm.total_cfe|default:"—"|format_tva }}
         </td>
 
         <!-- Mode de paiement -->
-        <td>{{ cm.declaration.mode_paiement|default:"—" }}</td>
+        <td>{{ cm.declaration.mode_paiement|default:"—"|format_tva }}</td>
 
         <!-- Dégrèvement -->
-        <td>{{ cm.declaration.degrevement|default:"—" }}</td>
+        <td>{{ cm.declaration.degrevement|default:"—"|format_tva }}</td>
 
         <!-- Formulaire 1447C -->
         <td>
             <div class="d-flex justify-content-end align-items-center gap-2">
-                <span>{{ cm.declaration.formulaire_1447c|default:"—" }}</span>
+                <span>{{ cm.declaration.formulaire_1447c|default:"—"|format_tva }}</span>
                 {% include "partials/statut_badge.html" with statut=cm.declaration.statut_1447c %}
             </div>
         </td>
@@ -165,5 +166,66 @@ document.querySelectorAll("table thead th").forEach((header, index) => {
     });
 });
 </script>
+<script>
+document.querySelectorAll("table thead th").forEach((header, index) => {
+    header.style.cursor = "pointer";
+
+    // Sauvegarde de l'ordre original
+    const table = header.closest("table");
+    const tbody = table.querySelector("tbody");
+    const originalRows = Array.from(tbody.querySelectorAll("tr"));
+
+    // État du tri : 0 = original, 1 = asc, 2 = desc
+    let sortState = 0;
+
+    header.addEventListener("click", () => {
+
+        let rows = Array.from(tbody.querySelectorAll("tr"));
+
+        // Cycle : original → asc → desc → original
+        sortState = (sortState + 1) % 3;
+
+        // 0 = retour à l'ordre original
+        if (sortState === 0) {
+            tbody.innerHTML = "";
+            originalRows.forEach(r => tbody.appendChild(r));
+            return;
+        }
+
+        const isAsc = sortState === 1;
+
+        rows.sort((a, b) => {
+            const aVal = (a.cells[index].innerText || "").trim();
+            const bVal = (b.cells[index].innerText || "").trim();
+
+            // Conversion en nombre (en retirant espaces et virgules)
+            const aNum = parseFloat(aVal.replace(/\s/g, "").replace(",", "."));
+            const bNum = parseFloat(bVal.replace(/\s/g, "").replace(",", "."));
+
+            const aIsNum = !isNaN(aNum);
+            const bIsNum = !isNaN(bNum);
+
+            // Cas 1 : les deux sont numériques
+            if (aIsNum && bIsNum) {
+                return isAsc ? aNum - bNum : bNum - aNum;
+            }
+
+            // Cas 2 : un seul est numérique → le numérique passe avant
+            if (aIsNum && !bIsNum) return isAsc ? -1 : 1;
+            if (!aIsNum && bIsNum) return isAsc ? 1 : -1;
+
+            // Cas 3 : tri texte
+            return isAsc
+                ? aVal.localeCompare(bVal)
+                : bVal.localeCompare(aVal);
+        });
+
+        // Réinjection
+        tbody.innerHTML = "";
+        rows.forEach(row => tbody.appendChild(row));
+    });
+});
+</script>
+
 
 {% endblock %}

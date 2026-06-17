@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load dossiers_tags %}
+{% load custom_filters %}
 
 {% block content %}
 
@@ -32,14 +34,15 @@
                 </select>
             </form>
 
-<form method="POST" action="{% url 'tva_valider_ca3t' annee.id %}" class="m-0">
-    {% csrf_token %}
-    <button class="btn btn-outline-success" style="height: 38px;">
-        Valider télétransmissions
-    </button>
-</form>
+            <!-- Valider télétransmissions -->
+            <form method="POST" action="{% url 'tva_valider_ca3t' annee.id %}" class="m-0">
+                {% csrf_token %}
+                <button class="btn btn-outline-success" style="height: 38px;">
+                    Valider télétransmissions
+                </button>
+            </form>
 
-
+            <!-- Reset suivi comptable -->
             <button id="resetSuiviBtn"
                     class="btn btn-outline-danger"
                     style="height: 38px;">
@@ -66,58 +69,83 @@
             </tr>
         </thead>
 
-<tbody>
-    {% for tca in tca_list %}
+        <tbody>
 
-    <tr class="{% if tca.client.archive %}archived-row{% endif %}">
+        {% for tca in tca_list %}
 
-        <!-- N° client -->
-        <td>{{ tca.client.numero }}</td>
+        <tr class="{% if tca.client.archive %}archived-row{% endif %}">
 
-        <!-- NOM DU CLIENT -->
-        <td class="client-name">
+            <!-- N° client -->
+            <td>{{ tca.client.numero }}</td>
 
-            {% if tca.client.archive %}
-                <!-- 🔒 Client archivé → pas de lien -->
-                <span class="fw-semibold text-muted">
-                    {{ tca.client.nom }}
-                </span>
+            <!-- NOM DU CLIENT -->
+            <td class="client-name">
 
-            {% else %}
-                <!-- 🔗 Client actif → lien normal -->
-                <a href="{% url 'tva_saisie_ca3t' tca.id %}"
-                   class="text-decoration-none fw-semibold">
-                    {{ tca.client.nom }}
-                </a>
-            {% endif %}
+                {% if tca.client.archive %}
+                    <span class="fw-semibold text-muted">
+                        {{ tca.client.nom }}
+                    </span>
+                {% else %}
+                    <a href="{% url 'tva_saisie_ca3t' tca.id %}"
+                       class="text-decoration-none fw-semibold">
+                        {{ tca.client.nom }}
+                    </a>
+                {% endif %}
 
-        </td>
+            </td>
 
-        <!-- Échéance -->
-        <td>{{ tca.client.jour_echeance_tva|default_if_none:"" }}</td>
+            <!-- Échéance -->
+            <td>{{ tca.client.jour_echeance_tva|default_if_none:"" }}</td>
 
-        <!-- Trimestres -->
-        {% for montant, statut in tca.declaration.get_trimestriels %}
-        <td>
-            <div class="d-flex align-items-center justify-content-end gap-2">
-                <span class="text-end" style="min-width: 70px; display: inline-block;">
-                    {{ montant|default:" " }}
-                </span>
-                {% include "tva/partials/statut_badge.html" with statut=statut %}
-            </div>
-        </td>
+            <!-- TRIMESTRES -->
+            {% with decl=tca.declaration_obj %}
+                <td>
+                    <div class="d-flex align-items-center justify-content-end gap-2">
+                        <span class="text-end" style="min-width: 70px;">
+                            {{ decl.tva_t1|format_tva|default:" " }}
+                        </span>
+                        {% include "tva/partials/statut_badge_mini.html" with statut=decl.statut_t1 %}
+                    </div>
+                </td>
+
+                <td>
+                    <div class="d-flex align-items-center justify-content-end gap-2">
+                        <span class="text-end" style="min-width: 70px;">
+                            {{ decl.tva_t2|format_tva|default:" " }}
+                        </span>
+                        {% include "tva/partials/statut_badge_mini.html" with statut=decl.statut_t2 %}
+                    </div>
+                </td>
+
+                <td>
+                    <div class="d-flex align-items-center justify-content-end gap-2">
+                        <span class="text-end" style="min-width: 70px;">
+                            {{ decl.tva_t3|format_tva|default:" " }}
+                        </span>
+                        {% include "tva/partials/statut_badge_mini.html" with statut=decl.statut_t3 %}
+                    </div>
+                </td>
+
+                <td>
+                    <div class="d-flex align-items-center justify-content-end gap-2">
+                        <span class="text-end" style="min-width: 70px;">
+                            {{ decl.tva_t4|format_tva|default:" " }}
+                        </span>
+                        {% include "tva/partials/statut_badge_mini.html" with statut=decl.statut_t4 %}
+                    </div>
+                </td>
+            {% endwith %}
+
+            <!-- Suivi comptable -->
+            <td>
+                {% include "tva/partials/pastille_suivi.html" with suivi=tca.suivi %}
+            </td>
+
+        </tr>
+
         {% endfor %}
 
-        <!-- Suivi comptable -->
-        <td>
-            {% include "tva/partials/pastille_suivi.html" with suivi=tca.suivi %}
-        </td>
-
-    </tr>
-
-    {% endfor %}
-</tbody>
-
+        </tbody>
     </table>
 
 </section>
@@ -133,19 +161,17 @@ document.getElementById("searchInput").addEventListener("keyup", function () {
         const nom = row.querySelector(".client-name").textContent.toLowerCase();
         const echeance = row.children[2].textContent.toLowerCase();
 
-        if (
+        row.style.display =
             numero.includes(filter) ||
             nom.includes(filter) ||
             echeance.includes(filter)
-        ) {
-            row.style.display = "";
-        } else {
-            row.style.display = "none";
-        }
+            ? ""
+            : "none";
     });
 });
 </script>
 
+<!-- RESET SUIVI -->
 <script>
 document.getElementById("resetSuiviBtn").addEventListener("click", function () {
     if (!confirm("Voulez-vous vraiment réinitialiser le suivi comptable pour toute l'année ?")) {
@@ -168,7 +194,7 @@ document.getElementById("resetSuiviBtn").addEventListener("click", function () {
 });
 </script>
 
-<!-- Tri dynamique sur toutes les colonnes -->
+<!-- TRI DYNAMIQUE -->
 <script>
 document.querySelectorAll("table thead th").forEach((header, index) => {
     header.style.cursor = "pointer";
@@ -193,6 +219,5 @@ document.querySelectorAll("table thead th").forEach((header, index) => {
     });
 });
 </script>
-
 
 {% endblock %}

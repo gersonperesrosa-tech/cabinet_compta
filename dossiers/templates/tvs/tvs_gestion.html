@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load custom_filters %}
+{% load dossiers_tags %}
 {% block content %}
 
 <section class="section">
@@ -78,7 +79,7 @@
 
             <!-- TVS N-1 -->
             <td class="text-end">
-                {{ decl.tvs_n_1|default:"—" }}
+                {{ decl.tvs_n_1|default:"—"|format_tva }}
             </td>
 
             <!-- Véhicules (liste courte) -->
@@ -111,7 +112,7 @@
 
             <!-- Total TVS -->
             <td style="background:#e9fbe8;" class="text-end fw-bold">
-                {{ decl.total_tvs|default:"—" }}
+                {{ decl.total_tvs|default:"—"|format_tva }}
             </td>
 
         </tr>
@@ -157,6 +158,66 @@ document.querySelectorAll("table thead th").forEach((header, index) => {
             return 0;
         });
 
+        rows.forEach(row => tbody.appendChild(row));
+    });
+});
+</script>
+<script>
+document.querySelectorAll("table thead th").forEach((header, index) => {
+    header.style.cursor = "pointer";
+
+    // Sauvegarde de l'ordre original
+    const table = header.closest("table");
+    const tbody = table.querySelector("tbody");
+    const originalRows = Array.from(tbody.querySelectorAll("tr"));
+
+    // État du tri : 0 = original, 1 = asc, 2 = desc
+    let sortState = 0;
+
+    header.addEventListener("click", () => {
+
+        let rows = Array.from(tbody.querySelectorAll("tr"));
+
+        // Cycle : original → asc → desc → original
+        sortState = (sortState + 1) % 3;
+
+        // 0 = retour à l'ordre original
+        if (sortState === 0) {
+            tbody.innerHTML = "";
+            originalRows.forEach(r => tbody.appendChild(r));
+            return;
+        }
+
+        const isAsc = sortState === 1;
+
+        rows.sort((a, b) => {
+            const aVal = (a.cells[index].innerText || "").trim();
+            const bVal = (b.cells[index].innerText || "").trim();
+
+            // Conversion en nombre (en retirant espaces et virgules)
+            const aNum = parseFloat(aVal.replace(/\s/g, "").replace(",", "."));
+            const bNum = parseFloat(bVal.replace(/\s/g, "").replace(",", "."));
+
+            const aIsNum = !isNaN(aNum);
+            const bIsNum = !isNaN(bNum);
+
+            // Cas 1 : les deux sont numériques
+            if (aIsNum && bIsNum) {
+                return isAsc ? aNum - bNum : bNum - aNum;
+            }
+
+            // Cas 2 : un seul est numérique → le numérique passe avant
+            if (aIsNum && !bIsNum) return isAsc ? -1 : 1;
+            if (!aIsNum && bIsNum) return isAsc ? 1 : -1;
+
+            // Cas 3 : tri texte
+            return isAsc
+                ? aVal.localeCompare(bVal)
+                : bVal.localeCompare(aVal);
+        });
+
+        // Réinjection
+        tbody.innerHTML = "";
         rows.forEach(row => tbody.appendChild(row));
     });
 });

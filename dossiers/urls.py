@@ -245,6 +245,19 @@ urlpatterns = [
          name='suivi_comptable_save'),
 
     # ============================
+    # Seuils
+    # ============================
+
+
+    path("seuils/", views.seuils_list, name="seuils_list"),
+    path("seuils/add/", views.seuils_add, name="seuils_add"),
+    path("seuils/<int:pk>/edit/", views.seuils_edit, name="seuils_edit"),
+    path("seuils/<int:pk>/delete/", views.seuils_delete, name="seuils_delete"),
+
+
+
+
+    # ============================
     # TVA – Déclarations
     # ============================
 

@@ -281,3 +281,49 @@ class NotificationEmailForm(forms.ModelForm):
             "email": forms.EmailInput(attrs={"class": "form-control", "placeholder": "exemple@cabinet.com"}),
         }
 
+
+from django import forms
+from .models import SeuilFiscal
+
+class SeuilFiscalForm(forms.ModelForm):
+
+    MODULE_CHOICES = [
+        ("IS", "Impôt sur les sociétés (IS)"),
+        ("CFE", "Cotisation Foncière des Entreprises (CFE)"),
+        ("CVAE", "Cotisation sur la Valeur Ajoutée (CVAE)"),
+        ("TVS", "Taxe sur les Véhicules de Société (TVS)"),
+        ("DESDEB", "Déclarations DES/DEB"),
+        ("DIVIDENDES", "Dividendes"),
+    ]
+
+    CODE_CHOICES = [
+        ("N_1", "Montant N‑1"),
+        ("ACOMPTE", "Acompte"),
+        ("SOLDE", "Solde"),
+        ("TOTAL", "Total"),
+        ("MONTANT", "Montant"),
+        ("SEUIL", "Seuil général"),
+    ]
+
+    module = forms.ChoiceField(
+        choices=MODULE_CHOICES,
+        widget=forms.Select(attrs={"class": "form-select"})
+    )
+
+    code = forms.ChoiceField(
+        choices=CODE_CHOICES,
+        widget=forms.Select(attrs={"class": "form-select"})
+    )
+
+    valeur = forms.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={
+            "class": "form-control",
+            "placeholder": "Ex : 3000"
+        })
+    )
+
+    class Meta:
+        model = SeuilFiscal
+        fields = ["module", "code", "valeur"]

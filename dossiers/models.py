@@ -408,12 +408,13 @@ class TVAClientAnnee(models.Model):
 class TVADeclaration(models.Model):
 
     TVA_STATUTS = [
-        ("NONE", "Sans pastille"),
-        ("JAUNE", "A envoyer au client"),
-        ("VERT_CLAIR", "Télétransmis"),
-        ("VERT_FONCE", "Accepté"),
-        ("BLANC", "Rejeté"),
-
+        ("BLANC", "Blanc"),
+        ("ORANGE", "A envoyer client (orange)"),
+        ("JAUNE", "Envoyé client (jaune)"),
+        ("VERT_CLAIR", "Télétransmis (vert clair)"),
+        ("VERT_FONCE", "Accepté (vert foncé)"),
+        ("ROUGE", "Rejeté (rouge)"),   
+        ("NA", "N/A (gris)"),
     ]
 
     tva_client_annee = models.ForeignKey(
@@ -637,9 +638,9 @@ class CFEDeclaration(models.Model):
     def __str__(self):
         return f"CFE {self.client_module.client.nom} – {self.client_module.annee.annee}"
 
-    # -------------------------------------------------------
-    # MODULE CVAE
-    # -------------------------------------------------------
+ # -------------------------------------------------------
+# MODULE CVAE
+# -------------------------------------------------------
 
 class CVAEDeclaration(models.Model):
     client_module = models.OneToOneField(
@@ -651,15 +652,19 @@ class CVAEDeclaration(models.Model):
     # Pré-remplissage automatique (texte)
     cvae_n_1 = models.CharField(max_length=255, null=True, blank=True)
 
-    # Acompte CVAE (texte)
+    # Acompte 1 CVAE (texte)
     acompte_cvae = models.CharField(max_length=255, null=True, blank=True)
     statut_acompte_cvae = models.CharField(max_length=20, null=True, blank=True)
+
+    # Acompte 2 CVAE (texte)
+    acompte2_cvae = models.CharField(max_length=255, null=True, blank=True)
+    statut_acompte2_cvae = models.CharField(max_length=20, null=True, blank=True)
 
     # Solde CVAE (texte)
     solde_cvae = models.CharField(max_length=255, null=True, blank=True)
     statut_solde_cvae = models.CharField(max_length=20, null=True, blank=True)
 
-    # Nouveau champ : Total CVAE (texte)
+    # Total CVAE (texte)
     total_cvae = models.CharField(max_length=255, null=True, blank=True)
 
     # Commentaire
@@ -667,6 +672,7 @@ class CVAEDeclaration(models.Model):
 
     def __str__(self):
         return f"CVAE {self.client_module.client.nom} – {self.client_module.annee.annee}"
+
 
     # -------------------------------------------------------
     # MODULE TVS
@@ -1370,3 +1376,22 @@ class EmailLog(models.Model):
 
     def __str__(self):
         return f"{self.event} → {self.destinataire} ({self.date_envoi})"
+
+
+# -------------------------------
+#   CONFIGURATIONS DES SEUILS
+# -------------------------------
+
+class SeuilFiscal(models.Model):
+    module = models.CharField(max_length=50)   # ex: "IS", "CFE", "CVAE"
+    code = models.CharField(max_length=50)     # ex: "ACOMPTE", "SOLDE", "TOTAL"
+    valeur = models.DecimalField(max_digits=12, decimal_places=2)
+
+    class Meta:
+        unique_together = ('module', 'code')
+        verbose_name = "Seuil fiscal"
+        verbose_name_plural = "Seuils fiscaux"
+
+    def __str__(self):
+        return f"{self.module} - {self.code} : {self.valeur}"
+

@@ -15,3 +15,11 @@ def empty_dash(value):
     if value in [None, "", " ", 0, 0.0]:
         return ""
     return value
+
+@register.filter
+def attr(obj, attr_name):
+    """Permet d'accéder dynamiquement à un attribut dans un template."""
+    try:
+        return getattr(obj, attr_name)
+    except:
+        return ""

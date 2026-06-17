@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load dossiers_tags %}
+{% load custom_filters %}
 
 {% block content %}
 
@@ -32,15 +34,15 @@
                 </select>
             </form>
 
-<form method="POST" action="{% url 'tva_valider_ca12' annee.id %}" class="m-0">
-    {% csrf_token %}
-    <button class="btn btn-outline-success" style="height: 38px;">
-        Valider télétransmissions
-    </button>
-</form>
+            <!-- Valider télétransmissions -->
+            <form method="POST" action="{% url 'tva_valider_ca12' annee.id %}" class="m-0">
+                {% csrf_token %}
+                <button class="btn btn-outline-success" style="height: 38px;">
+                    Valider télétransmissions
+                </button>
+            </form>
 
-
-            <!-- Bouton reset suivi comptable -->
+            <!-- Reset suivi comptable -->
             <button id="resetSuiviBtn"
                     class="btn btn-outline-danger"
                     style="height: 38px;">
@@ -71,98 +73,101 @@
             </tr>
         </thead>
 
-<tbody>
-    {% for tca in tca_list %}
+        <tbody>
 
-    <tr class="{% if tca.client.archive %}archived-row{% endif %}">
+        {% for tca in tca_list %}
 
-        <!-- N° client -->
-        <td>{{ tca.client.numero }}</td>
+        <tr class="{% if tca.client.archive %}archived-row{% endif %}">
 
-        <!-- NOM DU CLIENT -->
-        <td class="client-name">
+            <!-- N° client -->
+            <td>{{ tca.client.numero }}</td>
 
-            {% if tca.client.archive %}
-                <!-- 🔒 Client archivé → pas de lien -->
-                <span class="fw-semibold text-muted">
-                    {{ tca.client.nom }}
-                </span>
+            <!-- NOM DU CLIENT -->
+            <td class="client-name">
 
-            {% else %}
-                <!-- 🔗 Client actif → lien normal -->
-                <a href="{% url 'tva_saisie_ca12' tca.id %}"
-                   class="text-decoration-none fw-semibold">
-                    {{ tca.client.nom }}
-                </a>
-            {% endif %}
+                {% if tca.client.archive %}
+                    <span class="fw-semibold text-muted">
+                        {{ tca.client.nom }}
+                    </span>
+                {% else %}
+                    <a href="{% url 'tva_saisie_ca12' tca.id %}"
+                       class="text-decoration-none fw-semibold">
+                        {{ tca.client.nom }}
+                    </a>
+                {% endif %}
 
-        </td>
+            </td>
 
-        <!-- Échéance -->
-        <td>{{ tca.client.jour_echeance_tva|default_if_none:"" }}</td>
+            <!-- Échéance -->
+            <td>{{ tca.client.jour_echeance_tva|default_if_none:"" }}</td>
 
-        <!-- TVA N-1 -->
-        <td style="background:#e8f1ff;">
-            {% if tca.declaration_obj and tca.declaration_obj.tva_n_1 %}
-                {{ tca.declaration_obj.tva_n_1 }}
-            {% else %}
-                —
-            {% endif %}
-        </td>
+            {% with decl=tca.declaration_obj %}
 
-        <!-- Acompte 1 -->
-        <td>
-            <div class="d-flex align-items-center justify-content-end gap-2">
-                <span class="text-end" style="min-width: 70px; display: inline-block;">
-                    {{ tca.declaration_obj.tva_acompte_1|default_if_none:"" }}
-                </span>
-                {% include "tva/partials/statut_badge.html" with statut=tca.declaration_obj.statut_acompte_1 %}
-            </div>
-        </td>
+                <!-- TVA N-1 -->
+                <td style="background:#e8f1ff;">
+                    {% if decl and decl.tva_n_1 %}
+                        {{ decl.tva_n_1|format_tva }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
 
-        <!-- Acompte 2 -->
-        <td>
-            <div class="d-flex align-items-center justify-content-end gap-2">
-                <span class="text-end" style="min-width: 70px; display: inline-block;">
-                    {{ tca.declaration_obj.tva_acompte_2|default_if_none:"" }}
-                </span>
-                {% include "tva/partials/statut_badge.html" with statut=tca.declaration_obj.statut_acompte_2 %}
-            </div>
-        </td>
+                <!-- Acompte 1 -->
+                <td>
+                    <div class="d-flex align-items-center justify-content-end gap-2">
+                        <span class="text-end" style="min-width: 70px;">
+                            {{ decl.tva_acompte_1|format_tva|default_if_none:"" }}
+                        </span>
+                        {% include "tva/partials/statut_badge_mini.html" with statut=decl.statut_acompte_1 %}
+                    </div>
+                </td>
 
-        <!-- Solde -->
-        <td>
-            <div class="d-flex align-items-center justify-content-end gap-2">
-                <span class="text-end" style="min-width: 70px; display: inline-block;">
-                    {{ tca.declaration_obj.tva_solde|default_if_none:"" }}
-                </span>
-                {% include "tva/partials/statut_badge.html" with statut=tca.declaration_obj.statut_solde %}
-            </div>
-        </td>
+                <!-- Acompte 2 -->
+                <td>
+                    <div class="d-flex align-items-center justify-content-end gap-2">
+                        <span class="text-end" style="min-width: 70px;">
+                            {{ decl.tva_acompte_2|format_tva|default_if_none:"" }}
+                        </span>
+                        {% include "tva/partials/statut_badge_mini.html" with statut=decl.statut_acompte_2 %}
+                    </div>
+                </td>
 
-        <!-- Total TVA année -->
-        <td style="background:#e9fbe8;">
-            {% if tca.total_tva_annee %}
-                {{ tca.total_tva_annee|floatformat:2 }}
-            {% else %}
-                —
-            {% endif %}
-        </td>
+                <!-- Solde -->
+                <td>
+                    <div class="d-flex align-items-center justify-content-end gap-2">
+                        <span class="text-end" style="min-width: 70px;">
+                            {{ decl.tva_solde|format_tva|default_if_none:"" }}
+                        </span>
+                        {% include "tva/partials/statut_badge_mini.html" with statut=decl.statut_solde %}
+                    </div>
+                </td>
 
-        <!-- Commentaire si TVA > 1000 -->
-        <td>
-            {{ tca.declaration_obj.commentaire_tva_plus_1000|default_if_none:"" }}
-        </td>
+                <!-- Total TVA année -->
+                <td style="background:#e9fbe8;">
+                    {% if tca.total_tva_annee %}
+                        {{ tca.total_tva_annee|format_tva }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
 
-        <!-- Suivi comptable -->
-        <td>
-            {% include "tva/partials/pastille_suivi.html" with suivi=tca.suivi %}
-        </td>
+                <!-- Commentaire si TVA > 1000 -->
+                <td>
+                    {{ decl.commentaire_tva_plus_1000|default_if_none:"" }}
+                </td>
 
-    </tr>
+            {% endwith %}
 
-    {% endfor %}
-</tbody>
+            <!-- Suivi comptable -->
+            <td>
+                {% include "tva/partials/pastille_suivi.html" with suivi=tca.suivi %}
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+        </tbody>
     </table>
 
 </section>
@@ -178,15 +183,12 @@ document.getElementById("searchInput").addEventListener("keyup", function () {
         const nom = row.querySelector(".client-name").textContent.toLowerCase();
         const echeance = row.children[2].textContent.toLowerCase();
 
-        if (
+        row.style.display =
             numero.includes(filter) ||
             nom.includes(filter) ||
             echeance.includes(filter)
-        ) {
-            row.style.display = "";
-        } else {
-            row.style.display = "none";
-        }
+            ? ""
+            : "none";
     });
 });
 </script>
@@ -214,7 +216,7 @@ document.getElementById("resetSuiviBtn").addEventListener("click", function () {
 });
 </script>
 
-<!-- Tri dynamique sur toutes les colonnes -->
+<!-- TRI DYNAMIQUE -->
 <script>
 document.querySelectorAll("table thead th").forEach((header, index) => {
     header.style.cursor = "pointer";
@@ -239,6 +241,5 @@ document.querySelectorAll("table thead th").forEach((header, index) => {
     });
 });
 </script>
-
 
 {% endblock %}

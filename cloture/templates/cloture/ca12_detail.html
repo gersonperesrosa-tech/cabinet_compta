@@ -89,4 +89,25 @@
 </form>
 
 </section>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const generalSelect = document.querySelector("select[name='statut_general']");
+    if (!generalSelect) return;
+
+    generalSelect.addEventListener("change", function () {
+        const value = this.value;
+
+        // Si statut général = N/A → appliquer N/A à tous les autres statuts
+        if (value === "na") {
+            document.querySelectorAll("select[name^='statut_']").forEach(select => {
+                if (select.name !== "statut_general") {
+                    select.value = "na";
+                }
+            });
+        }
+        // Si statut général ≠ N/A → ne rien modifier
+    });
+});
+</script>
+
 {% endblock %}

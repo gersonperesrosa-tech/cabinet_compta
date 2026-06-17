@@ -27,14 +27,24 @@
         <div class="card p-4">
             <h4 class="mb-3">Configurations</h4>
 
-            <a href="{% url 'notification_email_settings' %}" class="btn btn-primary w-100">
+            <a href="{% url 'notification_email_settings' %}" class="btn btn-primary w-100 mb-2">
                 Paramétrage des emails
             </a>
 
-<a href="{% url 'email_logs_list' %}" class="btn btn-outline-primary w-100">
-    Historique des emails
-</a>
+            <a href="{% url 'email_logs_list' %}" class="btn btn-outline-primary w-100">
+                Historique des emails
+            </a>
+        </div>
+    </div>
 
+    <!-- Section Seuils fiscaux -->
+    <div class="col-md-6 mb-4">
+        <div class="card p-4">
+            <h4 class="mb-3">Seuils fiscaux</h4>
+
+            <a href="{% url 'seuils_list' %}" class="btn btn-primary w-100">
+                Gérer les seuils fiscaux
+            </a>
         </div>
     </div>
 

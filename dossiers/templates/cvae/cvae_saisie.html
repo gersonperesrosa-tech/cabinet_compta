@@ -33,9 +33,9 @@
                 <td></td>
             </tr>
 
-            <!-- Acompte CVAE -->
+            <!-- Acompte 1 CVAE -->
             <tr>
-                <td><strong>Acompte CVAE (15/06)</strong></td>
+                <td><strong>Acompte 1 CVAE (15/06)</strong></td>
                 <td>
                     <input type="text"
                            name="acompte_cvae"
@@ -50,9 +50,26 @@
                 </td>
             </tr>
 
+            <!-- Acompte 2 CVAE -->
+            <tr>
+                <td><strong>Acompte 2 CVAE (15/09)</strong></td>
+                <td>
+                    <input type="text"
+                           name="acompte2_cvae"
+                           id="acompte2_cvae"
+                           class="form-control"
+                           value="{{ declaration.acompte2_cvae|empty_dash }}">
+                </td>
+                <td>
+                    <select name="statut_acompte2_cvae" class="form-select">
+                        {% include "partials/statut_options.html" with selected=declaration.statut_acompte2_cvae %}
+                    </select>
+                </td>
+            </tr>
+
             <!-- Solde CVAE -->
             <tr>
-                <td><strong>Solde CVAE (15/09)</strong></td>
+                <td><strong>Solde CVAE</strong></td>
                 <td>
                     <input type="text"
                            name="solde_cvae"
@@ -67,7 +84,7 @@
                 </td>
             </tr>
 
-            <!-- Total CVAE (NOUVEAU CHAMP) -->
+            <!-- Total CVAE -->
             <tr>
                 <td><strong>Total CVAE</strong></td>
                 <td>
@@ -119,16 +136,18 @@ function toNumber(value) {
 }
 
 function updateTotalCVAE() {
-    const acompte = toNumber(document.getElementById("acompte_cvae").value);
+    const acompte1 = toNumber(document.getElementById("acompte_cvae").value);
+    const acompte2 = toNumber(document.getElementById("acompte2_cvae").value);
     const solde = toNumber(document.getElementById("solde_cvae").value);
 
-    const total = acompte + solde;
+    const total = acompte1 + acompte2 + solde;
 
     document.getElementById("total_cvae").value =
         total.toFixed(2).replace(".", ",") + " €";
 }
 
 document.getElementById("acompte_cvae").addEventListener("input", updateTotalCVAE);
+document.getElementById("acompte2_cvae").addEventListener("input", updateTotalCVAE);
 document.getElementById("solde_cvae").addEventListener("input", updateTotalCVAE);
 </script>
 
