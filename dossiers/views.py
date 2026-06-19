@@ -1402,35 +1402,24 @@ def tva_saisie_ca3m(request, tva_client_annee_id):
         except:
             return None
 
+    # Liste des mois
+    mois = [
+        "janvier", "fevrier", "mars", "avril", "mai", "juin",
+        "juillet", "aout", "septembre", "octobre", "novembre", "decembre"
+    ]
+
     if request.method == "POST":
 
-        # MONTANTS
-        declaration.tva_janvier = to_decimal(request.POST.get("tva_janvier"))
-        declaration.tva_fevrier = to_decimal(request.POST.get("tva_fevrier"))
-        declaration.tva_mars = to_decimal(request.POST.get("tva_mars"))
-        declaration.tva_avril = to_decimal(request.POST.get("tva_avril"))
-        declaration.tva_mai = to_decimal(request.POST.get("tva_mai"))
-        declaration.tva_juin = to_decimal(request.POST.get("tva_juin"))
-        declaration.tva_juillet = to_decimal(request.POST.get("tva_juillet"))
-        declaration.tva_aout = to_decimal(request.POST.get("tva_aout"))
-        declaration.tva_septembre = to_decimal(request.POST.get("tva_septembre"))
-        declaration.tva_octobre = to_decimal(request.POST.get("tva_octobre"))
-        declaration.tva_novembre = to_decimal(request.POST.get("tva_novembre"))
-        declaration.tva_decembre = to_decimal(request.POST.get("tva_decembre"))
+        for m in mois:
+            montant_key = f"tva_{m}"
+            statut_key = f"statut_{m}"
 
-        # STATUTS (corrigés)
-        declaration.statut_janvier = clean_statut(request.POST.get("statut_janvier"))
-        declaration.statut_fevrier = clean_statut(request.POST.get("statut_fevrier"))
-        declaration.statut_mars = clean_statut(request.POST.get("statut_mars"))
-        declaration.statut_avril = clean_statut(request.POST.get("statut_avril"))
-        declaration.statut_mai = clean_statut(request.POST.get("statut_mai"))
-        declaration.statut_juin = clean_statut(request.POST.get("statut_juin"))
-        declaration.statut_juillet = clean_statut(request.POST.get("statut_juillet"))
-        declaration.statut_aout = clean_statut(request.POST.get("statut_aout"))
-        declaration.statut_septembre = clean_statut(request.POST.get("statut_septembre"))
-        declaration.statut_octobre = clean_statut(request.POST.get("statut_octobre"))
-        declaration.statut_novembre = clean_statut(request.POST.get("statut_novembre"))
-        declaration.statut_decembre = clean_statut(request.POST.get("statut_decembre"))
+            # Si le champ est présent dans le POST → on met à jour
+            if montant_key in request.POST:
+                setattr(declaration, montant_key, to_decimal(request.POST.get(montant_key)))
+
+            if statut_key in request.POST:
+                setattr(declaration, statut_key, clean_statut(request.POST.get(statut_key)))
 
         declaration.save()
         messages.success(request, "Déclaration TVA mensuelle enregistrée.")
@@ -1444,7 +1433,7 @@ def tva_saisie_ca3m(request, tva_client_annee_id):
 from django.contrib.auth.decorators import login_required
 from decimal import Decimal
 
-@login_required
+
 @login_required
 def tva_saisie_ca3t(request, tva_client_annee_id):
     tca = get_object_or_404(TVAClientAnnee, id=tva_client_annee_id)
@@ -1459,19 +1448,19 @@ def tva_saisie_ca3t(request, tva_client_annee_id):
         except:
             return None
 
+    trimestres = ["t1", "t2", "t3", "t4"]
+
     if request.method == "POST":
 
-        # Montants trimestriels
-        declaration.ca3t_t1 = clean_decimal(request.POST.get("ca3t_t1"))
-        declaration.ca3t_t2 = clean_decimal(request.POST.get("ca3t_t2"))
-        declaration.ca3t_t3 = clean_decimal(request.POST.get("ca3t_t3"))
-        declaration.ca3t_t4 = clean_decimal(request.POST.get("ca3t_t4"))
+        for t in trimestres:
+            montant_key = f"ca3t_{t}"
+            statut_key = f"statut_{t}"
 
-        # Statuts trimestriels (corrigés)
-        declaration.statut_t1 = clean_statut(request.POST.get("statut_t1"))
-        declaration.statut_t2 = clean_statut(request.POST.get("statut_t2"))
-        declaration.statut_t3 = clean_statut(request.POST.get("statut_t3"))
-        declaration.statut_t4 = clean_statut(request.POST.get("statut_t4"))
+            if montant_key in request.POST:
+                setattr(declaration, montant_key, clean_decimal(request.POST.get(montant_key)))
+
+            if statut_key in request.POST:
+                setattr(declaration, statut_key, clean_statut(request.POST.get(statut_key)))
 
         declaration.save()
         messages.success(request, "Déclaration trimestrielle enregistrée.")
@@ -1481,7 +1470,6 @@ def tva_saisie_ca3t(request, tva_client_annee_id):
         "tca": tca,
         "declaration": declaration,
     })
-
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404
@@ -1755,10 +1743,27 @@ def tva_gestion_ca3m(request):
             annee=annee.annee
         ).first()
 
-        # Déclaration TVA (⚠️ NE PAS utiliser tca.declaration)
-        tca.declaration_obj = TVADeclaration.objects.filter(
+        # Déclaration TVA
+        decl = TVADeclaration.objects.filter(
             tva_client_annee=tca
         ).first()
+
+        tca.declaration_obj = decl
+
+        # 🔥 TOTAL TVA MENSUELLE
+        if decl:
+            total = 0
+            for v in [
+                decl.tva_janvier, decl.tva_fevrier, decl.tva_mars,
+                decl.tva_avril, decl.tva_mai, decl.tva_juin,
+                decl.tva_juillet, decl.tva_aout, decl.tva_septembre,
+                decl.tva_octobre, decl.tva_novembre, decl.tva_decembre
+            ]:
+                if v:
+                    total += v
+            tca.total_tva = total
+        else:
+            tca.total_tva = None
 
     return render(request, "tva/gestion/ca3m.html", {
         "annee": annee,
@@ -1823,16 +1828,29 @@ def tva_gestion_ca3t(request):
         )
 
     for tca in tca_list:
+
         # Suivi comptable
         tca.suivi = SuiviComptable.objects.filter(
             client=tca.client,
             annee=annee.annee
         ).first()
 
-        # Déclaration TVA (⚠️ NE PAS utiliser tca.declaration)
-        tca.declaration_obj = TVADeclaration.objects.filter(
+        # Déclaration TVA
+        decl = TVADeclaration.objects.filter(
             tva_client_annee=tca
         ).first()
+
+        tca.declaration_obj = decl
+
+        # 🔥 TOTAL TVA TRIMESTRIELLE
+        if decl:
+            total = 0
+            for v in [decl.ca3t_t1, decl.ca3t_t2, decl.ca3t_t3, decl.ca3t_t4]:
+                if v:
+                    total += v
+            tca.total_tva = total
+        else:
+            tca.total_tva = None
 
     return render(request, "tva/gestion/ca3t.html", {
         "annee": annee,
@@ -1891,16 +1909,26 @@ def tva_gestion_ca12(request):
         )
 
     for tca in tca_list:
-        # Suivi comptable
         tca.suivi = SuiviComptable.objects.filter(
             client=tca.client,
             annee=annee.annee
         ).first()
 
-        # Déclaration TVA (⚠️ NE PAS utiliser tca.declaration)
-        tca.declaration_obj = TVADeclaration.objects.filter(
+        decl = TVADeclaration.objects.filter(
             tva_client_annee=tca
         ).first()
+
+        tca.declaration_obj = decl
+
+        # 🔥 total_tva_annee pour le template de gestion
+        if decl:
+            total = 0
+            for v in [decl.tva_acompte_1, decl.tva_acompte_2, decl.tva_solde]:
+                if v:
+                    total += v
+            tca.total_tva_annee = total
+        else:
+            tca.total_tva_annee = None
 
     return render(request, "tva/gestion/ca12.html", {
         "annee": annee,

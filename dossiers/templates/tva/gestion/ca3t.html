@@ -64,6 +64,8 @@
                 <th>T2</th>
                 <th>T3</th>
                 <th>T4</th>
+                <th>Total</th>
+
 
                 <th data-sort="suivi">Suivi comptable <span class="sort-icon"></span></th>
             </tr>
@@ -102,7 +104,7 @@
                 <td>
                     <div class="d-flex align-items-center justify-content-end gap-2">
                         <span class="text-end" style="min-width: 70px;">
-                            {{ decl.tva_t1|format_tva|default:" " }}
+                            {{ decl.ca3t_t1|format_tva|default:" " }}
                         </span>
                         {% include "tva/partials/statut_badge_mini.html" with statut=decl.statut_t1 %}
                     </div>
@@ -111,7 +113,7 @@
                 <td>
                     <div class="d-flex align-items-center justify-content-end gap-2">
                         <span class="text-end" style="min-width: 70px;">
-                            {{ decl.tva_t2|format_tva|default:" " }}
+                            {{ decl.ca3t_t2|format_tva|default:" " }}
                         </span>
                         {% include "tva/partials/statut_badge_mini.html" with statut=decl.statut_t2 %}
                     </div>
@@ -120,7 +122,7 @@
                 <td>
                     <div class="d-flex align-items-center justify-content-end gap-2">
                         <span class="text-end" style="min-width: 70px;">
-                            {{ decl.tva_t3|format_tva|default:" " }}
+                            {{ decl.ca3t_t3|format_tva|default:" " }}
                         </span>
                         {% include "tva/partials/statut_badge_mini.html" with statut=decl.statut_t3 %}
                     </div>
@@ -129,12 +131,22 @@
                 <td>
                     <div class="d-flex align-items-center justify-content-end gap-2">
                         <span class="text-end" style="min-width: 70px;">
-                            {{ decl.tva_t4|format_tva|default:" " }}
+                            {{ decl.ca3t_t4|format_tva|default:" " }}
                         </span>
                         {% include "tva/partials/statut_badge_mini.html" with statut=decl.statut_t4 %}
                     </div>
                 </td>
             {% endwith %}
+
+            <!-- Total TVA -->
+            <td style="background:#e9fbe8;">
+                {% if tca.total_tva %}
+                    {{ tca.total_tva|format_tva }}
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+
 
             <!-- Suivi comptable -->
             <td>

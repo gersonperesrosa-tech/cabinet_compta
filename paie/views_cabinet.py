@@ -404,6 +404,22 @@ def liste_mois_client(request, client_id):
 from django.template.loader import get_template
 from django.http import HttpResponse
 
+from dossiers.notifications import envoyer_relance_client
+
+@login_required
+def relancer_mois_client(request, paie_mois_id):
+    mois = get_object_or_404(PaieMois, id=paie_mois_id)
+
+    if mois.client_valide:
+        messages.warning(request, "Ce mois est déjà validé par le client.")
+        return redirect("paie:liste_mois_client", client_id=mois.client.id)
+
+    envoyer_relance_client(mois)
+
+    messages.success(request, "Relance envoyée au client.")
+    return redirect("paie:liste_mois_client", client_id=mois.client.id)
+
+
 # ----------------------------------------------------
 #  FORCER LA VALIDATION DU MOIS
 # ----------------------------------------------------
@@ -428,3 +444,29 @@ def forcer_validation_mois(request, paie_mois_id):
 
     messages.success(request, "Validation forcée appliquée (uniquement ce qui manquait).")
     return redirect("paie:liste_mois_client", client_id=paie_mois.client.id)
+
+# ----------------------------------------------------
+#  VALIDER LE MOIS POUR LE CLIENT (AVEC DEPART DE MAILS)
+# ----------------------------------------------------
+
+from django.utils import timezone
+from dossiers.notifications import envoyer_notifications_paie
+
+@login_required
+def valider_pour_client(request, paie_mois_id):
+    mois = get_object_or_404(PaieMois, id=paie_mois_id)
+
+    if mois.client_valide:
+        messages.warning(request, "Ce mois est déjà validé par le client.")
+        return redirect("paie:liste_mois_client", client_id=mois.client.id)
+
+    mois.client_valide = True
+    mois.client_valide_par_cabinet = True
+    mois.date_validation_par_cabinet = timezone.now()
+    mois.save()
+
+    envoyer_notifications_paie(mois)
+
+    messages.success(request, "Le mois a été validé pour le client et les notifications ont été envoyées.")
+    return redirect("paie:liste_mois_client", client_id=mois.client.id)
+

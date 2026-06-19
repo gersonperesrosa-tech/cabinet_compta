@@ -89,10 +89,8 @@ urlpatterns = [
     path("mes-mois/", views_client.client_liste_mois, name="client_liste_mois"),
     path("cabinet/client/<int:client_id>/mois/creer-suivant/", views_cabinet.creer_mois_suivant, name="cabinet_creer_mois_suivant"),
     path("cabinet/mois/<int:paie_mois_id>/forcer-validation/", views_cabinet.forcer_validation_mois, name="forcer_validation_mois"),
-
-
-
-
+    path("cabinet/relancer/<int:paie_mois_id>/", views_cabinet.relancer_mois_client, name="relancer_mois_client"),
+    path("cabinet/mois/<int:paie_mois_id>/valider-pour-client/", views_cabinet.valider_pour_client, name="valider_pour_client"),
 
 
 ]

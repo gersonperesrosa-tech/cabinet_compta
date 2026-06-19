@@ -72,6 +72,8 @@
             <th>Nov</th>
             <th>Déc</th>
 
+            <th>Total</th>
+
             <th>Suivi comptable</th>
         </tr>
     </thead>
@@ -119,13 +121,22 @@
             {% endif %}
         {% endwith %}
 
-        <!-- Suivi comptable -->
-<td>
-    {% include "tva/partials/pastille_suivi.html" with suivi=tca.suivi %}
-</td>
-    </tr>
+        <!-- Total TVA -->
+        <td style="background:#e9fbe8;">
+            {% if tca.total_tva %}
+                {{ tca.total_tva|format_tva }}
+            {% else %}
+                —
+            {% endif %}
+        </td>
 
-{% endfor %}
+        <!-- Suivi comptable -->
+        <td>
+            {% include "tva/partials/pastille_suivi.html" with suivi=tca.suivi %}
+        </td>
+            </tr>
+
+   {% endfor %}
 </tbody>
 
 </table>

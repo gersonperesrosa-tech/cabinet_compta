@@ -72,3 +72,33 @@ def envoyer_notifications_dsn(mois):
             "preheader": f"La DSN {mois.mois}/{mois.annee} a été validée pour {mois.client}."
         },
     )
+
+
+def envoyer_relance_client(mois):
+    client = mois.client
+    email = client.user.email if client.user else None
+    if not email:
+        return
+
+    subject = f"Relance – Validation du mois de paie {mois.mois_nom} {mois.annee}"
+
+    context = {
+        "mois": mois,
+        "subject": subject,
+        "preheader": f"Relance concernant la validation du mois de paie {mois.mois_nom} {mois.annee}.",
+        "brand_name": "experteaprovence",
+        "brand_color": "#013363",
+        "brand_logo": "https://gestionexpertea.wordpress.com/wp-content/uploads/2026/04/gestionexpertea.jpg",
+    }
+
+    html_message = render_to_string("emails/relance_paie.html", context)
+    text_message = "Merci de valider votre mois de paie."
+
+    msg = EmailMultiAlternatives(
+        subject=subject,
+        body=text_message,
+        from_email="gerson.peresdarosa@expertea-provence.fr",
+        to=[email],
+    )
+    msg.attach_alternative(html_message, "text/html")
+    msg.send()

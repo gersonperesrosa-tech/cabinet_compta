@@ -35,20 +35,24 @@ class PaieMois(models.Model):
     annee = models.IntegerField()
     mois = models.IntegerField()
 
-    # Workflow existant
+    # --- Workflow existant ---
     client_valide = models.BooleanField(default=False)
     partenaire_valide = models.BooleanField(default=False)
     date_validation_client = models.DateTimeField(null=True, blank=True)
     date_validation_partenaire = models.DateTimeField(null=True, blank=True)
 
-    # Nouveau suivi partenaire
+    # --- Nouveau : validation faite par le cabinet pour le client ---
+    client_valide_par_cabinet = models.BooleanField(default=False)
+    date_validation_par_cabinet = models.DateTimeField(null=True, blank=True)
+
+    # --- Suivi partenaire ---
     bs_fait = models.BooleanField(default=False)
     dsn_faite = models.BooleanField(default=False)
 
     date_bs_fait = models.DateTimeField(null=True, blank=True)
     date_dsn_faite = models.DateTimeField(null=True, blank=True)
 
-    # 🔥 Nouveau : suivi séparé des validations forcées
+    # --- Suivi des validations forcées ---
     bs_force = models.BooleanField(default=False)
     dsn_force = models.BooleanField(default=False)
 
@@ -58,6 +62,7 @@ class PaieMois(models.Model):
         verbose_name = "Paie mois"
         verbose_name_plural = "Paie mois"
 
+    # Format long : Janvier, Février, ...
     @property
     def mois_nom(self):
         mois_noms = [
@@ -66,6 +71,7 @@ class PaieMois(models.Model):
         ]
         return mois_noms[self.mois]
 
+    # Format court : Jan, Fév, Mar, ...
     @property
     def mois_nom_court(self):
         mois_noms = [

@@ -45,22 +45,35 @@
                 <td>{{ m.mois }}/{{ m.annee }}</td>
 
                 <!-- Statut client -->
-                <td>
-                    {% if m.client_valide %}
-                        <h5><span class="badge bg-success">Validé client</span><h5>
-                    {% else %}
-                        <h5><span class="badge bg-warning text-dark">En attente</span><h5>
-                    {% endif %}
-                </td>
+<td>
+    {% if m.client_valide and m.client_valide_par_cabinet %}
+        <h5><span class="badge bg-success">Validé par le cabinet</span></h5>
 
+    {% elif m.client_valide %}
+        <h5><span class="badge bg-success">Validé par le client</span></h5>
+
+    {% else %}
+        <h5><span class="badge bg-warning text-dark">En attente</span></h5>
+    {% endif %}
+</td>
                 <!-- Date validation client -->
-                <td>
-                    {% if m.date_validation_client %}
-                        {{ m.date_validation_client|date:"d/m/Y H:i" }}
-                    {% else %}
-                        -
-                    {% endif %}
-                </td>
+<td>
+    {% if m.client_valide %}
+        
+        {% if m.client_valide_par_cabinet and m.date_validation_par_cabinet %}
+            {{ m.date_validation_par_cabinet|date:"d/m/Y H:i" }}
+
+        {% elif m.date_validation_client %}
+            {{ m.date_validation_client|date:"d/m/Y H:i" }}
+
+        {% else %}
+            <span class="text-muted">-</span>
+        {% endif %}
+
+    {% else %}
+        <span class="text-muted">-</span>
+    {% endif %}
+</td>
 
                 <!-- Validation partenaire (BS + DSN) -->
 <td>
@@ -103,12 +116,13 @@
     </div>
 </td>
 
-                <!-- Actions -->
-                <td class="text-center">
-                    <a href="{% url 'paie:variables_paie_salaries' m.id %}"
-                       class="btn btn-sm btn-outline-primary">
-                        Ouvrir
-                    </a>
+<!-- Actions -->
+<td class="text-center">
+
+    <a href="{% url 'paie:variables_paie_salaries' m.id %}"
+       class="btn btn-sm btn-outline-primary">
+        Ouvrir
+    </a>
 
     {% if m.bs_fait or m.dsn_faite or m.client_valide %}
         <a href="{% url 'paie:devalider_mois' m.id %}"
@@ -118,13 +132,32 @@
         </a>
     {% endif %}
 
-{% if not m.bs_fait or not m.dsn_faite %}
-    <a href="{% url 'paie:forcer_validation_mois' m.id %}"
-       class="btn btn-sm btn-outline-warning"
-       onclick="return confirm('Forcer la validation BS + DSN pour ce mois ?');">
-        Forcer validation
+    {% if not m.bs_fait or not m.dsn_faite %}
+        <a href="{% url 'paie:forcer_validation_mois' m.id %}"
+           class="btn btn-sm btn-outline-warning"
+           onclick="return confirm('Forcer la validation BS + DSN pour ce mois ?');">
+            Forcer validation
+        </a>
+    {% endif %}
+
+{% if not m.client_valide %}
+    <a href="{% url 'paie:valider_pour_client' m.id %}"
+       class="btn btn-sm btn-outline-success"
+       onclick="return confirm('Valider ce mois pour le client ? Cela enverra les notifications comme si le client avait validé.');">
+        Valider pour le client
     </a>
 {% endif %}
+
+
+    {% if not m.client_valide %}
+        <a href="{% url 'paie:relancer_mois_client' m.id %}"
+           class="btn btn-sm btn-outline-info"
+           onclick="return confirm('Envoyer une relance au client pour ce mois ?');">
+            Relancer
+        </a>
+    {% endif %}
+
+</td>
 
 
             </tr>
