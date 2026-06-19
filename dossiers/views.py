@@ -1394,11 +1394,20 @@ def tva_saisie_ca3m(request, tva_client_annee_id):
         tva_client_annee=tca
     )
 
-    def to_decimal(value):
-        if value in ["", None]:
+    # Nettoyage pour ENTIER avec espaces FR
+    def clean_int(value):
+        if not value:
             return None
+
+        # Supprimer espaces normaux et insécables
+        value = value.replace(" ", "").replace("\u00A0", "")
+
+        # Interdire virgules et points (tu veux un entier)
+        if "," in value or "." in value:
+            return None
+
         try:
-            return Decimal(value.replace(",", "."))
+            return int(value)
         except:
             return None
 
@@ -1414,10 +1423,13 @@ def tva_saisie_ca3m(request, tva_client_annee_id):
             montant_key = f"tva_{m}"
             statut_key = f"statut_{m}"
 
-            # Si le champ est présent dans le POST → on met à jour
+            # MONTANT
             if montant_key in request.POST:
-                setattr(declaration, montant_key, to_decimal(request.POST.get(montant_key)))
+                montant_brut = request.POST.get(montant_key)
+                montant_net = clean_int(montant_brut)
+                setattr(declaration, montant_key, montant_net)
 
+            # STATUT
             if statut_key in request.POST:
                 setattr(declaration, statut_key, clean_statut(request.POST.get(statut_key)))
 
@@ -1470,6 +1482,8 @@ def tva_saisie_ca3t(request, tva_client_annee_id):
         "tca": tca,
         "declaration": declaration,
     })
+
+
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404
