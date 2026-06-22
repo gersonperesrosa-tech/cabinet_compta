@@ -1,9 +1,16 @@
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+from django.conf import settings
 from .models import NotificationEmail, EmailLog
 
 
 def envoyer_email(event, template_name, subject, context):
+    """
+    Envoi générique d'un email de notification.
+    Utilise l'expéditeur défini dans settings.DEFAULT_FROM_EMAIL
+    (obligatoire pour le SMTP entreprise).
+    """
+
     emails = NotificationEmail.objects.filter(event=event).values_list("email", flat=True)
     if not emails:
         return
@@ -24,19 +31,25 @@ def envoyer_email(event, template_name, subject, context):
         msg = EmailMultiAlternatives(
             subject=subject,
             body=text_message,
-            from_email="gerson.peresdarosa@expertea-provence.fr",
+            from_email=settings.DEFAULT_FROM_EMAIL,  
             to=list(emails),
         )
         msg.attach_alternative(html_message, "text/html")
         msg.send()
 
+        # Log succès
         for email in emails:
             EmailLog.objects.create(event=event, destinataire=email, message=subject)
 
     except Exception as e:
+        # Log échec
         for email in emails:
             EmailLog.objects.create(event=event, destinataire=email, message=str(e), statut="échec")
 
+
+# ============================
+#  NOTIFICATIONS PAIE
+# ============================
 
 def envoyer_notifications_paie(mois):
     envoyer_email(
@@ -45,7 +58,7 @@ def envoyer_notifications_paie(mois):
         subject=f"Paie validée – {mois.client} – {mois.mois}/{mois.annee}",
         context={
             "mois": mois,
-            "preheader": f"Le mois de paie {mois.mois}/{mois.annee} a été validé pour {mois.client}."
+            "preheader": f"Le mois de paie {mois.mois}/{mois.annee} a été validé pour {mois.client}.",
         },
     )
 
@@ -57,7 +70,7 @@ def envoyer_notifications_bs(mois):
         subject=f"BS validés – {mois.client} – {mois.mois}/{mois.annee}",
         context={
             "mois": mois,
-            "preheader": f"Les bulletins de salaire {mois.mois}/{mois.annee} ont été validés pour {mois.client}."
+            "preheader": f"Les bulletins de salaire {mois.mois}/{mois.annee} ont été validés pour {mois.client}.",
         },
     )
 
@@ -69,12 +82,21 @@ def envoyer_notifications_dsn(mois):
         subject=f"DSN validée – {mois.client} – {mois.mois}/{mois.annee}",
         context={
             "mois": mois,
-            "preheader": f"La DSN {mois.mois}/{mois.annee} a été validée pour {mois.client}."
+            "preheader": f"La DSN {mois.mois}/{mois.annee} a été validée pour {mois.client}.",
         },
     )
 
 
+# ============================
+#  RELANCE CLIENT
+# ============================
+
 def envoyer_relance_client(mois):
+    """
+    Envoi d'une relance au client pour valider son mois de paie.
+    Utilise settings.DEFAULT_FROM_EMAIL pour respecter le SMTP entreprise.
+    """
+
     client = mois.client
     email = client.user.email if client.user else None
     if not email:
@@ -97,7 +119,7 @@ def envoyer_relance_client(mois):
     msg = EmailMultiAlternatives(
         subject=subject,
         body=text_message,
-        from_email="gerson.peresdarosa@expertea-provence.fr",
+        from_email=settings.DEFAULT_FROM_EMAIL,
         to=[email],
     )
     msg.attach_alternative(html_message, "text/html")

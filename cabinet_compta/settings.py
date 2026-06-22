@@ -101,19 +101,20 @@ LOGIN_URL = "/login/"
 LOGOUT_REDIRECT_URL = "/login/"
 
 # ============================================
-# EMAIL — CONFIGURATION SENDINBLUE (BREVO)
+# EMAIL — CONFIGURATION SMTP EXPERTEA
 # ============================================
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp-relay.brevo.com"
-EMAIL_PORT = 587
+
+EMAIL_HOST = os.environ.get("SMTP_HOST")
+EMAIL_PORT = int(os.environ.get("SMTP_PORT", 587))
 EMAIL_USE_TLS = True
 
-# ⚠️ À REMPLIR AVEC TES INFOS SENDINBLUE
-EMAIL_HOST_USER = os.environ.get("BREVO_SMTP_LOGIN")
-EMAIL_HOST_PASSWORD = os.environ.get("BREVO_SMTP_PASSWORD")
+EMAIL_HOST_USER = os.environ.get("SMTP_USER")
+EMAIL_HOST_PASSWORD = os.environ.get("SMTP_PASSWORD")
 
-DEFAULT_FROM_EMAIL = os.environ.get("EMAIL_SENDER")
+DEFAULT_FROM_EMAIL = os.environ.get("SMTP_FROM")
+SERVER_EMAIL = os.environ.get("SMTP_FROM")
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
