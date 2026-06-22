@@ -105,16 +105,15 @@ LOGOUT_REDIRECT_URL = "/login/"
 # ============================================
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-
-EMAIL_HOST = os.environ.get("SMTP_HOST")
+EMAIL_HOST = os.environ.get("SMTP_HOST", "mail.apio.systems")
 EMAIL_PORT = int(os.environ.get("SMTP_PORT", 587))
 EMAIL_USE_TLS = True
 
-EMAIL_HOST_USER = os.environ.get("SMTP_USER")
-EMAIL_HOST_PASSWORD = os.environ.get("SMTP_PASSWORD")
+EMAIL_HOST_USER = os.environ.get("SMTP_USER", "smarthost@expertea-provence.fr")
+EMAIL_HOST_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
 
-DEFAULT_FROM_EMAIL = os.environ.get("SMTP_FROM")
-SERVER_EMAIL = os.environ.get("SMTP_FROM")
+DEFAULT_FROM_EMAIL = os.environ.get("SMTP_FROM", "smarthost@expertea-provence.fr")
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
