@@ -497,21 +497,6 @@
         {% endif %}
 
 
-{% if latest_cloture_year %}
-<a class="nav-link text-white d-flex align-items-center gap-2
-   {% if request.resolver_match.url_name == 'gestion_ca12' and request.GET.annee == latest_cloture_year|stringformat:"s" %}active{% endif %}"
-   href="{% url 'gestion_ca12' %}?annee={{ latest_cloture_year }}">
-    <span class="sidebar-text">CA12</span>
-</a>
-{% endif %}
-
-{% if latest_cloture_year %}
-<a class="nav-link text-white d-flex align-items-center gap-2
-   {% if request.resolver_match.url_name == 'gestion_isci' and request.GET.annee == latest_cloture_year|stringformat:"s" %}active{% endif %}"
-   href="{% url 'gestion_isci' %}?annee={{ latest_cloture_year }}">
-    <span class="sidebar-text">IS / CI</span>
-</a>
-{% endif %}
 
 {% if latest_cloture_year %}
 <a class="nav-link text-white d-flex align-items-center gap-2

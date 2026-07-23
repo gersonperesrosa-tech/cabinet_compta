@@ -47,7 +47,6 @@
             <th>Année</th>
             <th>2777D</th>
             <th>2561</th>
-            <th>Statut</th>
         </tr>
     </thead>
 
@@ -88,18 +87,27 @@
             <!-- Année de versement -->
             <td>{{ decl.annee_versement|empty_dash }}</td>
 
-            <!-- Date 2777D -->
-            <td>{{ decl.date_2777d|date:"d/m/Y"|default:"—" }}</td>
+<!-- 2777D -->
+<td>
+    <div class="d-flex align-items-center justify-content-center gap-2">
+        <span>{{ decl.date_2777d|date:"d/m/Y"|default:"—" }}</span>
 
-            <!-- Date 2561 -->
-            <td>{{ decl.date_2561|date:"d/m/Y"|default:"—" }}</td>
+        {% if decl.statut_2777d %}
+            {% include "partials/statut_badge.html" with statut=decl.statut_2777d %}
+        {% endif %}
+    </div>
+</td>
 
-            <!-- Statut -->
-            <td>
-                {% include "partials/statut_badge.html" with statut=decl.statut_dividendes %}
-            </td>
+<!-- 2561 -->
+<td>
+    <div class="d-flex align-items-center justify-content-center gap-2">
+        <span>{{ decl.date_2561|date:"d/m/Y"|default:"—" }}</span>
 
-        </tr>
+        {% if decl.statut_2561 %}
+            {% include "partials/statut_badge.html" with statut=decl.statut_2561 %}
+        {% endif %}
+    </div>
+</td>
 
         {% endwith %}
     {% endfor %}

@@ -32,10 +32,21 @@
     <div class="d-flex align-items-center gap-2">
 
         <form method="post"
+            action="{% url 'paie:partenaire_bs_a_verifier' paie_mois.id %}"
+            class="mb-0">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success" data-bs-toggle="tooltip"
+        data-bs-placement="top"
+        title="Envoyer les BS au cabinet pour vérification">
+                Envoyer au cabinet
+            </button>
+        </form>
+
+        <form method="post"
               action="{% url 'paie:partenaire_bs_fait' paie_mois.id %}"
               class="mb-0">
             {% csrf_token %}
-            <button type="submit" class="btn btn-success">
+            <button type="submit" class="btn btn-primary">
                 BS fait
             </button>
         </form>
@@ -59,8 +70,27 @@
 
 
 </div>
+        
+{% if paie_mois.bs_verifie_par_cabinet %}
+    <span class="badge bg-success text-start">
+        BS vérifié<br>
+        <big>{{ paie_mois.date_bs_verifie_par_cabinet|date:"d/m/Y H:i" }}</big>
+    </span>
+
+{% elif paie_mois.bs_a_verifier %}
+    <span class="badge bg-warning text-white text-start">
+        BS à vérifier<br>
+        <big>{{ paie_mois.date_bs_a_verifier|date:"d/m/Y H:i" }}</big>
+    </span>
+
+{% else %}
+    <span class="badge bg-secondary text-start">
+        BS non envoyé au cabinet
+    </span>
+{% endif %}
+
         {% if paie_mois.bs_fait %}
-            <span class="badge bg-success">
+            <span class="badge bg-primary">
                 BS fait<br>
                 <big>{{ paie_mois.date_bs_fait|date:"d/m/Y H:i" }}</big>
             </span>
@@ -217,6 +247,15 @@ document.querySelectorAll("table thead th").forEach((header, index) => {
     });
 });
 </script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    });
+</script>
+
 
 
 {% endblock %}

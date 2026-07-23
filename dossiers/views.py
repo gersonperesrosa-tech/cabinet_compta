@@ -171,12 +171,6 @@ def archives_clients(request):
     return render(request, 'dossiers/archives_clients.html', {'clients': clients})
 
 # ----------------------------------------------------
-#   SUIVI COMPTABLE (multi‑annuel)
-# ----------------------------------------------------
-
-
-
-# ----------------------------------------------------
 #   SLIDEBAR : formulaire AJAX du suivi comptable
 # ----------------------------------------------------
 
@@ -221,8 +215,6 @@ def suivi_comptable_save(request, client_id):
         })
 
     return JsonResponse({"success": False, "errors": form.errors}, status=400)
-
-
 
 # ----------------------------------------------------
 #   TVA (multi‑annuel)
@@ -1244,8 +1236,6 @@ def tva_franchise(request):
         "clients": clients,
     })
 
-
-
 # ----------------------------------------------------
 #   EXONERE TVA
 # ----------------------------------------------------
@@ -1269,7 +1259,6 @@ def tva_exoneres(request):
         "annees": annees,
         "clients": clients,
     })
-
 
 # ----------------------------------------------------
 #   NOUVELLE STRUCTURE MODULES TVA
@@ -1399,10 +1388,8 @@ def tva_saisie_ca3m(request, tva_client_annee_id):
         if not value:
             return None
 
-        # Supprimer espaces normaux et insécables
         value = value.replace(" ", "").replace("\u00A0", "")
 
-        # Interdire virgules et points (tu veux un entier)
         if "," in value or "." in value:
             return None
 
@@ -1422,6 +1409,7 @@ def tva_saisie_ca3m(request, tva_client_annee_id):
         for m in mois:
             montant_key = f"tva_{m}"
             statut_key = f"statut_{m}"
+            user_key = f"user_{m}"
 
             # MONTANT
             if montant_key in request.POST:
@@ -1433,6 +1421,11 @@ def tva_saisie_ca3m(request, tva_client_annee_id):
             if statut_key in request.POST:
                 setattr(declaration, statut_key, clean_statut(request.POST.get(statut_key)))
 
+            # INITIALLES
+            if user_key in request.POST:
+                initials = request.POST.get(user_key).strip().upper() or None
+                setattr(declaration, user_key, initials)
+
         declaration.save()
         messages.success(request, "Déclaration TVA mensuelle enregistrée.")
         return redirect("tva_gestion_ca3m")
@@ -1441,6 +1434,7 @@ def tva_saisie_ca3m(request, tva_client_annee_id):
         "tca": tca,
         "declaration": declaration,
     })
+
 
 from django.contrib.auth.decorators import login_required
 from decimal import Decimal
@@ -2735,7 +2729,10 @@ def dividendes_saisie(request, client_module_id):
         declaration.annee_versement = request.POST.get("annee_versement")
         declaration.commentaires = request.POST.get("commentaires")
 
+        # Statuts
         declaration.statut_dividendes = request.POST.get("statut_dividendes")
+        declaration.statut_2777d = request.POST.get("statut_2777d")
+        declaration.statut_2561 = request.POST.get("statut_2561")
 
         declaration.save()
         messages.success(request, "Déclaration Dividendes enregistrée avec succès.")
@@ -2744,8 +2741,8 @@ def dividendes_saisie(request, client_module_id):
     return render(request, "dividendes/dividendes_saisie.html", {
         "client_module": cm,
         "declaration": declaration,
-
     })
+
 
 @login_required
 def dividendes_gestion(request, annee_id):
@@ -2965,10 +2962,6 @@ def mon_profil(request):
         form = ProfileForm(instance=user)
 
     return render(request, template, {"form": form})
-
-
-
-
 
 from datetime import date
 from django.contrib.auth.decorators import login_required
@@ -4162,6 +4155,7 @@ def client_archive_interdit(request):
     # SEUILS
     # -------------------------
 
+# Seuils fiscaux
 
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import SeuilFiscal

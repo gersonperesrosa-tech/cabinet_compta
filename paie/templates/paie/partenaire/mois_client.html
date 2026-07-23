@@ -72,6 +72,25 @@
             <!-- BS / DSN -->
 <td>
     <div class="d-flex gap-2">
+{# --- BS à vérifier / BS vérifié (partenaire) --- #}
+{% if m.bs_verifie_par_cabinet %}
+    <span class="badge bg-success text-start">
+        BS vérifié<br>
+        {{ m.date_bs_verifie_par_cabinet|date:"d/m/Y H:i" }}
+    </span>
+
+{% elif m.bs_a_verifier %}
+    <span class="badge bg-warning text-dark text-start">
+        BS à vérifier<br>
+        {{ m.date_bs_a_verifier|date:"d/m/Y H:i" }}
+    </span>
+
+{% else %}
+    <span class="badge bg-secondary text-start">
+        BS non envoyé au cabinet
+    </span>
+{% endif %}
+
 
         {# --- BS --- #}
         {% if m.bs_fait %}
@@ -81,7 +100,7 @@
                     {{ m.date_bs_fait|date:"d/m/Y H:i" }}
                 </span>
             {% else %}
-                <span class="badge bg-success text-start">
+                <span class="badge bg-primary text-start">
                     BS fait<br>
                     {{ m.date_bs_fait|date:"d/m/Y H:i" }}
                 </span>

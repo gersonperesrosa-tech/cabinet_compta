@@ -15,111 +15,143 @@
         <!-- ========================= -->
         <!-- COLONNE GAUCHE (70%)     -->
         <!-- ========================= -->
-        <div class="col-md-8">
+<div class="col-md-8">
 
-            <!-- VA1330 CVAE -->
-            <div class="mb-4">
-                <label class="form-label fw-bold">VA-1330</label>
-                <textarea name="va1330_fait" class="form-control" rows="2" style="resize:none;">
+    <!-- CA12 Déclaration Clôture -->
+    <div class="mb-4">
+        <label class="form-label fw-bold">CA12</label>
+        <textarea name="ca12_decl_cloture" class="form-control" rows="1" style="resize:none;">
+{{ module.ca12_decl_cloture|default_if_none:"" }}</textarea>
+    </div>
+
+    <!-- IS Déclaration Clôture -->
+    <div class="mb-4">
+        <label class="form-label fw-bold">IS / CI</label>
+        <textarea name="is_decl_cloture" class="form-control" rows="1" style="resize:none;">
+{{ module.is_decl_cloture|default_if_none:"" }}</textarea>
+    </div>
+
+    <!-- VA1330 CVAE -->
+    <div class="mb-4">
+        <label class="form-label fw-bold">VA-1330</label>
+        <textarea name="va1330_fait" class="form-control" rows="1" style="resize:none;">
 {{ module.va1330_fait|default_if_none:"" }}</textarea>
-            </div>
+    </div>
 
-            <!-- CVAE 1329DEF -->
-            <div class="mb-4">
-                <label class="form-label fw-bold">CVAE 1329DEF</label>
-                <textarea name="cvae1329_fait" class="form-control" rows="2" style="resize:none;">
+    <!-- CVAE 1329DEF -->
+    <div class="mb-4">
+        <label class="form-label fw-bold">CVAE 1329DEF</label>
+        <textarea name="cvae1329_fait" class="form-control" rows="1" style="resize:none;">
 {{ module.cvae1329_fait|default_if_none:"" }}</textarea>
-            </div>
+    </div>
 
-            <!-- DECLOYER -->
-            <div class="mb-4">
-                <label class="form-label fw-bold">DEC LOYER</label>
-                <textarea name="decloyer_fait" class="form-control" rows="2" style="resize:none;">
+    <!-- DECLOYER -->
+    <div class="mb-4">
+        <label class="form-label fw-bold">DEC LOYER</label>
+        <textarea name="decloyer_fait" class="form-control" rows="1" style="resize:none;">
 {{ module.decloyer_fait|default_if_none:"" }}</textarea>
-            </div>
+    </div>
 
-            <!-- DAS2 -->
-            <div class="mb-4">
-                <label class="form-label fw-bold">DAS2</label>
-                <textarea name="das2_fait" class="form-control" rows="2" style="resize:none;">
+    <!-- DAS2 -->
+    <div class="mb-4">
+        <label class="form-label fw-bold">DAS2</label>
+        <textarea name="das2_fait" class="form-control" rows="1" style="resize:none;">
 {{ module.das2_fait|default_if_none:"" }}</textarea>
-            </div>
+    </div>
 
-            <!-- DRI -->
-            <div class="mb-4">
-                <label class="form-label fw-bold">DRI</label>
-                <textarea name="dri_fait" class="form-control" rows="2" style="resize:none;">
+    <!-- DRI -->
+    <div class="mb-4">
+        <label class="form-label fw-bold">DRI</label>
+        <textarea name="dri_fait" class="form-control" rows="1" style="resize:none;">
 {{ module.dri_fait|default_if_none:"" }}</textarea>
-            </div>
+    </div>
 
+</div>
 
-        </div>
 
         <!-- ========================= -->
         <!-- COLONNE DROITE (30%)     -->
         <!-- ========================= -->
-        <div class="col-md-4">
+<div class="col-md-4">
 
-            <div class="p-3 border rounded bg-light">
+    <div class="p-3 border rounded bg-light">
 
-                <h5 class="mb-3">Statuts</h5>
+        <h5 class="mb-3">Statuts</h5>
 
-                <!-- VA1330 CVAE -->
-                <label class="form-label fw-bold">VA-1330 CVAE</label>
-                <select name="statut_va1330_fait" class="form-select mb-3">
-                    {% for value, label in statuts %}
-                        <option value="{{ value }}" {% if module.statut_va1330_fait == value %}selected{% endif %}>
-                            {{ label }}
-                        </option>
-                    {% endfor %}
-                </select>
+        <!-- CA12 Déclaration Clôture -->
+        <label class="form-label fw-bold">CA12</label>
+        <select name="statut_ca12_decl_cloture" class="form-select mb-3">
+            {% for value, label in statuts %}
+                <option value="{{ value }}" {% if module.statut_ca12_decl_cloture == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
 
-                <!-- CVAE 1329DEF -->
-                <label class="form-label fw-bold">CVAE 1329DEF</label>
-                <select name="statut_cvae1329_fait" class="form-select mb-3">
-                    {% for value, label in statuts %}
-                        <option value="{{ value }}" {% if module.statut_cvae1329_fait == value %}selected{% endif %}>
-                            {{ label }}
-                        </option>
-                    {% endfor %}
-                </select>
+        <!-- IS Déclaration Clôture -->
+        <label class="form-label fw-bold">IS / CI</label>
+        <select name="statut_is_decl_cloture" class="form-select mb-3">
+            {% for value, label in statuts %}
+                <option value="{{ value }}" {% if module.statut_is_decl_cloture == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
 
+        <!-- VA1330 CVAE -->
+        <label class="form-label fw-bold">VA-1330 CVAE</label>
+        <select name="statut_va1330_fait" class="form-select mb-3">
+            {% for value, label in statuts %}
+                <option value="{{ value }}" {% if module.statut_va1330_fait == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
 
-                <!-- DECLOYER -->
-                <label class="form-label fw-bold">DEC LOYER</label>
-                <select name="statut_decloyer_fait" class="form-select mb-3">
-                    {% for value, label in statuts %}
-                        <option value="{{ value }}" {% if module.statut_decloyer_fait == value %}selected{% endif %}>
-                            {{ label }}
-                        </option>
-                    {% endfor %}
-                </select>
+        <!-- CVAE 1329DEF -->
+        <label class="form-label fw-bold">CVAE 1329DEF</label>
+        <select name="statut_cvae1329_fait" class="form-select mb-3">
+            {% for value, label in statuts %}
+                <option value="{{ value }}" {% if module.statut_cvae1329_fait == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
 
-                <!-- DAS2 -->
-                <label class="form-label fw-bold">DAS2</label>
-                <select name="statut_das2_fait" class="form-select mb-3">
-                    {% for value, label in statuts %}
-                        <option value="{{ value }}" {% if module.statut_das2_fait == value %}selected{% endif %}>
-                            {{ label }}
-                        </option>
-                    {% endfor %}
-                </select>
+        <!-- DECLOYER -->
+        <label class="form-label fw-bold">DEC LOYER</label>
+        <select name="statut_decloyer_fait" class="form-select mb-3">
+            {% for value, label in statuts %}
+                <option value="{{ value }}" {% if module.statut_decloyer_fait == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
 
-                <!-- DRI -->
-                <label class="form-label fw-bold">DRI fait</label>
-                <select name="statut_dri_fait" class="form-select mb-3">
-                    {% for value, label in statuts %}
-                        <option value="{{ value }}" {% if module.statut_dri_fait == value %}selected{% endif %}>
-                            {{ label }}
-                        </option>
-                    {% endfor %}
-                </select>
+        <!-- DAS2 -->
+        <label class="form-label fw-bold">DAS2</label>
+        <select name="statut_das2_fait" class="form-select mb-3">
+            {% for value, label in statuts %}
+                <option value="{{ value }}" {% if module.statut_das2_fait == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
 
+        <!-- DRI -->
+        <label class="form-label fw-bold">DRI fait</label>
+        <select name="statut_dri_fait" class="form-select mb-3">
+            {% for value, label in statuts %}
+                <option value="{{ value }}" {% if module.statut_dri_fait == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
 
-            </div>
-
-        </div>
     </div>
+
+</div>
+
 
     <!-- ========================= -->
     <!-- STATUT GÉNÉRAL (EN BAS)   -->

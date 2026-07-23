@@ -14,7 +14,7 @@ class ClotureStatus(models.TextChoices):
     ACCEPTE = "accepte", "Accepté"
     NA = "na", "N/A"
     NE_PAS_MODIFIER = "ne_pas_modifier", "Ne pas modifier"
-
+    TERMINE = "termine", "Terminé"
 
 class ClotureAnnee(models.Model):
     annee = models.PositiveIntegerField()
@@ -193,9 +193,14 @@ class ModuleDeclarations(models.Model):
     dri_envoi = models.CharField(max_length=255, blank=True, null=True)
     statut_dri_envoi = models.CharField(max_length=50, choices=ClotureStatus.choices, blank=True, null=True, default="non_commence")
 
+    ca12_decl_cloture = models.CharField(max_length=255, blank=True, null=True)
+    statut_ca12_decl_cloture = models.CharField(max_length=50, choices=ClotureStatus.choices, blank=True, null=True, default="non_commence")
+
+    is_decl_cloture = models.CharField(max_length=255, blank=True, null=True)
+    statut_is_decl_cloture = models.CharField(max_length=50, choices=ClotureStatus.choices, blank=True, null=True, default="non_commence")
+
     # Statut général
     statut_general = models.CharField(max_length=50, choices=ClotureStatus.choices, blank=True, null=True, default="non_commence")
-
 
 # -------------------------
 # Module Cloture Missions

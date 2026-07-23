@@ -5,6 +5,7 @@ from django.contrib import messages
 
 from .models import Client, Salarie, PaieMois, VariablePaie
 from .forms import VariablePaieForm
+from dossiers.notifications import envoyer_notifications_bs_verifie
 
 
 def dashboard_cabinet(request):
@@ -259,6 +260,8 @@ def cabinet_suivi_annuel(request):
             item.client = m.client_valide
             item.bs = m.bs_fait
             item.dsn = m.dsn_faite
+            item.bs_a_verifier = m.bs_a_verifier
+            item.bs_verifie_par_cabinet = m.bs_verifie_par_cabinet
 
         c.suivi = suivi
 
@@ -470,3 +473,17 @@ def valider_pour_client(request, paie_mois_id):
     messages.success(request, "Le mois a été validé pour le client et les notifications ont été envoyées.")
     return redirect("paie:liste_mois_client", client_id=mois.client.id)
 
+@login_required
+def paie_bs_verifie_par_cabinet(request, paie_id):
+    paie = get_object_or_404(PaieMois, id=paie_id)
+
+    # Le cabinet vérifie le BS
+    paie.bs_verifie_par_cabinet = True
+    paie.date_bs_verifie_par_cabinet = timezone.now()
+    paie.save()
+
+    # Envoi du mail au partenaire
+    envoyer_notifications_bs_verifie(paie)
+
+    messages.success(request, "Le BS a été vérifié par le cabinet.")
+    return redirect("paie:liste_mois_client", paie.client.id)

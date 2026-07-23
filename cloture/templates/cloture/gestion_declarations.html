@@ -42,6 +42,8 @@
         <tr>
             <th>N°</th>
             <th>Client</th>
+            <th>CA12</th>
+            <th>IS / CI</th>
             <th>VA1330</th>
             <th>1329DEF</th>
             <th>DECLOYER</th>
@@ -67,6 +69,16 @@
                 </a>
             </td>
 
+            <!-- CA12 -->
+            <td data-sort="{{ module.statut_ca12_decl_cloture }}">
+                {{ module.statut_ca12_decl_cloture|badge|safe }}
+            </td>
+
+            <!-- IS -->
+            <td data-sort="{{ module.statut_is_decl_cloture }}">
+                {{ module.statut_is_decl_cloture|badge|safe }}
+            </td>
+            
             <!-- VA1330 fait -->
             <td data-sort="{{ module.statut_va1330_fait }}">
                 {{ module.statut_va1330_fait|badge|safe }}

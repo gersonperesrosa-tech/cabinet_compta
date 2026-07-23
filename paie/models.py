@@ -41,9 +41,18 @@ class PaieMois(models.Model):
     date_validation_client = models.DateTimeField(null=True, blank=True)
     date_validation_partenaire = models.DateTimeField(null=True, blank=True)
 
-    # --- Nouveau : validation faite par le cabinet pour le client ---
+    # --- Validation faite par le cabinet pour le client ---
+    # (ce n'est PAS la vérification du BS)
     client_valide_par_cabinet = models.BooleanField(default=False)
     date_validation_par_cabinet = models.DateTimeField(null=True, blank=True)
+
+    # --- Étape manquante : BS à vérifier par le cabinet ---
+    bs_a_verifier = models.BooleanField(default=False)
+    date_bs_a_verifier = models.DateTimeField(null=True, blank=True)
+
+    # --- Étape manquante : BS vérifié par le cabinet ---
+    bs_verifie_par_cabinet = models.BooleanField(default=False)
+    date_bs_verifie_par_cabinet = models.DateTimeField(null=True, blank=True)
 
     # --- Suivi partenaire ---
     bs_fait = models.BooleanField(default=False)
@@ -55,6 +64,12 @@ class PaieMois(models.Model):
     # --- Suivi des validations forcées ---
     bs_force = models.BooleanField(default=False)
     dsn_force = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ("client", "annee", "mois")
+        ordering = ["-annee", "-mois"]
+        verbose_name = "Paie mois"
+        verbose_name_plural = "Paie mois"
 
     class Meta:
         unique_together = ("client", "annee", "mois")

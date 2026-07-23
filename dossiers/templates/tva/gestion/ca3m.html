@@ -101,25 +101,33 @@
         <!-- Échéance -->
         <td>{{ tca.client.jour_echeance_tva|default_if_none:"" }}</td>
 
-        <!-- Colonnes mensuelles -->
-        {% with decl=tca.declaration_obj %}
-            {% if decl %}
-                {% for montant, statut in decl.get_mensuels %}
-                    <td>
-                        <div class="d-flex align-items-center justify-content-end gap-2">
-                            <span class="text-end" style="min-width:70px; display:inline-block;">
-                                {{ montant|format_tva|default:" " }}
-                            </span>
-                            {% include "tva/partials/statut_badge_mini.html" with statut=statut %}
-                        </div>
-                    </td>
-                {% endfor %}
-            {% else %}
-                {% for _ in "123456789012" %}
-                    <td></td>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+<!-- Colonnes mensuelles -->
+{% with decl=tca.declaration_obj %}
+    {% if decl %}
+        {% for montant, statut, user in decl.get_mensuels %}
+            <td>
+                <div class="d-flex align-items-center justify-content-end gap-2">
+
+                    <span class="text-end" style="min-width:70px; display:inline-block;">
+                        {{ montant|format_tva|default:" " }}
+                    </span>
+
+                    {% include "tva/partials/statut_badge_mini.html" with statut=statut %}
+
+                    {% if user %}
+                        <span class="badge bg-light text-muted">{{ user }}</span>
+                    {% endif %}
+
+                </div>
+            </td>
+        {% endfor %}
+    {% else %}
+        {% for _ in "123456789012" %}
+            <td></td>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
 
         <!-- Total TVA -->
         <td style="background:#e9fbe8;">

@@ -112,7 +112,8 @@
 
                             <div class="col-md-6">
                                 <label class="form-label">Date MAJ compta</label>
-                                {{ form.date_maj_compta }}
+                                <input type="date" name="date_maj_compta" class="form-control"
+                                value="{{ suivi.date_maj_compta|date:'Y-m-d' }}">
                             </div>
 
                             <div class="col-md-6">
@@ -122,8 +123,8 @@
 
                             <div class="col-md-6">
                                 <label class="form-label">Saisi par</label>
-<input type="text" name="saisi_par" class="form-control"
-       value="{{ suivi.saisi_par|default:request.user.username }}">
+                                <input type="text" name="saisi_par" class="form-control"
+                                value="{{ suivi.saisi_par|default:request.user.username }}">
                             </div>
 
                             <div class="col-md-6">

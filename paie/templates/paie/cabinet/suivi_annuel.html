@@ -45,26 +45,34 @@
 
                 {% for mois in c.suivi %}
                 <td>
-                    <div class="d-flex justify-content-center gap-1">
+    <div class="d-flex justify-content-center gap-1">
 
-                        {% if mois.client %}
-                            <span class="badge bg-info">C</span>
-                        {% endif %}
+        {% if mois.client %}
+            <span class="badge bg-info">CL</span>
+        {% endif %}
 
-                        {% if mois.bs %}
-                            <span class="badge bg-success">BS</span>
-                        {% endif %}
+        {# --- BS à vérifier / BS vérifié (annuel, cabinet) --- #}
+        {% if mois.bs_verifie_par_cabinet %}
+            <span class="badge bg-success">BV</span>
+        {% elif mois.bs_a_verifier %}
+            <span class="badge bg-warning text-dark">BAV</span>
+        {% endif %}
 
-                        {% if mois.dsn %}
-                            <span class="badge bg-primary">DSN</span>
-                        {% endif %}
+        {% if mois.bs %}
+            <span class="badge bg-primary">BS</span>
+        {% endif %}
 
-                        {% if not mois.client and not mois.bs and not mois.dsn %}
-                            <span class="text-muted">—</span>
-                        {% endif %}
+        {% if mois.dsn %}
+            <span class="badge bg-primary">DSN</span>
+        {% endif %}
 
-                    </div>
-                </td>
+        {% if not mois.client and not mois.bs and not mois.dsn %}
+            <span class="text-muted">—</span>
+        {% endif %}
+
+    </div>
+</td>
+
                 {% endfor %}
 
             </tr>

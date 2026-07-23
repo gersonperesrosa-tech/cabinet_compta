@@ -17,6 +17,7 @@ BADGE_STYLES = {
 
     "na": ("bg-light text-dark border", "N/A"),
     "ne_pas_modifier": ("bg-dark text-white", "Ne pas modifier"),
+    "termine": ("bg-success", "Terminé"),
 }
 
 @register.filter

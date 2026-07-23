@@ -287,7 +287,6 @@ class HistoriqueTVA(models.Model):
         return f"{self.client.nom} – {self.annee} ({self.regime_tva})"
 
 
-
 class IS(models.Model):
 
     # 🔹 Client concerné
@@ -361,9 +360,9 @@ class IS(models.Model):
     def __str__(self):
         return f"IS – {self.client.nom} – {self.annee}"
 
-    # --------------------------------------------------------------------
-    # NOUVELLE STRUCTURE MODULES TVA
-    # --------------------------------------------------------------------
+# --------------------------------------------------------------------
+# NOUVELLE STRUCTURE MODULES TVA
+# --------------------------------------------------------------------
 
 class TVAAnnee(models.Model):
     annee = models.IntegerField(unique=True)
@@ -428,39 +427,51 @@ class TVADeclaration(models.Model):
     # -------------------------
     tva_janvier = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     statut_janvier = models.CharField(max_length=20, choices=TVA_STATUTS, default="NONE")
+    user_janvier = models.CharField(max_length=3, null=True, blank=True)
 
     tva_fevrier = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     statut_fevrier = models.CharField(max_length=20, choices=TVA_STATUTS, default="NONE")
+    user_fevrier = models.CharField(max_length=3, null=True, blank=True)
 
     tva_mars = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     statut_mars = models.CharField(max_length=20, choices=TVA_STATUTS, default="NONE")
+    user_mars = models.CharField(max_length=3, null=True, blank=True)
 
     tva_avril = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     statut_avril = models.CharField(max_length=20, choices=TVA_STATUTS, default="NONE")
+    user_avril = models.CharField(max_length=3, null=True, blank=True)
 
     tva_mai = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     statut_mai = models.CharField(max_length=20, choices=TVA_STATUTS, default="NONE")
+    user_mai = models.CharField(max_length=3, null=True, blank=True)
 
     tva_juin = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     statut_juin = models.CharField(max_length=20, choices=TVA_STATUTS, default="NONE")
+    user_juin = models.CharField(max_length=3, null=True, blank=True)
 
     tva_juillet = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     statut_juillet = models.CharField(max_length=20, choices=TVA_STATUTS, default="NONE")
+    user_juillet = models.CharField(max_length=3, null=True, blank=True)
 
     tva_aout = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     statut_aout = models.CharField(max_length=20, choices=TVA_STATUTS, default="NONE")
+    user_aout = models.CharField(max_length=3, null=True, blank=True)
 
     tva_septembre = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     statut_septembre = models.CharField(max_length=20, choices=TVA_STATUTS, default="NONE")
+    user_septembre = models.CharField(max_length=3, null=True, blank=True)
 
     tva_octobre = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     statut_octobre = models.CharField(max_length=20, choices=TVA_STATUTS, default="NONE")
+    user_octobre = models.CharField(max_length=3, null=True, blank=True)
 
     tva_novembre = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     statut_novembre = models.CharField(max_length=20, choices=TVA_STATUTS, default="NONE")
+    user_novembre = models.CharField(max_length=3, null=True, blank=True)
 
     tva_decembre = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     statut_decembre = models.CharField(max_length=20, choices=TVA_STATUTS, default="NONE")
+    user_decembre = models.CharField(max_length=3, null=True, blank=True)
 
     # -------------------------
     # CA3T (Trimestriel)
@@ -501,19 +512,20 @@ class TVADeclaration(models.Model):
 
     def get_mensuels(self):
         return [
-            (self.tva_janvier, self.statut_janvier),
-            (self.tva_fevrier, self.statut_fevrier),
-            (self.tva_mars, self.statut_mars),
-            (self.tva_avril, self.statut_avril),
-            (self.tva_mai, self.statut_mai),
-            (self.tva_juin, self.statut_juin),
-            (self.tva_juillet, self.statut_juillet),
-            (self.tva_aout, self.statut_aout),
-            (self.tva_septembre, self.statut_septembre),
-            (self.tva_octobre, self.statut_octobre),
-            (self.tva_novembre, self.statut_novembre),
-            (self.tva_decembre, self.statut_decembre),
+            (self.tva_janvier, self.statut_janvier, self.user_janvier),
+            (self.tva_fevrier, self.statut_fevrier, self.user_fevrier),
+            (self.tva_mars, self.statut_mars, self.user_mars),
+            (self.tva_avril, self.statut_avril, self.user_avril),
+            (self.tva_mai, self.statut_mai, self.user_mai),
+            (self.tva_juin, self.statut_juin, self.user_juin),
+            (self.tva_juillet, self.statut_juillet, self.user_juillet),
+            (self.tva_aout, self.statut_aout, self.user_aout),
+            (self.tva_septembre, self.statut_septembre, self.user_septembre),
+            (self.tva_octobre, self.statut_octobre, self.user_octobre),
+            (self.tva_novembre, self.statut_novembre, self.user_novembre),
+            (self.tva_decembre, self.statut_decembre, self.user_decembre),
         ]
+
 
     def get_trimestriels(self):
         return [
@@ -792,6 +804,17 @@ class DESDEBDeclaration(models.Model):
     # -------------------------------------------------------
 
 class DividendesDeclaration(models.Model):
+
+    DIVIDEND_STATUTS = [
+        ("BLANC", "Blanc"),
+        ("ORANGE", "A envoyer client (orange)"),
+        ("JAUNE", "Envoyé client (jaune)"),
+        ("VERT_CLAIR", "Télétransmis (vert clair)"),
+        ("VERT_FONCE", "Accepté (vert foncé)"),
+        ("ROUGE", "Rejeté (rouge)"),
+        ("NA", "N/A (gris)"),
+    ]
+
     client_module = models.OneToOneField(
         ClientModuleFiscal,
         on_delete=models.CASCADE,
@@ -805,10 +828,14 @@ class DividendesDeclaration(models.Model):
     date_2777d = models.DateField(blank=True, null=True)
     date_2561 = models.DateField(blank=True, null=True)
 
+    # Nouveaux statuts
+    statut_2777d = models.CharField(max_length=20, choices=DIVIDEND_STATUTS, blank=True, null=True)
+    statut_2561 = models.CharField(max_length=20, choices=DIVIDEND_STATUTS, blank=True, null=True)
+
     annee_versement = models.CharField(max_length=10, blank=True, null=True)
     commentaires = models.TextField(blank=True, null=True)
 
-    statut_dividendes = models.CharField(max_length=20, blank=True, null=True)
+    statut_dividendes = models.CharField(max_length=20, choices=DIVIDEND_STATUTS, blank=True, null=True)
 
     def __str__(self):
         return f"Dividendes {self.client_module}"
@@ -860,7 +887,6 @@ class DPDeclaration(models.Model):
 
 from django.db import models
 from django.contrib.auth.models import User
-
 
 class NoteTag(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
@@ -1357,6 +1383,8 @@ from django.db import models
 class NotificationEmail(models.Model):
     EVENT_CHOICES = [
         ("PAIE_VALIDEE", "Validation du mois de paie"),
+        ("BS_A_VERIFIER", "BS à vérifier par le cabinet"),
+        ("BS_VERIFIE", "BS vérifié par le cabinet"),
         ("BS_FAIT", "Bulletins de salaire faits"),
         ("DSN_FAITE", "DSN faite"),
     ]
@@ -1366,6 +1394,7 @@ class NotificationEmail(models.Model):
 
     def __str__(self):
         return f"{self.email} ({self.get_event_display()})"
+
 
 class EmailLog(models.Model):
     event = models.CharField(max_length=50)

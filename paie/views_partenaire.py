@@ -3,9 +3,11 @@ from django.contrib.auth.decorators import login_required
 from paie.models import Client, PaieMois, Salarie, VariablePaie
 from dossiers.models import NotificationPaie
 from django.utils import timezone
+from django.contrib import messages
 from dossiers.notifications import (
     envoyer_notifications_bs,
     envoyer_notifications_dsn,
+    envoyer_notifications_bs_a_verifier,
 )
 
 
@@ -153,6 +155,20 @@ def partenaire_detail_salarie_mois(request, paie_mois_id, salarie_id):
         "salarie": salarie,
         "variables": variables,
     })
+
+@login_required
+def paie_bs_a_verifier(request, paie_id):
+    paie = get_object_or_404(PaieMois, id=paie_id)
+
+    paie.bs_a_verifier = True
+    paie.date_bs_a_verifier = timezone.now()
+    paie.save()
+
+    # Appel correct
+    envoyer_notifications_bs_a_verifier(paie)
+
+    messages.success(request, "Le BS a été envoyé au cabinet pour vérification.")
+    return redirect("paie:partenaire_mois_client", paie.client.id)
 
 
 @login_required

@@ -34,8 +34,6 @@
             <th>N°</th>
             <th>Client</th>
             <th>Révisions, Plaquette et Liasse</th>
-            <th>CA12</th>
-            <th>IS/CI</th>
             <th>Déclarations</th>
             <th>Mission</th>
             <th>Juridique</th>
@@ -68,37 +66,6 @@
                 {% if row.revision %}
                     <a href="{% url 'revision_detail' row.revision.id %}">
                         {{ row.revision.statut_general|badge|safe }}
-                    </a>
-                {% endif %}
-            </td>
-
-
-            <!-- CA12 -->
-            <td 
-                {% if row.ca12 %}
-                    data-sort="{{ row.ca12.statut_general }}"
-                {% else %}
-                    data-sort=""
-                {% endif %}
-            >
-                {% if row.ca12 %}
-                    <a href="{% url 'ca12_detail' row.ca12.id %}">
-                        {{ row.ca12.statut_general|badge|safe }}
-                    </a>
-                {% endif %}
-            </td>
-
-            <!-- IS/CI -->
-            <td 
-                {% if row.isci %}
-                    data-sort="{{ row.isci.statut_general }}"
-                {% else %}
-                    data-sort=""
-                {% endif %}
-            >
-                {% if row.isci %}
-                    <a href="{% url 'isci_detail' row.isci.id %}">
-                        {{ row.isci.statut_general|badge|safe }}
                     </a>
                 {% endif %}
             </td>

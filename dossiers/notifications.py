@@ -86,6 +86,36 @@ def envoyer_notifications_dsn(mois):
         },
     )
 
+# BS à vérifier (partenaire -> cabinet)
+def envoyer_notifications_bs_a_verifier(mois):
+    envoyer_email(
+        event="BS_A_VERIFIER",
+        template_name="emails/bs_a_verifier.html",
+        subject=f"BS à vérifier – {mois.client} – {mois.mois}/{mois.annee}",
+        context={
+            "mois": mois,
+            "preheader": (
+                f"Le partenaire a terminé le BS pour {mois.client} "
+                f"et demande une vérification pour {mois.mois}/{mois.annee}."
+            ),
+        },
+    )
+
+# BS vérifié par le cabinet (cabinet -> partenaire)
+def envoyer_notifications_bs_verifie(mois):
+    envoyer_email(
+        event="BS_VERIFIE",
+        template_name="emails/bs_verifie.html",
+        subject=f"BS à vérifié – {mois.client} – {mois.mois}/{mois.annee}",
+        context={
+            "mois": mois,
+            "preheader": (
+                f"Le cabinet a vérifié les BS pour {mois.client} "
+            ),
+        },
+    )
+
+
 
 # ============================
 #  RELANCE CLIENT

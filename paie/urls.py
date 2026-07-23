@@ -2,8 +2,6 @@ from django.urls import path
 from . import views_client, views_partenaire, views_cabinet
 from .views import paie_client_dashboard
 
-
-
 app_name = "paie"
 
 urlpatterns = [
@@ -32,11 +30,7 @@ urlpatterns = [
     path("partenaire/mois/<int:paie_mois_id>/bs-fait/", views_partenaire.partenaire_bs_fait, name="partenaire_bs_fait"),
     path("partenaire/mois/<int:paie_mois_id>/dsn-faite/", views_partenaire.partenaire_dsn_faite, name="partenaire_dsn_faite"),
     path("partenaire/notifications/<int:notif_id>/lu/", views_partenaire.notification_lue, name="notification_lue"),
-
-
-
-
-
+    path("bs-a-verifier/<int:paie_id>/", views_partenaire.paie_bs_a_verifier, name="partenaire_bs_a_verifier"),
 
     # ----------------------------------------------------
     #   INTERFACE CABINET
@@ -44,9 +38,7 @@ urlpatterns = [
     path("cabinet/", views_cabinet.dashboard_cabinet, name="cabinet_dashboard"),
     path("cabinet/clients-paie/", views_cabinet.clients_paie, name="cabinet_clients_paie"),
     path("cabinet/suivi-annuel/", views_cabinet.cabinet_suivi_annuel, name="cabinet_suivi_annuel"),
-
-
-
+    path("bs-verifie/<int:paie_id>/", views_cabinet.paie_bs_verifie_par_cabinet, name="cabinet_bs_verifie"),
 
     # ----------------------------------------------------
     #   SALARIÉS (gestion côté cabinet)
@@ -57,7 +49,6 @@ urlpatterns = [
     path("cabinet/salarie/<int:salarie_id>/supprimer/", views_cabinet.supprimer_salarie, name="cabinet_supprimer_salarie"),
     path("cabinet/salarie/<int:salarie_id>/", views_cabinet.cabinet_fiche_salarie, name="cabinet_fiche_salarie"),
     path("cabinet/salarie/<int:salarie_id>/remunerations/", views_cabinet.cabinet_salarie_remunerations, name="cabinet_salarie_remunerations"),
-
 
     # ----------------------------------------------------
     #   VARIABLES DE PAIE (gestion côté cabinet)
@@ -78,8 +69,6 @@ urlpatterns = [
     path("mois/<int:paie_mois_id>/valider/", views_cabinet.valider_mois_client, name="valider_mois_client"),
     path("client/mois/creer-suivant/", views_client.creer_mois_suivant, name="client_creer_mois_suivant"),
     path("mois/<int:paie_mois_id>/devalider/", views_cabinet.devalider_mois, name="devalider_mois"),
-
-
 
     # ----------------------------------------------------
     #  LISTE DES MOIS

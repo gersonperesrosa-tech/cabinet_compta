@@ -79,6 +79,25 @@
 <td>
     <div class="d-flex gap-2">
 
+{# --- BS à vérifier / BS vérifié --- #}
+{% if m.bs_verifie_par_cabinet %}
+    <span class="badge bg-success text-start">
+        BS vérifié<br>
+        {{ m.date_bs_verifie_par_cabinet|date:"d/m/Y H:i" }}
+    </span>
+
+{% elif m.bs_a_verifier %}
+    <span class="badge bg-warning text-dark text-start">
+        BS à vérifier<br>
+        {{ m.date_bs_a_verifier|date:"d/m/Y H:i" }}
+    </span>
+
+{% else %}
+    <span class="badge bg-secondary text-start">
+        BS non envoyé au cabinet
+    </span>
+{% endif %}
+
         {# --- BS --- #}
         {% if m.bs_fait %}
             {% if m.bs_force %}
@@ -87,7 +106,7 @@
                     {{ m.date_bs_fait|date:"d/m/Y H:i" }}
                 </span>
             {% else %}
-                <span class="badge bg-success text-start">
+                <span class="badge bg-primary text-start">
                     BS fait<br>
                     {{ m.date_bs_fait|date:"d/m/Y H:i" }}
                 </span>
@@ -119,6 +138,22 @@
 <!-- Actions -->
 <td class="text-center">
 
+    {% if m.bs_a_verifier %}
+    <form method="post"
+          action="{% url 'paie:cabinet_bs_verifie' m.id %}"
+          class="d-inline">
+        {% csrf_token %}
+        <button type="submit"
+                class="btn btn-sm btn-outline-success"
+                data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                title="Le cabinet confirme que le BS a été vérifié">
+            BS vérifié
+        </button>
+    </form>
+    {% endif %}
+
+
     <a href="{% url 'paie:variables_paie_salaries' m.id %}"
        class="btn btn-sm btn-outline-primary">
         Ouvrir
@@ -135,7 +170,7 @@
     {% if not m.bs_fait or not m.dsn_faite %}
         <a href="{% url 'paie:forcer_validation_mois' m.id %}"
            class="btn btn-sm btn-outline-warning"
-           onclick="return confirm('Forcer la validation BS + DSN pour ce mois ?');">
+           onclick="return confirm('Forcer la validation BS + DSN pour ce mois à la place du partenaire ?');">
             Forcer validation
         </a>
     {% endif %}
@@ -166,5 +201,13 @@
     </table>
 
 </div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    });
+</script>
 {% endblock %}
 

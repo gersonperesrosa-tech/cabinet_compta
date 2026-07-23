@@ -73,7 +73,7 @@ def cloture_detail(request, cloture_id):
 @login_required
 def cloture_add_clients(request, cloture_id):
     cloture = get_object_or_404(ClotureAnnee, id=cloture_id)
-    clients = Client.objects.all().order_by("nom")
+    clients = Client.objects.filter(archive=False).order_by("nom")
 
     if request.method == "POST":
         selected_ids = request.POST.getlist("clients")
@@ -398,6 +398,8 @@ def declarations_detail(request, module_id):
 
     if request.method == "POST":
         fields = [
+            "ca12_decl_cloture", "statut_ca12_decl_cloture",
+            "is_decl_cloture", "statut_is_decl_cloture",
             "va1330_fait", "statut_va1330_fait",
             "va1330_envoi", "statut_va1330_envoi",
             "cvae1329_fait", "statut_cvae1329_fait",
@@ -544,34 +546,31 @@ def gestion_globale_cloture(request):
 
         # Récupération des modules
         row["revision"] = ModuleRevision.objects.filter(client=client, cloture__annee=selected_year).first()
-        row["plaquettes"] = ModulePlaquettesLiasse.objects.filter(client=client, cloture__annee=selected_year).first()
-        row["ca12"] = ModuleCA12.objects.filter(client=client, cloture__annee=selected_year).first()
-        row["isci"] = ModuleISCI.objects.filter(client=client, cloture__annee=selected_year).first()
         row["declarations"] = ModuleDeclarations.objects.filter(client=client, cloture__annee=selected_year).first()
         row["mission"] = ModuleMission.objects.filter(client=client, cloture__annee=selected_year).first()
         row["juridique"] = ModuleJuridique.objects.filter(client=client, cloture__annee=selected_year).first()
 
-        # Liste des statuts (hors N/A)
+        # Liste des statuts (on garde NA dans la liste cette fois)
         statuts = [
-            m.statut_general
+        m.statut_general
             for m in [
-                row["revision"], row["plaquettes"], row["ca12"],
-                row["isci"], row["declarations"], row["mission"], row["juridique"]
+                row["revision"],
+                row["declarations"], row["mission"], row["juridique"]
             ]
-            if m is not None and m.statut_general != "na"
+            if m is not None
         ]
 
-        # Cas où tous les modules sont N/A
+        # Si aucun module n'existe
         if not statuts:
             row["statut_global"] = "non_commence"
 
-        # Tous = non commencé
+        # Si tous les statuts sont dans {na, termine, envoye}
+        elif all(s in ["na", "termine", "envoye"] for s in statuts):
+            row["statut_global"] = "termine"
+
+        # Si tous = non_commence
         elif all(s == "non_commence" for s in statuts):
             row["statut_global"] = "non_commence"
-
-        # Tous = terminé
-        elif all(s == "envoye" for s in statuts):
-            row["statut_global"] = "envoye"
 
         # Sinon = en cours
         else:

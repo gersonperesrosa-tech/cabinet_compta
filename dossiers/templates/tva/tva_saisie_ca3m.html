@@ -17,6 +17,7 @@
                 <th>Mois</th>
                 <th>Montant TVA</th>
                 <th>Statut</th>
+                <th>Initiales</th>
             </tr>
         </thead>
         <tbody>
@@ -35,6 +36,13 @@
                     {% include "partials/statut_options.html" with selected=declaration.statut_janvier only %}
                 </select>
             </td>
+            <td>
+                <input type="text"
+                       name="user_janvier"
+                       maxlength="3"
+                       class="form-control text-uppercase"
+                       value="{{ declaration.user_janvier|default_if_none:'' }}">
+            </td>
         </tr>
 
         {# FÉVRIER #}
@@ -50,6 +58,13 @@
                 <select name="statut_fevrier" class="form-select">
                     {% include "partials/statut_options.html" with selected=declaration.statut_fevrier only %}
                 </select>
+            </td>
+            <td>
+                <input type="text"
+                       name="user_fevrier"
+                       maxlength="3"
+                       class="form-control text-uppercase"
+                       value="{{ declaration.user_fevrier|default_if_none:'' }}">
             </td>
         </tr>
 
@@ -67,6 +82,13 @@
                     {% include "partials/statut_options.html" with selected=declaration.statut_mars only %}
                 </select>
             </td>
+            <td>
+                <input type="text"
+                       name="user_mars"
+                       maxlength="3"
+                       class="form-control text-uppercase"
+                       value="{{ declaration.user_mars|default_if_none:'' }}">
+            </td>
         </tr>
 
         {# AVRIL #}
@@ -82,6 +104,13 @@
                 <select name="statut_avril" class="form-select">
                     {% include "partials/statut_options.html" with selected=declaration.statut_avril only %}
                 </select>
+            </td>
+            <td>
+                <input type="text"
+                       name="user_avril"
+                       maxlength="3"
+                       class="form-control text-uppercase"
+                       value="{{ declaration.user_avril|default_if_none:'' }}">
             </td>
         </tr>
 
@@ -99,6 +128,13 @@
                     {% include "partials/statut_options.html" with selected=declaration.statut_mai only %}
                 </select>
             </td>
+            <td>
+                <input type="text"
+                       name="user_mai"
+                       maxlength="3"
+                       class="form-control text-uppercase"
+                       value="{{ declaration.user_mai|default_if_none:'' }}">
+            </td>
         </tr>
 
         {# JUIN #}
@@ -114,6 +150,13 @@
                 <select name="statut_juin" class="form-select">
                     {% include "partials/statut_options.html" with selected=declaration.statut_juin only %}
                 </select>
+            </td>
+            <td>
+                <input type="text"
+                       name="user_juin"
+                       maxlength="3"
+                       class="form-control text-uppercase"
+                       value="{{ declaration.user_juin|default_if_none:'' }}">
             </td>
         </tr>
 
@@ -131,6 +174,13 @@
                     {% include "partials/statut_options.html" with selected=declaration.statut_juillet only %}
                 </select>
             </td>
+            <td>
+                <input type="text"
+                       name="user_juillet"
+                       maxlength="3"
+                       class="form-control text-uppercase"
+                       value="{{ declaration.user_juillet|default_if_none:'' }}">
+            </td>
         </tr>
 
         {# AOÛT #}
@@ -146,6 +196,13 @@
                 <select name="statut_aout" class="form-select">
                     {% include "partials/statut_options.html" with selected=declaration.statut_aout only %}
                 </select>
+            </td>
+            <td>
+                <input type="text"
+                       name="user_aout"
+                       maxlength="3"
+                       class="form-control text-uppercase"
+                       value="{{ declaration.user_aout|default_if_none:'' }}">
             </td>
         </tr>
 
@@ -163,6 +220,13 @@
                     {% include "partials/statut_options.html" with selected=declaration.statut_septembre only %}
                 </select>
             </td>
+            <td>
+                <input type="text"
+                       name="user_septembre"
+                       maxlength="3"
+                       class="form-control text-uppercase"
+                       value="{{ declaration.user_septembre|default_if_none:'' }}">
+            </td>
         </tr>
 
         {# OCTOBRE #}
@@ -178,6 +242,13 @@
                 <select name="statut_octobre" class="form-select">
                     {% include "partials/statut_options.html" with selected=declaration.statut_octobre only %}
                 </select>
+            </td>
+            <td>
+                <input type="text"
+                       name="user_octobre"
+                       maxlength="3"
+                       class="form-control text-uppercase"
+                       value="{{ declaration.user_octobre|default_if_none:'' }}">
             </td>
         </tr>
 
@@ -195,6 +266,13 @@
                     {% include "partials/statut_options.html" with selected=declaration.statut_novembre only %}
                 </select>
             </td>
+            <td>
+                <input type="text"
+                       name="user_novembre"
+                       maxlength="3"
+                       class="form-control text-uppercase"
+                       value="{{ declaration.user_novembre|default_if_none:'' }}">
+            </td>
         </tr>
 
         {# DÉCEMBRE #}
@@ -211,13 +289,19 @@
                     {% include "partials/statut_options.html" with selected=declaration.statut_decembre only %}
                 </select>
             </td>
+            <td>
+                <input type="text"
+                       name="user_decembre"
+                       maxlength="3"
+                       class="form-control text-uppercase"
+                       value="{{ declaration.user_decembre|default_if_none:'' }}">
+            </td>
         </tr>
 
         </tbody>
     </table>
 
     <div class="d-flex justify-content-between align-items-center mt-4">
-
         <a href="{% url 'tva_clients_module' tca.module.id %}"
            class="btn btn-outline-secondary">
             Retour au Module Mensuel
@@ -226,10 +310,10 @@
         <button type="submit" class="btn btn-primary">
             Enregistrer
         </button>
-
     </div>
 
 </form>
+
 
 </section>
 
