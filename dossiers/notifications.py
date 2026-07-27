@@ -106,7 +106,7 @@ def envoyer_notifications_bs_verifie(mois):
     envoyer_email(
         event="BS_VERIFIE",
         template_name="emails/bs_verifie.html",
-        subject=f"BS à vérifié – {mois.client} – {mois.mois}/{mois.annee}",
+        subject=f"BS vérifié – {mois.client} – {mois.mois}/{mois.annee}",
         context={
             "mois": mois,
             "preheader": (
