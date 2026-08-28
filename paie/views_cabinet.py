@@ -77,6 +77,25 @@ def modifier_salarie(request, salarie_id):
 
 
 @login_required
+def sortie_salarie(request, salarie_id):
+    salarie = get_object_or_404(Salarie, id=salarie_id)
+    client = salarie.client
+
+    if request.method == "POST":
+        date_sortie = request.POST.get("date_sortie")
+
+        if date_sortie:
+            salarie.date_sortie = date_sortie
+            salarie.actif = False
+            salarie.save()
+
+        return redirect("paie:cabinet_liste_salaries_client", client_id=client.id)
+
+    # Si quelqu’un accède en GET, on renvoie vers la fiche
+    return redirect("paie:cabinet_modifier_salarie", salarie_id=salarie.id)
+
+
+@login_required
 def supprimer_salarie(request, salarie_id):
     salarie = get_object_or_404(Salarie, id=salarie_id)
     client_id = salarie.client.id
@@ -108,12 +127,39 @@ def cabinet_salarie_remunerations(request, salarie_id):
 #   VARIABLES DE PAIE
 # ----------------------------------------------------
 
+from datetime import date
+import calendar
+from django.db import models
+
+from datetime import date
+from django.db import models
+import calendar
+
 @login_required
 def variables_paie_salaries(request, paie_mois_id):
     paie_mois = get_object_or_404(PaieMois, id=paie_mois_id)
-    salaries = Salarie.objects.filter(client=paie_mois.client).order_by("nom")
 
-    # On récupère les variables existantes pour chaque salarié
+    # Début du mois (ex : 2026-06-01)
+    date_debut_mois = date(paie_mois.annee, paie_mois.mois, 1)
+
+    # Fin du mois (ex : 2026-06-30)
+    dernier_jour = calendar.monthrange(paie_mois.annee, paie_mois.mois)[1]
+    date_fin_mois = date(paie_mois.annee, paie_mois.mois, dernier_jour)
+
+    # Règle :
+    # - actif → afficher
+    # - date_sortie NULL → afficher
+    # - date_sortie >= date_debut_mois → afficher
+    # - date_sortie < date_debut_mois → NE PAS afficher
+    salaries = Salarie.objects.filter(
+        client=paie_mois.client
+    ).filter(
+        models.Q(actif=True) |
+        models.Q(date_sortie__isnull=True) |
+        models.Q(date_sortie__gte=date_debut_mois)
+    ).order_by("nom")
+
+    # Variables existantes
     variables_dict = {
         v.salarie_id: v
         for v in VariablePaie.objects.filter(paie_mois=paie_mois)
@@ -124,6 +170,8 @@ def variables_paie_salaries(request, paie_mois_id):
         "salaries": salaries,
         "variables_dict": variables_dict,
     })
+
+
 
 
 @login_required

@@ -1,0 +1,41 @@
+{% extends "base_paie_client.html" %}
+
+{% block content %}
+<section class="section">
+
+<div class="container mt-5">
+
+    <div class="card shadow-sm p-4">
+
+        <h2 class="mb-3 text-danger">
+            Salarié non disponible pour ce mois
+        </h2>
+
+        <p class="mb-4">
+            Le salarié <strong>{{ salarie.prenom }} {{ salarie.nom }}</strong> ne fait plus partie de l'entreprise
+            pour le mois de paie <strong>{{ mois.mois }}/{{ mois.annee }}</strong>.
+        </p>
+
+        <p class="text-muted">
+            Il a quitté l'entreprise le 
+            <strong>
+                {% if salarie.date_sortie %}
+                    {{ salarie.date_sortie|date:"d/m/Y" }}
+                {% else %}
+                    (date de sortie inconnue)
+                {% endif %}
+            </strong>.
+        </p>
+
+        <div class="mt-4">
+            <a href="{% url 'paie:client_mois_detail' mois.id %}" class="btn btn-secondary">
+                ← Retour au mois de paie
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+</section>
+{% endblock %}

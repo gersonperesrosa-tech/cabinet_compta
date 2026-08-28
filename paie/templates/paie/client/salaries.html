@@ -5,6 +5,13 @@
 
 <h1 class="mb-4">Liste des Salariés</h1>
 
+<div class="d-flex gap-2 mb-3">
+    <button class="btn btn-outline-primary" id="filterActifs">Actifs</button>
+    <button class="btn btn-outline-secondary" id="filterInactifs">Inactifs</button>
+    <button class="btn btn-outline-dark" id="filterTous">Tous</button>
+</div>
+
+
 <table class="table table-hover align-middle">
     <thead>
         <tr>
@@ -22,7 +29,7 @@
     <tbody>
         {% for s in salaries %}
         <tr>
-
+            <td class="is-actif d-none">{{ s.actif }}</td>
             <td>{{ s.nom }}</td>
             <td>{{ s.prenom }}</td>
 
@@ -64,8 +71,14 @@
                 {% if s.actif %}
                     <span class="badge bg-success">Actif</span>
                 {% else %}
-                    <span class="badge bg-secondary">Sorti</span>
+                <span class="badge bg-secondary">
+                    Sorti
+                    {% if s.date_sortie %}
+                        – {{ s.date_sortie|date:"d/m/Y" }}
+                    {% endif %}
+                </span>
                 {% endif %}
+
             </td>
 
             <td class="text-end">
@@ -107,5 +120,45 @@ document.querySelectorAll("table thead th").forEach((header, index) => {
     });
 });
 </script>
+
+<!-- Filtre des salariés -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const rows = document.querySelectorAll("table tbody tr");
+
+    const filterActifsBtn = document.getElementById("filterActifs");
+    const filterInactifsBtn = document.getElementById("filterInactifs");
+    const filterTousBtn = document.getElementById("filterTous");
+
+    function applyFilterActifs() {
+        rows.forEach(row => {
+            const actif = row.querySelector(".is-actif").innerText.trim() === "True";
+            row.style.display = actif ? "" : "none";
+        });
+    }
+
+    // --- FILTRE ACTIFS ---
+    filterActifsBtn.addEventListener("click", applyFilterActifs);
+
+    // --- FILTRE INACTIFS ---
+    filterInactifsBtn.addEventListener("click", function () {
+        rows.forEach(row => {
+            const actif = row.querySelector(".is-actif").innerText.trim() === "True";
+            row.style.display = actif ? "none" : "";
+        });
+    });
+
+    // --- FILTRE TOUS ---
+    filterTousBtn.addEventListener("click", function () {
+        rows.forEach(row => row.style.display = "");
+    });
+
+    // --- APPLIQUER LE FILTRE ACTIFS AU CHARGEMENT ---
+    applyFilterActifs();
+
+});
+</script>
+
 
 {% endblock %}

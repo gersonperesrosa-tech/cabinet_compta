@@ -106,6 +106,10 @@ def client_salarie_remunerations(request, salarie_id):
 #   VARIABLES
 # ----------------------------------------------------
 
+from datetime import date
+from django.db import models
+import calendar
+
 @login_required
 def variables_salarie(request, mois_id, salarie_id):
 
@@ -118,6 +122,28 @@ def variables_salarie(request, mois_id, salarie_id):
         client = request.user.client
         mois = get_object_or_404(PaieMois, id=mois_id, client=client)
         salarie = get_object_or_404(Salarie, id=salarie_id, client=client)
+
+    # --- LOGIQUE D'AFFICHAGE DU SALARIÉ DANS CE MOIS -----------------------
+
+    # Début du mois (ex : 2026-06-01)
+    date_debut_mois = date(mois.annee, mois.mois, 1)
+
+    # Le salarié doit apparaître si :
+    # - actif
+    # - OU date_sortie NULL
+    # - OU date_sortie >= début du mois
+    if not (
+        salarie.actif or
+        salarie.date_sortie is None or
+        salarie.date_sortie >= date_debut_mois
+    ):
+        # Le salarié est sorti avant ce mois → on bloque l'accès
+        return render(request, "paie/client/salaries/salarie_non_disponible.html", {
+            "mois": mois,
+            "salarie": salarie,
+        })
+
+    # -----------------------------------------------------------------------
 
     # Si le mois est validé → pas de modification
     if mois.client_valide:
@@ -147,8 +173,9 @@ def variables_salarie(request, mois_id, salarie_id):
     return render(request, "paie/client/variables_salarie.html", {
         "mois": mois,
         "salarie": salarie,
-        "variables": variables,   # ← ESSENTIEL
+        "variables": variables,
     })
+
 
 # ----------------------------------------------------
 #   MOIS
@@ -228,19 +255,37 @@ def creer_mois_suivant(request):
     return redirect("paie:client_liste_mois")
 
 
+from datetime import date
+from django.db import models
+import calendar
+
 @login_required
 def mois_detail(request, mois_id):
 
     # ADMIN → accès total
     if request.user.groups.filter(name="Utilisateur").exists():
         mois = get_object_or_404(PaieMois, id=mois_id)
-        salaries = Salarie.objects.filter(client=mois.client).order_by("nom")
-
+        client = mois.client
     else:
         # CLIENT → accès limité
         client = request.user.client
         mois = get_object_or_404(PaieMois, id=mois_id, client=client)
-        salaries = Salarie.objects.filter(client=client).order_by("nom")
+
+    # --- LOGIQUE D'AFFICHAGE DES SALARIÉS POUR CE MOIS ---------------------
+
+    # Début du mois (ex : 2026-06-01)
+    date_debut_mois = date(mois.annee, mois.mois, 1)
+
+    # Filtre identique à celui utilisé dans variables_paie_salaries
+    salaries = Salarie.objects.filter(
+        client=client
+    ).filter(
+        models.Q(actif=True) |
+        models.Q(date_sortie__isnull=True) |
+        models.Q(date_sortie__gte=date_debut_mois)
+    ).order_by("nom")
+
+    # -----------------------------------------------------------------------
 
     # Récupération de toutes les variables du mois
     variables = VariablePaie.objects.filter(paie_mois=mois)
@@ -253,6 +298,7 @@ def mois_detail(request, mois_id):
         "salaries": salaries,
         "variables_dict": variables_dict,
     })
+
 
 
 @login_required

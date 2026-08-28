@@ -20,11 +20,7 @@
         <input type="text" id="searchInput" class="form-control w-50"
                placeholder="Rechercher un salarié...">
 
-        <!-- Boutons filtre -->
-        <div class="d-flex gap-2">
-            <button class="btn btn-outline-primary" id="filterActifs">Actifs</button>
-            <button class="btn btn-outline-secondary" id="filterTous">Tous</button>
-        </div>
+        
 
     </div>
 
@@ -122,6 +118,7 @@
         <th>Autres infos</th>
         <th>Actif</th>
         <th class="text-end">Actions</th>
+        <td class="present-mois d-none">{{ ligne.present_ce_mois }}</td>
     </tr>
 </thead>
 
@@ -205,13 +202,13 @@ document.addEventListener("DOMContentLoaded", function () {
     // --- FILTRE ACTIFS ---
     filterActifsBtn.addEventListener("click", function () {
         rows.forEach(row => {
-            const actifBadge = row.querySelector("td:nth-child(11) .badge");
-            const isActif = actifBadge && actifBadge.classList.contains("bg-success");
-            row.style.display = isActif ? "" : "none";
+            const present = row.querySelector(".present-mois").innerText.trim() === "True";
+            row.style.display = present ? "" : "none";
         });
 
         searchInput.value = "";
     });
+
 
     // --- FILTRE TOUS ---
     filterTousBtn.addEventListener("click", function () {

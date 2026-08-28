@@ -113,12 +113,33 @@ def partenaire_mois_client(request, client_id):
     })
 
 
+from datetime import date
+from django.db import models
+import calendar
+
+from datetime import date
+from django.db import models
+import calendar
+
 @login_required
 def partenaire_variables_mois(request, paie_mois_id):
     paie_mois = get_object_or_404(PaieMois, id=paie_mois_id)
 
-    # Tri des salariés par NOM (A → Z)
-    salaries = Salarie.objects.filter(client=paie_mois.client).order_by("nom")
+    # --- LOGIQUE D'AFFICHAGE DES SALARIÉS POUR CE MOIS ---------------------
+
+    # Début du mois (ex : 2026-06-01)
+    date_debut_mois = date(paie_mois.annee, paie_mois.mois, 1)
+
+    # Filtre identique aux autres vues
+    salaries = Salarie.objects.filter(
+        client=paie_mois.client
+    ).filter(
+        models.Q(actif=True) |
+        models.Q(date_sortie__isnull=True) |
+        models.Q(date_sortie__gte=date_debut_mois)
+    ).order_by("nom")
+
+    # -----------------------------------------------------------------------
 
     # Dictionnaire : { salarie_id : VariablePaie }
     variables_dict = {
@@ -129,15 +150,25 @@ def partenaire_variables_mois(request, paie_mois_id):
     # Construction des lignes pour le tableau
     lignes = []
     for s in salaries:
+
+        # Présence réelle dans ce mois (logique métier)
+        present_ce_mois = (
+            s.actif or
+            s.date_sortie is None or
+            s.date_sortie >= date_debut_mois
+        )
+
         lignes.append({
             "salarie": s,
             "variables": variables_dict.get(s.id),
+            "present_ce_mois": present_ce_mois,   # ← ajouté pour le filtre JS
         })
 
     return render(request, "paie/partenaire/variables_mois.html", {
         "paie_mois": paie_mois,
         "lignes": lignes,
     })
+
 
 
 @login_required

@@ -14,6 +14,13 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="mb-0">Suivi comptable</h1>
 
+        <div class="d-flex gap-2 mb-3">
+    <button class="btn btn-sm btn-outline-success" id="filterTermine">Terminé</button>
+    <button class="btn btn-sm btn-outline-warning" id="filterEnCours">En cours</button>
+    <button class="btn btn-sm btn-outline-secondary" id="filterNonCommence">Non commencé</button>
+    <button class="btn btn-sm btn-outline-dark" id="filterTous">Tous</button>
+</div>
+
         <div class="input-group" style="max-width: 280px;">
             <span class="input-group-text bg-white">
                 <i class="bi bi-search"></i>
@@ -27,6 +34,7 @@
 <table class="table table-hover align-middle mb-0">
     <thead class="table-light">
         <tr>
+            <th class="d-none"></th> <!-- colonne cachée -->
             <th data-sort="numero">N°</th>
             <th data-sort="nom">Nom</th>
             <th data-sort="periodicite">Périodicité</th>
@@ -56,7 +64,15 @@
             {% with annee=annees|get_item:client.id %}
 
             <tr>
-
+                <td class="statut-saisie d-none">
+                    {% if suivi.saisie_terminee %}
+                        termine
+                    {% elif suivi.saisie_en_cours %}
+                        en_cours
+                    {% else %}
+                        non_commence
+                    {% endif %}
+                </td>
                 <td>{{ client.numero }}</td>
 
                 <td>
@@ -151,6 +167,36 @@ document.querySelectorAll("table thead th[data-sort]").forEach((header, index) =
     });
 });
 </script>
+
+<!-- Filtre statut -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const rows = document.querySelectorAll("table tbody tr");
+
+    const filterTermineBtn = document.getElementById("filterTermine");
+    const filterEnCoursBtn = document.getElementById("filterEnCours");
+    const filterNonCommenceBtn = document.getElementById("filterNonCommence");
+    const filterTousBtn = document.getElementById("filterTous");
+
+    function applyFilter(statut) {
+        rows.forEach(row => {
+            const value = row.querySelector(".statut-saisie").innerText.trim();
+            row.style.display = (value === statut) ? "" : "none";
+        });
+    }
+
+    filterTermineBtn.addEventListener("click", () => applyFilter("termine"));
+    filterEnCoursBtn.addEventListener("click", () => applyFilter("en_cours"));
+    filterNonCommenceBtn.addEventListener("click", () => applyFilter("non_commence"));
+
+    filterTousBtn.addEventListener("click", () => {
+        rows.forEach(row => row.style.display = "");
+    });
+
+});
+</script>
+
 
 </section>
 

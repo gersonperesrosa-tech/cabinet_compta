@@ -49,6 +49,8 @@ urlpatterns = [
     path("cabinet/salarie/<int:salarie_id>/supprimer/", views_cabinet.supprimer_salarie, name="cabinet_supprimer_salarie"),
     path("cabinet/salarie/<int:salarie_id>/", views_cabinet.cabinet_fiche_salarie, name="cabinet_fiche_salarie"),
     path("cabinet/salarie/<int:salarie_id>/remunerations/", views_cabinet.cabinet_salarie_remunerations, name="cabinet_salarie_remunerations"),
+    path("salarie/<int:salarie_id>/sortie/", views_cabinet.sortie_salarie, name="sortie_salarie"),
+
 
     # ----------------------------------------------------
     #   VARIABLES DE PAIE (gestion côté cabinet)
