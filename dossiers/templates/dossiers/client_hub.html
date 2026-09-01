@@ -133,7 +133,7 @@
         </thead>
         <tbody>
             <tr>
-                {% for montant, statut in tva_ca3m.get_mensuels %}
+                {% for montant, statut, user in tva_ca3m.get_mensuels %}
                 <td>
                     <div class="d-flex justify-content-between">
                         <span>{{ montant|default:" " }}</span>

@@ -10,6 +10,8 @@ from django.http import HttpResponse
 from .models import Client, SuiviComptable, TVA, IS
 from .forms import ClientForm, SuiviComptableForm, TVAForm, ISForm, ClotureClientForm
 from .models import TVAAnnee, TVAModule, TVAClientAnnee, TVADeclaration, CVAEDeclaration, TVSDeclaration, TVSVehicule, DESDEBDeclaration, DividendesDeclaration, DPDeclaration, NoteTag, NoteCategorie, ClientNote, KanbanColumn, KanbanCard, KanbanTag, KanbanCardTag, ClotureAnnee, ClotureClient, NotificationPaie, NotificationPaieLu
+from dossiers.audit import audit
+from .models import URSSAFMensuelle, URSSAFTrimestrielle
 
 
 # Liste des statuts TVA autorisés
@@ -117,7 +119,6 @@ def liste_clients(request):
 @login_required
 def ajouter_client(request):
 
-    # --- Accès réservé staff / superuser ---
     if not (request.user.is_staff or request.user.is_superuser):
         return redirect("access_denied")
 
@@ -125,6 +126,15 @@ def ajouter_client(request):
         form = ClientForm(request.POST)
         if form.is_valid():
             client = form.save()
+
+            # ⭐ AUDIT
+            audit(
+                client=client,
+                user=request.user,
+                action=f"Cabinet : création du client {client.nom}",
+                metadata={"client_id": client.id}
+            )
+
             return redirect('fiche_client', client.id)
     else:
         form = ClientForm()
@@ -132,6 +142,7 @@ def ajouter_client(request):
     return render(request, 'dossiers/clients/ajouter_client.html', {
         'form': form
     })
+
 
 @login_required
 def archiver_client(request, client_id):
@@ -142,7 +153,17 @@ def archiver_client(request, client_id):
 
     client.archive = True
     client.save()
+
+    # ⭐ AUDIT
+    audit(
+        client=client,
+        user=request.user,
+        action=f"Cabinet : archivage du client {client.nom}",
+        metadata={"client_id": client.id}
+    )
+
     return redirect('liste_clients')
+
 
 @login_required
 def restaurer_client(request, client_id):
@@ -153,7 +174,17 @@ def restaurer_client(request, client_id):
 
     client.archive = False
     client.save()
+
+    # ⭐ AUDIT
+    audit(
+        client=client,
+        user=request.user,
+        action=f"Cabinet : restauration du client {client.nom}",
+        metadata={"client_id": client.id}
+    )
+
     return redirect('archives_clients')
+
 
 @login_required
 def supprimer_client(request, client_id):
@@ -162,12 +193,30 @@ def supprimer_client(request, client_id):
     if not (request.user.is_staff or request.user.is_superuser):
         return redirect("access_denied")
 
+    # ⭐ AUDIT
+    audit(
+        client=client,
+        user=request.user,
+        action=f"Cabinet : suppression du client {client.nom}",
+        metadata={"client_id": client.id}
+    )
+
     client.delete()
     return redirect('liste_clients')
+
 
 @login_required
 def archives_clients(request):
     clients = Client.objects.filter(archive=True).order_by("nom")
+
+    # ⭐ AUDIT
+    audit(
+        client=None,
+        user=request.user,
+        action="Cabinet : consultation des clients archivés",
+        metadata={}
+    )
+
     return render(request, 'dossiers/archives_clients.html', {'clients': clients})
 
 # ----------------------------------------------------
@@ -727,13 +776,12 @@ def fiche_client(request, client_id):
     # ----------------------------------------------------
     module_is = ClientModuleFiscal.objects.filter(
         client=client,
-        module__nom="IS",   # ✔ CORRECTION ICI
+        module__nom="IS",
         annee__annee=current_year
     ).first()
 
     if module_is:
-        # Si tu veux un champ dans ISDeclaration, tu peux aller le chercher ici
-        regime_imposition_auto = "IS"   # ou module_is.is_declaration.xxx
+        regime_imposition_auto = "IS"
     else:
         regime_imposition_auto = None
 
@@ -746,13 +794,11 @@ def fiche_client(request, client_id):
     )
 
     if tva_modules.count() == 1:
-        regime_tva_auto = tva_modules.first().module.type  # ou .module.nom selon ton modèle TVA
+        regime_tva_auto = tva_modules.first().module.type
         tva_multiple = False
-
     elif tva_modules.count() > 1:
         regime_tva_auto = None
         tva_multiple = True
-
     else:
         regime_tva_auto = None
         tva_multiple = False
@@ -766,10 +812,8 @@ def fiche_client(request, client_id):
         if form.is_valid():
             client = form.save(commit=False)
 
-            # Module Paie
             client.module_paie = "module_paie" in request.POST
 
-            # Si info automatique → on remplace la saisie manuelle
             if regime_imposition_auto:
                 client.regime_imposition = regime_imposition_auto
 
@@ -777,10 +821,27 @@ def fiche_client(request, client_id):
                 client.regime_tva = regime_tva_auto
 
             client.save()
+
+            # ⭐ AUDIT : modification du client
+            audit(
+                client=client,
+                user=request.user,
+                action=f"Cabinet : modification de la fiche client {client.nom}",
+                metadata={"client_id": client.id}
+            )
+
             return redirect("liste_clients")
 
     else:
         form = ClientForm(instance=client)
+
+        # ⭐ AUDIT : consultation de la fiche client
+        audit(
+            client=client,
+            user=request.user,
+            action=f"Cabinet : consultation de la fiche client {client.nom}",
+            metadata={"client_id": client.id}
+        )
 
     # ----------------------------------------------------
     # 4) RENDER
@@ -788,14 +849,12 @@ def fiche_client(request, client_id):
     return render(request, "clients/fiche_client.html", {
         "form": form,
         "client": client,
-
-        # Infos automatiques
         "regime_imposition_auto": regime_imposition_auto,
         "regime_tva_auto": regime_tva_auto,
         "tva_multiple": tva_multiple,
-
         "current_year": current_year,
     })
+
 
 # ----------------------------------------------------
 #   IS (multi‑annuel)
@@ -1294,37 +1353,66 @@ def tva_creer_annee(request):
         # Création de l'année
         tva_annee = TVAAnnee.objects.create(annee=annee)
 
+        # ⭐ AUDIT : création année TVA
+        audit(
+            client=None,
+            user=request.user,
+            action=f"Cabinet : création de l'année TVA {annee}",
+            metadata={"annee": annee}
+        )
+
         # Création automatique des modules
         for type_module in ["CA3M", "CA3T", "CA12", "FR", "EXO"]:
-            TVAModule.objects.create(annee=tva_annee, type=type_module)
+            module = TVAModule.objects.create(annee=tva_annee, type=type_module)
+
+            # ⭐ AUDIT : création module TVA
+            audit(
+                client=None,
+                user=request.user,
+                action=f"Cabinet : création du module TVA {type_module} pour {annee}",
+                metadata={"annee": annee, "module": type_module}
+            )
 
         messages.success(request, f"L'année TVA {annee} a été créée avec ses modules.")
         return redirect("tva_annees")
 
     return redirect("tva_annees")
 
+
 @login_required
 def tva_modules_annee(request, annee_id):
     annee = get_object_or_404(TVAAnnee, id=annee_id)
     modules = annee.modules.all().order_by("type")
+
+    # ⭐ AUDIT
+    audit(
+        client=None,
+        user=request.user,
+        action=f"Cabinet : consultation des modules TVA pour l'année {annee.annee}",
+        metadata={"annee": annee.annee}
+    )
 
     return render(request, "tva/tva_modules_annee.html", {
         "annee": annee,
         "modules": modules,
     })
 
+
 @login_required
 def tva_clients_module(request, module_id):
     module = get_object_or_404(TVAModule, id=module_id)
 
-    # Clients déjà dans ce module TVA
     clients_module = TVAClientAnnee.objects.filter(module=module).select_related("client")
-
-    # IDs des clients déjà dans le module
     clients_ids = clients_module.values_list("client_id", flat=True)
-
-    # Clients disponibles = tous les clients sauf ceux déjà dans le module
     clients_disponibles = Client.objects.exclude(id__in=clients_ids).order_by("nom")
+
+    # ⭐ AUDIT
+    audit(
+        client=None,
+        user=request.user,
+        action=f"Cabinet : consultation des clients du module TVA {module.get_type_display()} ({module.annee.annee})",
+        metadata={"module_id": module.id, "annee": module.annee.annee}
+    )
 
     return render(request, "tva/tva_clients_module.html", {
         "module": module,
@@ -1332,12 +1420,13 @@ def tva_clients_module(request, module_id):
         "clients_disponibles": clients_disponibles,
     })
 
+
 @login_required
 def tva_clients_module_ajouter(request, module_id):
     module = get_object_or_404(TVAModule, id=module_id)
 
     if request.method == "POST":
-        client_ids = request.POST.getlist("clients")  # ← liste de clients sélectionnés
+        client_ids = request.POST.getlist("clients")
 
         for cid in client_ids:
             client = get_object_or_404(Client, id=cid)
@@ -1345,7 +1434,15 @@ def tva_clients_module_ajouter(request, module_id):
             TVAClientAnnee.objects.get_or_create(
                 module=module,
                 client=client,
-                annee=module.annee  # ← OBLIGATOIRE dans ton modèle
+                annee=module.annee
+            )
+
+            # ⭐ AUDIT : ajout client au module TVA
+            audit(
+                client=client,
+                user=request.user,
+                action=f"Cabinet : ajout du client {client.nom} au module TVA {module.get_type_display()} ({module.annee.annee})",
+                metadata={"client_id": client.id, "module_id": module.id}
             )
 
         messages.success(
@@ -1355,10 +1452,21 @@ def tva_clients_module_ajouter(request, module_id):
 
     return redirect("tva_clients_module", module_id=module.id)
 
+
 @login_required
 def tva_clients_module_supprimer(request, client_annee_id):
     obj = get_object_or_404(TVAClientAnnee, id=client_annee_id)
     module_id = obj.module.id
+    client = obj.client
+
+    # ⭐ AUDIT
+    audit(
+        client=client,
+        user=request.user,
+        action=f"Cabinet : retrait du client {client.nom} du module TVA {obj.module.get_type_display()} ({obj.annee.annee})",
+        metadata={"client_id": client.id, "module_id": obj.module.id}
+    )
+
     obj.delete()
 
     messages.success(request, "Client retiré du module.")
@@ -1367,6 +1475,15 @@ def tva_clients_module_supprimer(request, client_annee_id):
 @login_required
 def tva_annees(request):
     annees = TVAAnnee.objects.order_by("-annee")
+
+    # ⭐ AUDIT
+    audit(
+        client=None,
+        user=request.user,
+        action="Cabinet : consultation de la liste des années TVA",
+        metadata={}
+    )
+
     return render(request, "tva/tva_annees.html", {"annees": annees})
 
 from django.contrib.auth.decorators import login_required
@@ -2094,58 +2211,99 @@ def fiscal_annees(request):
     if request.method == "POST":
         nouvelle_annee = request.POST.get("annee")
         if nouvelle_annee:
-            AnneeFiscale.objects.get_or_create(annee=nouvelle_annee)
+            obj, created = AnneeFiscale.objects.get_or_create(annee=nouvelle_annee)
+
+            if created:
+                # ⭐ AUDIT : création année fiscale
+                audit(
+                    client=None,
+                    user=request.user,
+                    action=f"Cabinet : création de l'année fiscale {nouvelle_annee}",
+                    metadata={"annee": nouvelle_annee}
+                )
+
             messages.success(request, "Année fiscale créée.")
             return redirect("fiscal_annees")
+
+    # ⭐ AUDIT : consultation des années fiscales
+    audit(
+        client=None,
+        user=request.user,
+        action="Cabinet : consultation des années fiscales",
+        metadata={}
+    )
 
     return render(request, "fiscal/annees.html", {
         "annees": annees,
     })
+
 
 @login_required
 def fiscal_modules(request, annee_id):
     annee = get_object_or_404(AnneeFiscale, id=annee_id)
     modules = ModuleFiscal.objects.all().order_by("nom")
 
+    # ⭐ AUDIT
+    audit(
+        client=None,
+        user=request.user,
+        action=f"Cabinet : consultation des modules fiscaux pour l'année {annee.annee}",
+        metadata={"annee": annee.annee}
+    )
+
     return render(request, "fiscal/modules.html", {
         "annee": annee,
         "modules": modules,
     })
+
 
 @login_required
 def fiscal_clients_module(request, annee_id, module_id):
     annee = get_object_or_404(AnneeFiscale, id=annee_id)
     module = get_object_or_404(ModuleFiscal, id=module_id)
 
-    # Clients déjà dans le module fiscal
     cms = ClientModuleFiscal.objects.filter(
         annee=annee,
         module=module
     ).select_related("client")
 
-    # IDs des clients déjà dans le module
     clients_ids = cms.values_list("client_id", flat=True)
-
-    # Clients disponibles = tous les clients sauf ceux déjà dans le module
     clients_disponibles = Client.objects.exclude(id__in=clients_ids).order_by("nom")
 
     if request.method == "POST":
-        client_ids = request.POST.getlist("clients")  # ← multi-sélection
+        client_ids = request.POST.getlist("clients")
 
         for cid in client_ids:
             client = get_object_or_404(Client, id=cid)
 
-            ClientModuleFiscal.objects.get_or_create(
+            obj, created = ClientModuleFiscal.objects.get_or_create(
                 client=client,
                 module=module,
                 annee=annee
             )
+
+            if created:
+                # ⭐ AUDIT : ajout client au module fiscal
+                audit(
+                    client=client,
+                    user=request.user,
+                    action=f"Cabinet : ajout du client {client.nom} au module fiscal {module.nom} ({annee.annee})",
+                    metadata={"client_id": client.id, "module_id": module.id}
+                )
 
         messages.success(
             request,
             f"{len(client_ids)} client(s) ajouté(s) au module {module.nom}."
         )
         return redirect(request.path)
+
+    # ⭐ AUDIT : consultation des clients du module fiscal
+    audit(
+        client=None,
+        user=request.user,
+        action=f"Cabinet : consultation des clients du module fiscal {module.nom} ({annee.annee})",
+        metadata={"module_id": module.id, "annee": annee.annee}
+    )
 
     return render(request, "fiscal/clients_module.html", {
         "annee": annee,
@@ -2159,11 +2317,224 @@ def fiscal_supprimer_client_module(request, cm_id):
     cm = get_object_or_404(ClientModuleFiscal, id=cm_id)
     annee_id = cm.annee.id
     module_id = cm.module.id
+    client = cm.client
+
+    # ⭐ AUDIT
+    audit(
+        client=client,
+        user=request.user,
+        action=f"Cabinet : retrait du client {client.nom} du module fiscal {cm.module.nom} ({cm.annee.annee})",
+        metadata={"client_id": client.id, "module_id": cm.module.id}
+    )
 
     cm.delete()
     messages.success(request, "Client retiré du module.")
 
     return redirect("fiscal_clients_module", annee_id=annee_id, module_id=module_id)
+
+# ----------------------------------------------------
+#   MODULES URSSAF
+# ----------------------------------------------------
+
+@login_required
+def urssaf_mensuel_gestion(request, annee_id):
+    # Toutes les années pour le sélecteur
+    annees = AnneeFiscale.objects.order_by("annee")
+
+    # Année sélectionnée via GET (sélecteur)
+    annee_param = request.GET.get("annee")
+    if annee_param:
+        annee = get_object_or_404(AnneeFiscale, annee=annee_param)
+    else:
+        annee = get_object_or_404(AnneeFiscale, id=annee_id)
+
+    module = get_object_or_404(ModuleFiscal, nom="URSSAF Mensuel")
+
+    cms = ClientModuleFiscal.objects.filter(
+        annee=annee,
+        module=module
+    ).select_related("client", "urssaf_mensuelle")
+
+    clients_ids = cms.values_list("client_id", flat=True)
+    clients_disponibles = Client.objects.exclude(id__in=clients_ids).order_by("nom")
+
+    if request.method == "POST":
+        client_ids = request.POST.getlist("clients")
+
+        for cid in client_ids:
+            client = get_object_or_404(Client, id=cid)
+
+            cmf, created = ClientModuleFiscal.objects.get_or_create(
+                client=client,
+                module=module,
+                annee=annee
+            )
+
+            # Tu veux garder le create → je le laisse
+            if created:
+                URSSAFMensuelle.objects.create(client_module=cmf)
+
+        messages.success(request, "Clients ajoutés au module URSSAF Mensuel.")
+        return redirect(request.path)
+
+    return render(request, "urssaf/urssaf_mensuel_gestion.html", {
+        "annees": annees,
+        "annee": annee,
+        "module": module,
+        "cms": cms,
+        "clients_disponibles": clients_disponibles,
+    })
+
+from decimal import Decimal
+
+def clean_amount(value):
+    if not value:
+        return None
+
+    # Nettoyage des espaces, insécables, €, etc.
+    v = value.replace("€", "").replace(" ", "").replace("\xa0", "").strip()
+
+    if v in ["", "-", "None"]:
+        return None
+
+    try:
+        return Decimal(v.replace(",", "."))
+    except:
+        return None
+
+
+@login_required
+def urssaf_mensuel_saisie(request, cm_id):
+    cm = get_object_or_404(ClientModuleFiscal, id=cm_id)
+
+    # 🔒 Protection : garantir que la déclaration existe
+    decl, _ = URSSAFMensuelle.objects.get_or_create(client_module=cm)
+
+    if request.method == "POST":
+        for mois in [
+            "janvier", "fevrier", "mars", "avril", "mai", "juin",
+            "juillet", "aout", "septembre", "octobre", "novembre", "decembre"
+        ]:
+            montant_raw = request.POST.get(f"urssaf_{mois}")
+            montant = clean_amount(montant_raw)
+
+            statut = request.POST.get(f"statut_urssaf_{mois}")
+
+            setattr(decl, f"urssaf_{mois}", montant)
+            setattr(decl, f"statut_urssaf_{mois}", statut)
+
+        decl.save()
+        messages.success(request, "Déclaration URSSAF Mensuelle mise à jour.")
+        return redirect("urssaf_mensuel_gestion", cm.annee.id)
+
+    return render(request, "urssaf/urssaf_mensuel_saisie.html", {
+        "cm": cm,
+        "decl": decl,
+    })
+
+
+@login_required
+def urssaf_trimestriel_gestion(request, annee_id):
+    annees = AnneeFiscale.objects.order_by("annee")
+
+    annee_param = request.GET.get("annee")
+    if annee_param:
+        annee = get_object_or_404(AnneeFiscale, annee=annee_param)
+    else:
+        annee = get_object_or_404(AnneeFiscale, id=annee_id)
+
+    module = get_object_or_404(ModuleFiscal, nom="URSSAF Trimestriel")
+
+    cms = ClientModuleFiscal.objects.filter(
+        annee=annee,
+        module=module
+    ).select_related("client", "urssaf_trimestrielle")
+
+    clients_ids = cms.values_list("client_id", flat=True)
+    clients_disponibles = Client.objects.exclude(id__in=clients_ids).order_by("nom")
+
+    if request.method == "POST":
+        client_ids = request.POST.getlist("clients")
+
+        for cid in client_ids:
+            client = get_object_or_404(Client, id=cid)
+
+            cmf, created = ClientModuleFiscal.objects.get_or_create(
+                client=client,
+                module=module,
+                annee=annee
+            )
+
+            # ⭐ Toujours garantir que la déclaration existe
+            if not hasattr(cmf, "urssaf_trimestrielle"):
+                URSSAFTrimestrielle.objects.create(client_module=cmf)
+
+        messages.success(request, "Clients ajoutés au module URSSAF Trimestriel.")
+        return redirect(request.path)
+
+    return render(request, "urssaf/urssaf_trimestriel_gestion.html", {
+        "annees": annees,
+        "annee": annee,
+        "module": module,
+        "cms": cms,
+        "clients_disponibles": clients_disponibles,
+    })
+
+
+from decimal import Decimal
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib.auth.decorators import login_required
+
+
+def clean_amount(value):
+    """
+    Nettoie les montants avant insertion dans un DecimalField.
+    Gère : espaces, insécables, €, tirets, virgules, valeurs vides.
+    """
+    if not value:
+        return None
+
+    # Supprime les espaces, insécables, €, etc.
+    v = value.replace("€", "").replace(" ", "").replace("\xa0", "").strip()
+
+    # Valeurs considérées comme vides
+    if v in ["", "-", "None"]:
+        return None
+
+    # Conversion en décimal
+    try:
+        return Decimal(v.replace(",", "."))
+    except:
+        return None
+
+
+@login_required
+def urssaf_trimestriel_saisie(request, cm_id):
+    cm = get_object_or_404(ClientModuleFiscal, id=cm_id)
+
+    # 🔒 Sécurisation : on garantit que la déclaration existe
+    decl, _ = URSSAFTrimestrielle.objects.get_or_create(client_module=cm)
+
+    if request.method == "POST":
+        for tri in ["1tri", "2tri", "3tri", "4tri"]:
+            montant_raw = request.POST.get(f"urssaf_{tri}")
+            statut = request.POST.get(f"statut_urssaf_{tri}")
+
+            montant = clean_amount(montant_raw)
+
+            setattr(decl, f"urssaf_{tri}", montant)
+            setattr(decl, f"statut_urssaf_{tri}", statut)
+
+        decl.save()
+        messages.success(request, "Déclaration URSSAF Trimestrielle mise à jour.")
+        return redirect("urssaf_trimestriel_gestion", cm.annee.id)
+
+    return render(request, "urssaf/urssaf_trimestriel_saisie.html", {
+        "cm": cm,
+        "decl": decl,
+    })
+
 
 
 
@@ -3900,6 +4271,15 @@ def todo_delete_multiple(request):
 @login_required
 def cloture_annees(request):
     annees = ClotureAnnee.objects.all().order_by('-annee')
+
+    # ⭐ AUDIT
+    audit(
+        client=None,
+        user=request.user,
+        action="Cabinet : consultation des années de clôture",
+        metadata={}
+    )
+
     return render(request, "cloture/annees.html", {"annees": annees})
 
 
@@ -3913,13 +4293,10 @@ def cloture_annee_create(request):
         except:
             return redirect("cloture_annees")
 
-        # Créer ou récupérer l'année
         annee, created = ClotureAnnee.objects.get_or_create(annee=new_year)
 
-        # Si l'année vient d'être créée → créer les fiches clients
         if created:
-            from .models import Client  # ✔️ Import correct
-
+            from .models import Client
             clients = Client.objects.all()
 
             for client in clients:
@@ -3928,13 +4305,38 @@ def cloture_annee_create(request):
                     client=client
                 )
 
+            # ⭐ AUDIT : création année clôture
+            audit(
+                client=None,
+                user=request.user,
+                action=f"Cabinet : création de l'année de clôture {new_year}",
+                metadata={"annee": new_year}
+            )
+
+            # ⭐ AUDIT : création des fiches clients
+            audit(
+                client=None,
+                user=request.user,
+                action=f"Cabinet : création des fiches de clôture pour l'année {new_year}",
+                metadata={"annee": new_year, "nb_clients": clients.count()}
+            )
+
         return redirect("cloture_annees")
+
 
 @login_required
 def cloture_clients(request, annee_id):
     annee = ClotureAnnee.objects.get(id=annee_id)
     clotures = ClotureClient.objects.filter(annee=annee).select_related("client")
     annees = ClotureAnnee.objects.all().order_by('-annee')
+
+    # ⭐ AUDIT
+    audit(
+        client=None,
+        user=request.user,
+        action=f"Cabinet : consultation des clients pour la clôture {annee.annee}",
+        metadata={"annee": annee.annee}
+    )
 
     return render(request, "cloture/clients.html", {
         "annee": annee,
@@ -3953,14 +4355,33 @@ def cloture_client_detail(request, cloture_id):
             instance = form.save(commit=False)
             instance.utilisateur_maj = request.user
             instance.save()
+
+            # ⭐ AUDIT : modification fiche clôture
+            audit(
+                client=cloture.client,
+                user=request.user,
+                action=f"Cabinet : modification de la fiche de clôture du client {cloture.client.nom} ({cloture.annee.annee})",
+                metadata={"cloture_id": cloture.id}
+            )
+
             return redirect("cloture_client_detail", cloture_id=cloture.id)
+
     else:
         form = ClotureClientForm(instance=cloture)
+
+        # ⭐ AUDIT : consultation fiche clôture
+        audit(
+            client=cloture.client,
+            user=request.user,
+            action=f"Cabinet : consultation de la fiche de clôture du client {cloture.client.nom} ({cloture.annee.annee})",
+            metadata={"cloture_id": cloture.id}
+        )
 
     return render(request, "cloture/detail.html", {
         "cloture": cloture,
         "form": form,
     })
+
 
 # ----------------------------------------------------
 #   MODULE NOTIFICATIONS DASHBOARD DE LA PAIE

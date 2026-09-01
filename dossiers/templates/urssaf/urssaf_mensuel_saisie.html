@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block content %}
+
+<section class="section">
+
+<h1>URSSAF Mensuelle – {{ cm.client.nom }} ({{ cm.annee.annee }})</h1>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <table class="table table-bordered align-middle mt-4">
+        <thead>
+            <tr>
+                <th>Mois</th>
+                <th>Montant</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <!-- JANVIER -->
+            <tr>
+                <td><strong>Janvier</strong></td>
+                <td>
+                    <input type="text"
+                           name="urssaf_janvier"
+                           class="form-control"
+                           value="{{ decl.urssaf_janvier|empty_dash }}">
+                </td>
+                <td>
+                    <select name="statut_urssaf_janvier" class="form-select">
+                        {% include "partials/statut_options.html" with selected=decl.statut_urssaf_janvier %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- FEVRIER -->
+            <tr>
+                <td><strong>Février</strong></td>
+                <td>
+                    <input type="text"
+                           name="urssaf_fevrier"
+                           class="form-control"
+                           value="{{ decl.urssaf_fevrier|empty_dash }}">
+                </td>
+                <td>
+                    <select name="statut_urssaf_fevrier" class="form-select">
+                        {% include "partials/statut_options.html" with selected=decl.statut_urssaf_fevrier %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- MARS -->
+            <tr>
+                <td><strong>Mars</strong></td>
+                <td>
+                    <input type="text"
+                           name="urssaf_mars"
+                           class="form-control"
+                           value="{{ decl.urssaf_mars|empty_dash }}">
+                </td>
+                <td>
+                    <select name="statut_urssaf_mars" class="form-select">
+                        {% include "partials/statut_options.html" with selected=decl.statut_urssaf_mars %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- AVRIL -->
+            <tr>
+                <td><strong>Avril</strong></td>
+                <td>
+                    <input type="text"
+                           name="urssaf_avril"
+                           class="form-control"
+                           value="{{ decl.urssaf_avril|empty_dash }}">
+                </td>
+                <td>
+                    <select name="statut_urssaf_avril" class="form-select">
+                        {% include "partials/statut_options.html" with selected=decl.statut_urssaf_avril %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- MAI -->
+            <tr>
+                <td><strong>Mai</strong></td>
+                <td>
+                    <input type="text"
+                           name="urssaf_mai"
+                           class="form-control"
+                           value="{{ decl.urssaf_mai|empty_dash }}">
+                </td>
+                <td>
+                    <select name="statut_urssaf_mai" class="form-select">
+                        {% include "partials/statut_options.html" with selected=decl.statut_urssaf_mai %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- JUIN -->
+            <tr>
+                <td><strong>Juin</strong></td>
+                <td>
+                    <input type="text"
+                           name="urssaf_juin"
+                           class="form-control"
+                           value="{{ decl.urssaf_juin|empty_dash }}">
+                </td>
+                <td>
+                    <select name="statut_urssaf_juin" class="form-select">
+                        {% include "partials/statut_options.html" with selected=decl.statut_urssaf_juin %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- JUILLET -->
+            <tr>
+                <td><strong>Juillet</strong></td>
+                <td>
+                    <input type="text"
+                           name="urssaf_juillet"
+                           class="form-control"
+                           value="{{ decl.urssaf_juillet|empty_dash }}">
+                </td>
+                <td>
+                    <select name="statut_urssaf_juillet" class="form-select">
+                        {% include "partials/statut_options.html" with selected=decl.statut_urssaf_juillet %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- AOUT -->
+            <tr>
+                <td><strong>Août</strong></td>
+                <td>
+                    <input type="text"
+                           name="urssaf_aout"
+                           class="form-control"
+                           value="{{ decl.urssaf_aout|empty_dash }}">
+                </td>
+                <td>
+                    <select name="statut_urssaf_aout" class="form-select">
+                        {% include "partials/statut_options.html" with selected=decl.statut_urssaf_aout %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- SEPTEMBRE -->
+            <tr>
+                <td><strong>Septembre</strong></td>
+                <td>
+                    <input type="text"
+                           name="urssaf_septembre"
+                           class="form-control"
+                           value="{{ decl.urssaf_septembre|empty_dash }}">
+                </td>
+                <td>
+                    <select name="statut_urssaf_septembre" class="form-select">
+                        {% include "partials/statut_options.html" with selected=decl.statut_urssaf_septembre %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- OCTOBRE -->
+            <tr>
+                <td><strong>Octobre</strong></td>
+                <td>
+                    <input type="text"
+                           name="urssaf_octobre"
+                           class="form-control"
+                           value="{{ decl.urssaf_octobre|empty_dash }}">
+                </td>
+                <td>
+                    <select name="statut_urssaf_octobre" class="form-select">
+                        {% include "partials/statut_options.html" with selected=decl.statut_urssaf_octobre %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- NOVEMBRE -->
+            <tr>
+                <td><strong>Novembre</strong></td>
+                <td>
+                    <input type="text"
+                           name="urssaf_novembre"
+                           class="form-control"
+                           value="{{ decl.urssaf_novembre|empty_dash }}">
+                </td>
+                <td>
+                    <select name="statut_urssaf_novembre" class="form-select">
+                        {% include "partials/statut_options.html" with selected=decl.statut_urssaf_novembre %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- DECEMBRE -->
+            <tr>
+                <td><strong>Décembre</strong></td>
+                <td>
+                    <input type="text"
+                           name="urssaf_decembre"
+                           class="form-control"
+                           value="{{ decl.urssaf_decembre|empty_dash }}">
+                </td>
+                <td>
+                    <select name="statut_urssaf_decembre" class="form-select">
+                        {% include "partials/statut_options.html" with selected=decl.statut_urssaf_decembre %}
+                    </select>
+                </td>
+            </tr>
+
+        </tbody>
+    </table>
+
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <a href="{% url 'urssaf_mensuel_gestion' cm.annee.id %}"
+           class="btn btn-outline-secondary">
+            Retour au module URSSAF Mensuel
+        </a>
+
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+    </div>
+
+</form>
+
+</section>
+
+{% endblock %}

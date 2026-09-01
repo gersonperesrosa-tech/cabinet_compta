@@ -47,6 +47,7 @@ MIDDLEWARE = [
 
 MIDDLEWARE += [
     'dossiers.middleware.ClientArchiveMiddleware',
+    'dossiers.middleware.AuditMiddleware',
 ]
 
 ROOT_URLCONF = 'cabinet_compta.urls'

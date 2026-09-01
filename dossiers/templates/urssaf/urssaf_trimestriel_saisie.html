@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block content %}
+
+<section class="section">
+
+<h1>Saisie URSSAF Trimestrielle – {{ cm.client.nom }} ({{ cm.annee.annee }})</h1>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <table class="table table-bordered align-middle mt-4">
+        <thead>
+            <tr>
+                <th>Trimestre</th>
+                <th>Montant URSSAF</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <!-- 1er trimestre -->
+            <tr>
+                <td><strong>1er trimestre</strong></td>
+                <td>
+                    <input type="text"
+                           name="urssaf_1tri"
+                           class="form-control"
+                           value="{{ decl.urssaf_1tri|empty_dash }}">
+                </td>
+                <td>
+                    <select name="statut_urssaf_1tri" class="form-select">
+                        {% include "partials/statut_options.html" with selected=decl.statut_urssaf_1tri %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- 2e trimestre -->
+            <tr>
+                <td><strong>2e trimestre</strong></td>
+                <td>
+                    <input type="text"
+                           name="urssaf_2tri"
+                           class="form-control"
+                           value="{{ decl.urssaf_2tri|empty_dash }}">
+                </td>
+                <td>
+                    <select name="statut_urssaf_2tri" class="form-select">
+                        {% include "partials/statut_options.html" with selected=decl.statut_urssaf_2tri %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- 3e trimestre -->
+            <tr>
+                <td><strong>3e trimestre</strong></td>
+                <td>
+                    <input type="text"
+                           name="urssaf_3tri"
+                           class="form-control"
+                           value="{{ decl.urssaf_3tri|empty_dash }}">
+                </td>
+                <td>
+                    <select name="statut_urssaf_3tri" class="form-select">
+                        {% include "partials/statut_options.html" with selected=decl.statut_urssaf_3tri %}
+                    </select>
+                </td>
+            </tr>
+
+            <!-- 4e trimestre -->
+            <tr>
+                <td><strong>4e trimestre</strong></td>
+                <td>
+                    <input type="text"
+                           name="urssaf_4tri"
+                           class="form-control"
+                           value="{{ decl.urssaf_4tri|empty_dash }}">
+                </td>
+                <td>
+                    <select name="statut_urssaf_4tri" class="form-select">
+                        {% include "partials/statut_options.html" with selected=decl.statut_urssaf_4tri %}
+                    </select>
+                </td>
+            </tr>
+
+        </tbody>
+    </table>
+
+    <!-- Boutons -->
+    <div class="d-flex justify-content-between align-items-center mt-4">
+
+        <a href="{% url 'urssaf_trimestriel_gestion' cm.annee.id %}"
+           class="btn btn-outline-secondary">
+            Retour au module URSSAF Trimestriel
+        </a>
+
+        <button type="submit" class="btn btn-primary">
+            Enregistrer
+        </button>
+
+    </div>
+
+</form>
+
+</section>
+
+{% endblock %}

@@ -545,9 +545,9 @@ class TVADeclaration(models.Model):
         }
 
 
-    # -------------------------------------------------------
-    # MODULE FICAL
-    # -------------------------------------------------------
+# -------------------------------------------------------
+# MODULE FICAL
+# -------------------------------------------------------
 
 
 class ModuleFiscal(models.Model):
@@ -573,11 +573,127 @@ class ClientModuleFiscal(models.Model):
     def __str__(self):
         return f"{self.client.nom} – {self.module.nom} – {self.annee.annee}"
 
+# -------------------------------------------------------
+# MODULE URSSAF MENSUELLE
+# -------------------------------------------------------
+
+class URSSAFMensuelle(models.Model):
+
+    client_module = models.OneToOneField(
+        ClientModuleFiscal,
+        on_delete=models.CASCADE,
+        related_name="urssaf_mensuelle"
+    )
+
+    URSSAF_STATUTS = [
+        ("BLANC", "Blanc"),
+        ("ORANGE", "A envoyer client"),
+        ("JAUNE", "Envoyé client"),
+        ("VERT_CLAIR", "Télétransmis"),
+        ("VERT_FONCE", "Accepté"),
+        ("ROUGE", "Rejeté"),
+        ("NA", "N/A"),
+    ]
+
+    urssaf_janvier = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    statut_urssaf_janvier = models.CharField(max_length=20, choices=URSSAF_STATUTS, default="BLANC")
+
+    urssaf_fevrier = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    statut_urssaf_fevrier = models.CharField(max_length=20, choices=URSSAF_STATUTS, default="BLANC")
+
+    urssaf_mars = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    statut_urssaf_mars = models.CharField(max_length=20, choices=URSSAF_STATUTS, default="BLANC")
+
+    urssaf_avril = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    statut_urssaf_avril = models.CharField(max_length=20, choices=URSSAF_STATUTS, default="BLANC")
+
+    urssaf_mai = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    statut_urssaf_mai = models.CharField(max_length=20, choices=URSSAF_STATUTS, default="BLANC")
+
+    urssaf_juin = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    statut_urssaf_juin = models.CharField(max_length=20, choices=URSSAF_STATUTS, default="BLANC")
+
+    urssaf_juillet = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    statut_urssaf_juillet = models.CharField(max_length=20, choices=URSSAF_STATUTS, default="BLANC")
+
+    urssaf_aout = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    statut_urssaf_aout = models.CharField(max_length=20, choices=URSSAF_STATUTS, default="BLANC")
+
+    urssaf_septembre = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    statut_urssaf_septembre = models.CharField(max_length=20, choices=URSSAF_STATUTS, default="BLANC")
+
+    urssaf_octobre = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    statut_urssaf_octobre = models.CharField(max_length=20, choices=URSSAF_STATUTS, default="BLANC")
+
+    urssaf_novembre = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    statut_urssaf_novembre = models.CharField(max_length=20, choices=URSSAF_STATUTS, default="BLANC")
+
+    urssaf_decembre = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    statut_urssaf_decembre = models.CharField(max_length=20, choices=URSSAF_STATUTS, default="BLANC")
+
+    def get_mensuels(self):
+        champs = [
+            ("urssaf_janvier", "statut_urssaf_janvier"),
+            ("urssaf_fevrier", "statut_urssaf_fevrier"),
+            ("urssaf_mars", "statut_urssaf_mars"),
+            ("urssaf_avril", "statut_urssaf_avril"),
+            ("urssaf_mai", "statut_urssaf_mai"),
+            ("urssaf_juin", "statut_urssaf_juin"),
+            ("urssaf_juillet", "statut_urssaf_juillet"),
+            ("urssaf_aout", "statut_urssaf_aout"),
+            ("urssaf_septembre", "statut_urssaf_septembre"),
+            ("urssaf_octobre", "statut_urssaf_octobre"),
+            ("urssaf_novembre", "statut_urssaf_novembre"),
+            ("urssaf_decembre", "statut_urssaf_decembre"),
+        ]
+        return [(getattr(self, m), getattr(self, s)) for m, s in champs]
+
+# -------------------------------------------------------
+# MODULE URSSAF TRIMESTRIELLE
+# -------------------------------------------------------
+
+class URSSAFTrimestrielle(models.Model):
+
+    client_module = models.OneToOneField(
+        ClientModuleFiscal,
+        on_delete=models.CASCADE,
+        related_name="urssaf_trimestrielle"
+    )
+
+    URSSAF_STATUTS = [
+        ("BLANC", "Blanc"),
+        ("ORANGE", "A envoyer client"),
+        ("JAUNE", "Envoyé client"),
+        ("VERT_CLAIR", "Télétransmis"),
+        ("VERT_FONCE", "Accepté"),
+        ("ROUGE", "Rejeté"),
+        ("NA", "N/A"),
+    ]
+
+    urssaf_1tri = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    statut_urssaf_1tri = models.CharField(max_length=20, choices=URSSAF_STATUTS, default="BLANC")
+
+    urssaf_2tri = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    statut_urssaf_2tri = models.CharField(max_length=20, choices=URSSAF_STATUTS, default="BLANC")
+
+    urssaf_3tri = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    statut_urssaf_3tri = models.CharField(max_length=20, choices=URSSAF_STATUTS, default="BLANC")
+
+    urssaf_4tri = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    statut_urssaf_4tri = models.CharField(max_length=20, choices=URSSAF_STATUTS, default="BLANC")
+
+    def get_trimestres(self):
+        return [
+            (self.urssaf_1tri, self.statut_urssaf_1tri),
+            (self.urssaf_2tri, self.statut_urssaf_2tri),
+            (self.urssaf_3tri, self.statut_urssaf_3tri),
+            (self.urssaf_4tri, self.statut_urssaf_4tri),
+        ]
 
 
-    # -------------------------------------------------------
-    # NOUVEAU MODULE IS
-    # -------------------------------------------------------
+# -------------------------------------------------------
+# NOUVEAU MODULE IS
+# -------------------------------------------------------
 
 class ISDeclaration(models.Model):
 
@@ -614,9 +730,9 @@ class ISDeclaration(models.Model):
     # Commentaire
     commentaire_plus_3000 = models.TextField(null=True, blank=True)
 
-    # -------------------------------------------------------
-    # MODULE CFE
-    # -------------------------------------------------------
+# -------------------------------------------------------
+# MODULE CFE
+# -------------------------------------------------------
 
 from django.db import models
 from dossiers.models import ClientModuleFiscal
@@ -650,7 +766,7 @@ class CFEDeclaration(models.Model):
     def __str__(self):
         return f"CFE {self.client_module.client.nom} – {self.client_module.annee.annee}"
 
- # -------------------------------------------------------
+# -------------------------------------------------------
 # MODULE CVAE
 # -------------------------------------------------------
 
@@ -686,9 +802,9 @@ class CVAEDeclaration(models.Model):
         return f"CVAE {self.client_module.client.nom} – {self.client_module.annee.annee}"
 
 
-    # -------------------------------------------------------
-    # MODULE TVS
-    # -------------------------------------------------------
+# -------------------------------------------------------
+# MODULE TVS
+# -------------------------------------------------------
 
 class TVSDeclaration(models.Model):
     client_module = models.OneToOneField(
@@ -745,9 +861,9 @@ class TVSVehicule(models.Model):
         return f"{self.immatriculation or 'Véhicule'} – TVS"
 
 
-    # -------------------------------------------------------
-    # MODULE DESDEB
-    # -------------------------------------------------------
+# -------------------------------------------------------
+# MODULE DESDEB
+# -------------------------------------------------------
 
 class DESDEBDeclaration(models.Model):
     client_module = models.OneToOneField(
@@ -799,9 +915,9 @@ class DESDEBDeclaration(models.Model):
     def __str__(self):
         return f"DESDEB {self.client_module}"
 
-    # -------------------------------------------------------
-    # MODULE DIVIDENDES
-    # -------------------------------------------------------
+# -------------------------------------------------------
+# MODULE DIVIDENDES
+# -------------------------------------------------------
 
 class DividendesDeclaration(models.Model):
 
@@ -840,10 +956,9 @@ class DividendesDeclaration(models.Model):
     def __str__(self):
         return f"Dividendes {self.client_module}"
 
-
-    # -------------------------------------------------------
-    # MODULE DP
-    # -------------------------------------------------------
+# -------------------------------------------------------
+# MODULE DP
+# -------------------------------------------------------
 
 class DPDeclaration(models.Model):
     STATUS_CHOICES = [
@@ -881,9 +996,9 @@ class DPDeclaration(models.Model):
         return f"DP {self.client.nom}"
 
 
-    # -------------------------------------------------------
-    # MODULE NOTE PRIVEE CLIENTS
-    # -------------------------------------------------------
+# -------------------------------------------------------
+# MODULE NOTE PRIVEE CLIENTS
+# -------------------------------------------------------
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -1424,3 +1539,55 @@ class SeuilFiscal(models.Model):
     def __str__(self):
         return f"{self.module} - {self.code} : {self.valeur}"
 
+# -------------------------------
+#   MODULE D'AUDIT SUR ADMIN DJANGO
+# -------------------------------
+
+from django.db import models
+from django.contrib.auth.models import User
+from dossiers.models import Client  # si ton modèle Client est ici
+
+class AuditLog(models.Model):
+    """
+    Journal des actions effectuées dans le SaaS.
+    Compatible avec tous les utilisateurs : cabinet, client, partenaire.
+    """
+
+    client = models.ForeignKey(
+        Client,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="audit_logs"
+    )
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="audit_logs"
+    )
+
+    app = models.CharField(
+        max_length=50,
+        help_text="Nom de l'application concernée (ex: paie, compta, facturation)"
+    )
+
+    action = models.CharField(
+        max_length=255,
+        help_text="Description courte de l'action"
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    metadata = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Données supplémentaires (ID salarié, mois, etc.)"
+    )
+
+    def __str__(self):
+        return f"{self.created_at} - {self.client} - {self.action}"

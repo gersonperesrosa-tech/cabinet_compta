@@ -4,7 +4,7 @@ from paie.models import PaieMois, Salarie, VariablePaie
 from dossiers.models import NotificationPaie
 from paie.forms import VariablePaieForm
 from dossiers.notifications import envoyer_notifications_paie
-
+from dossiers.audit import audit
 
 
 @login_required
@@ -49,7 +49,7 @@ def paie_client_dashboard(request):
         ).count()
 
     context = {
-        "client": client,  # ← ICI
+        "client": client,
         "mois_en_cours": mois_en_cours,
         "derniers_mois": derniers_mois,
         "nb_salaries": nb_salaries,
@@ -59,7 +59,16 @@ def paie_client_dashboard(request):
         "total_variables": total_variables,
     }
 
+    # ⭐ AUDIT : consultation du dashboard
+    audit(
+        client=client,
+        user=request.user,
+        action="Consultation du tableau de bord paie",
+        metadata={}
+    )
+
     return render(request, "paie/client/dashboard.html", context)
+
 
 # ----------------------------------------------------
 #   SALARIES
@@ -69,25 +78,52 @@ def paie_client_dashboard(request):
 @login_required
 def liste_salaries(request):
 
-    # ADMIN → accès total
     if request.user.groups.filter(name="Utilisateur").exists():
         salaries = Salarie.objects.all().order_by("nom")
+
+        # ⭐ AUDIT
+        audit(
+            client=None,
+            user=request.user,
+            action="Consultation de la liste des salariés (ADMIN)",
+            metadata={}
+        )
+
         return render(request, "paie/client/salaries.html", {"salaries": salaries})
 
     # CLIENT → accès limité
     client = request.user.client
     salaries = Salarie.objects.filter(client=client).order_by("nom")
 
+    # ⭐ AUDIT
+    audit(
+        client=client,
+        user=request.user,
+        action="Consultation de la liste des salariés",
+        metadata={}
+    )
+
     return render(request, "paie/client/salaries.html", {"salaries": salaries})
 
+
+@login_required
 def client_fiche_salarie(request, salarie_id):
     salarie = get_object_or_404(Salarie, id=salarie_id)
+
+    # ⭐ AUDIT
+    audit(
+        client=salarie.client,
+        user=request.user,
+        action=f"Consultation de la fiche salarié {salarie.nom}",
+        metadata={"salarie_id": salarie.id}
+    )
 
     return render(request, "paie/client/salaries/fiche_salarie.html", {
         "salarie": salarie
     })
 
 
+@login_required
 def client_salarie_remunerations(request, salarie_id):
     salarie = get_object_or_404(Salarie, id=salarie_id)
 
@@ -95,10 +131,19 @@ def client_salarie_remunerations(request, salarie_id):
         salarie=salarie
     ).select_related("paie_mois").order_by("-paie_mois__annee", "-paie_mois__mois")
 
+    # ⭐ AUDIT
+    audit(
+        client=salarie.client,
+        user=request.user,
+        action=f"Consultation des rémunérations du salarié {salarie.nom}",
+        metadata={"salarie_id": salarie.id}
+    )
+
     return render(request, "paie/client/salaries/remunerations.html", {
         "salarie": salarie,
         "variables": variables,
     })
+
 
 
 
@@ -109,6 +154,8 @@ def client_salarie_remunerations(request, salarie_id):
 from datetime import date
 from django.db import models
 import calendar
+
+from dossiers.audit import audit
 
 @login_required
 def variables_salarie(request, mois_id, salarie_id):
@@ -125,25 +172,17 @@ def variables_salarie(request, mois_id, salarie_id):
 
     # --- LOGIQUE D'AFFICHAGE DU SALARIÉ DANS CE MOIS -----------------------
 
-    # Début du mois (ex : 2026-06-01)
     date_debut_mois = date(mois.annee, mois.mois, 1)
 
-    # Le salarié doit apparaître si :
-    # - actif
-    # - OU date_sortie NULL
-    # - OU date_sortie >= début du mois
     if not (
         salarie.actif or
         salarie.date_sortie is None or
         salarie.date_sortie >= date_debut_mois
     ):
-        # Le salarié est sorti avant ce mois → on bloque l'accès
         return render(request, "paie/client/salaries/salarie_non_disponible.html", {
             "mois": mois,
             "salarie": salarie,
         })
-
-    # -----------------------------------------------------------------------
 
     # Si le mois est validé → pas de modification
     if mois.client_valide:
@@ -164,10 +203,25 @@ def variables_salarie(request, mois_id, salarie_id):
         variables.primes = request.POST.get("primes", "")
         variables.acomptes = request.POST.get("acomptes", "")
         variables.autres_infos = request.POST.get("autres_infos", "")
-
         variables.save()
 
+        # AUDIT : modification des variables
+        audit(
+            client=mois.client,
+            user=request.user,
+            action=f"Modification des variables du salarié {salarie.nom} pour {mois.mois}/{mois.annee}",
+            metadata={"mois_id": mois.id, "salarie_id": salarie.id}
+        )
+
         return redirect("paie:client_mois_detail", mois_id=mois.id)
+
+    # AUDIT : consultation des variables
+    audit(
+        client=mois.client,
+        user=request.user,
+        action=f"Consultation des variables du salarié {salarie.nom} pour {mois.mois}/{mois.annee}",
+        metadata={"mois_id": mois.id, "salarie_id": salarie.id}
+    )
 
     # GET → on envoie les données au template
     return render(request, "paie/client/variables_salarie.html", {
@@ -184,6 +238,8 @@ def variables_salarie(request, mois_id, salarie_id):
 
 from django.utils import timezone
 
+from dossiers.audit import audit
+
 @login_required
 def valider_mois(request, mois_id):
 
@@ -194,12 +250,19 @@ def valider_mois(request, mois_id):
         mois.date_validation_client = timezone.now()
         mois.save()
 
-        # 🔔 Notification interne
         NotificationPaie.objects.create(
             client=mois.client,
             paie_mois=mois,
             lu_cabinet=False,
             lu_partenaire=False
+        )
+
+        # ⭐ AUDIT
+        audit(
+            client=mois.client,
+            user=request.user,
+            action=f"Validation du mois {mois.mois}/{mois.annee} (ADMIN)",
+            metadata={"mois_id": mois.id}
         )
 
         return redirect("paie:client_mois_detail", mois_id=mois.id)
@@ -212,7 +275,6 @@ def valider_mois(request, mois_id):
     mois.date_validation_client = timezone.now()
     mois.save()
 
-    # 🔔 Notification interne
     NotificationPaie.objects.create(
         client=mois.client,
         paie_mois=mois,
@@ -220,24 +282,31 @@ def valider_mois(request, mois_id):
         lu_partenaire=False
     )
 
-    # 📧 Envoi email (MANQUAIT ICI)
     envoyer_notifications_paie(mois)
 
+    # ⭐ AUDIT
+    audit(
+        client=mois.client,
+        user=request.user,
+        action=f"Validation du mois {mois.mois}/{mois.annee} (CLIENT)",
+        metadata={"mois_id": mois.id}
+    )
+
     return redirect("paie:client_mois_detail", mois_id=mois.id)
+
+
+from dossiers.audit import audit
 
 @login_required
 def creer_mois_suivant(request):
     client = request.user.client
 
-    # On récupère le dernier mois existant
     dernier = PaieMois.objects.filter(client=client).order_by("-annee", "-mois").first()
 
     if not dernier:
-        # Aucun mois → on crée le premier
         nouveau_mois = 1
         nouvelle_annee = timezone.now().year
     else:
-        # Calcul du mois suivant
         if dernier.mois == 12:
             nouveau_mois = 1
             nouvelle_annee = dernier.annee + 1
@@ -245,38 +314,50 @@ def creer_mois_suivant(request):
             nouveau_mois = dernier.mois + 1
             nouvelle_annee = dernier.annee
 
-    # Création du mois
-    PaieMois.objects.create(
+    nouveau = PaieMois.objects.create(
         client=client,
         mois=nouveau_mois,
         annee=nouvelle_annee
     )
 
+    # ⭐ AUDIT
+    audit(
+        client=client,
+        user=request.user,
+        action=f"Création du mois {nouveau.mois}/{nouveau.annee}",
+        metadata={"mois_id": nouveau.id}
+    )
+
     return redirect("paie:client_liste_mois")
+
 
 
 from datetime import date
 from django.db import models
 import calendar
 
+from dossiers.audit import audit
+
 @login_required
 def mois_detail(request, mois_id):
 
-    # ADMIN → accès total
     if request.user.groups.filter(name="Utilisateur").exists():
         mois = get_object_or_404(PaieMois, id=mois_id)
         client = mois.client
     else:
-        # CLIENT → accès limité
         client = request.user.client
         mois = get_object_or_404(PaieMois, id=mois_id, client=client)
 
-    # --- LOGIQUE D'AFFICHAGE DES SALARIÉS POUR CE MOIS ---------------------
+    # ⭐ AUDIT : consultation du mois
+    audit(
+        client=client,
+        user=request.user,
+        action=f"Consultation du mois {mois.mois}/{mois.annee}",
+        metadata={"mois_id": mois.id}
+    )
 
-    # Début du mois (ex : 2026-06-01)
     date_debut_mois = date(mois.annee, mois.mois, 1)
 
-    # Filtre identique à celui utilisé dans variables_paie_salaries
     salaries = Salarie.objects.filter(
         client=client
     ).filter(
@@ -285,12 +366,7 @@ def mois_detail(request, mois_id):
         models.Q(date_sortie__gte=date_debut_mois)
     ).order_by("nom")
 
-    # -----------------------------------------------------------------------
-
-    # Récupération de toutes les variables du mois
     variables = VariablePaie.objects.filter(paie_mois=mois)
-
-    # Dictionnaire : { salarie_id : VariablePaie }
     variables_dict = {v.salarie_id: v for v in variables}
 
     return render(request, "paie/client/mois_detail.html", {
@@ -301,13 +377,23 @@ def mois_detail(request, mois_id):
 
 
 
+
+from dossiers.audit import audit
+
 @login_required
 def client_liste_mois(request):
     client = request.user.client
     mois_list = PaieMois.objects.filter(client=client).order_by('-annee', '-mois')
 
+    # ⭐ AUDIT
+    audit(
+        client=client,
+        user=request.user,
+        action="Consultation de la liste des mois",
+        metadata={}
+    )
+
     return render(request, "paie/client/liste_mois_client.html", {
         "mois_list": mois_list,
         "client": client,
     })
-

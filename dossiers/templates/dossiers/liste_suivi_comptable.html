@@ -47,7 +47,7 @@
 
             <th data-sort="maj_compta">MAJ compta</th>
 
-            <th>Dernier mois</th>
+            <th data-sort="dernier_mois">Dernier mois</th>
             <th>Saisi par</th>
             <th>Vérif.</th>
 
@@ -73,27 +73,27 @@
                         non_commence
                     {% endif %}
                 </td>
-                <td>{{ client.numero }}</td>
+                <td data-sort="numero">{{ client.numero }}</td>
 
-                <td>
+                <td data-sort="nom">
                     <a href="{% url 'suivi_comptable' client.id annee %}"
                        class="text-decoration-none fw-semibold">
                         {{ client.nom }}
                     </a>
                 </td>
 
-                <td>{{ client.periodicite }}</td>
+                <td data-sort="periodicite">{{ client.periodicite }}</td>
 
-                <td>{{ client.forme_juridique }}</td>
-                <td>{{ client.date_cloture }}</td>
+                <td data-sort="forme_juridique">{{ client.forme_juridique }}</td>
+                <td data-sort="date_cloture">{{ client.date_cloture }}</td>
 
-<td>{{ client.regime_tva_auto }}</td>
-                <td>{{ client.jour_echeance_tva|default_if_none:"" }}</td>
+                <td data-sort="regime_tva">{{ client.regime_tva_auto }}</td>
+                <td data-sort="echeance_tva">{{ client.jour_echeance_tva|default_if_none:"" }}</td>
 
-                <td>{{ suivi.date_maj_compta|default:"—" }}</td>
+                <td data-sort="maj_compta">{{ suivi.date_maj_compta|default:"—" }}</td>
 
-                <td>{{ suivi.dernier_mois_traite|default:"—" }}</td>
-                <td>{{ suivi.saisi_par|default:"—" }}</td>
+                <td data-sort="dernier_mois">{{ suivi.dernier_mois_traite|default:"—" }}</td>
+                <td data-sort="saisi_par">{{ suivi.saisi_par|default:"—" }}</td>
 
                 <td>
                     {% if suivi and suivi.verifie %}
@@ -114,7 +114,7 @@
                     {% endif %}
                 </td>
 
-                <td class="text-muted small">
+                <td data-sort="commentaire" class="text-muted small">
                     {{ suivi.commentaire|default:"—" }}
                 </td>
 
@@ -144,10 +144,11 @@ document.getElementById("searchInput").addEventListener("input", function() {
 
 <!-- Tri dynamique -->
 <script>
-document.querySelectorAll("table thead th[data-sort]").forEach((header, index) => {
+document.querySelectorAll("table thead th[data-sort]").forEach(header => {
     header.style.cursor = "pointer";
 
     header.addEventListener("click", () => {
+        const sortKey = header.dataset.sort;
         const table = header.closest("table");
         const tbody = table.querySelector("tbody");
         const rows = Array.from(tbody.querySelectorAll("tr"));
@@ -155,8 +156,11 @@ document.querySelectorAll("table thead th[data-sort]").forEach((header, index) =
         const isAsc = header.classList.toggle("asc");
 
         rows.sort((a, b) => {
-            const aVal = (a.cells[index].innerText || "").toLowerCase();
-            const bVal = (b.cells[index].innerText || "").toLowerCase();
+            const aCell = a.querySelector(`td[data-sort="${sortKey}"]`);
+            const bCell = b.querySelector(`td[data-sort="${sortKey}"]`);
+
+            const aVal = (aCell?.innerText || "").toLowerCase();
+            const bVal = (bCell?.innerText || "").toLowerCase();
 
             if (aVal < bVal) return isAsc ? -1 : 1;
             if (aVal > bVal) return isAsc ? 1 : -1;
@@ -167,6 +171,8 @@ document.querySelectorAll("table thead th[data-sort]").forEach((header, index) =
     });
 });
 </script>
+
+
 
 <!-- Filtre statut -->
 <script>

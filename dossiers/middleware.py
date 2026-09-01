@@ -87,3 +87,43 @@ class ClientArchiveMiddleware:
             return redirect("client_archive_interdit")
 
         return self.get_response(request)
+
+
+from django.utils.deprecation import MiddlewareMixin
+from dossiers.models import AuditLog
+from django.urls import resolve
+
+class AuditMiddleware(MiddlewareMixin):
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        # On ignore les assets, admin, etc.
+        if request.path.startswith("/static/") or request.path.startswith("/admin/"):
+            return None
+
+        # On ignore les GET sans importance
+        if request.method == "GET":
+            return None
+
+        # Trouver la vue appelée
+        view_name = resolve(request.path).url_name or "unknown_view"
+
+        # Trouver l'app
+        app_name = resolve(request.path).app_name or "unknown_app"
+
+        # Trouver le client si présent dans les kwargs
+        client_id = view_kwargs.get("client_id", None)
+
+        # Enregistrer
+        AuditLog.objects.create(
+            client_id=client_id,
+            user=request.user if request.user.is_authenticated else None,
+            app=app_name,
+            action=f"{request.method} sur {view_name}",
+            metadata={
+                "path": request.path,
+                "method": request.method,
+                "POST": dict(request.POST),
+            }
+        )
+
+        return None

@@ -348,6 +348,37 @@
         {% if annee_selectionnee %}
             {% with annee_id=annee_selectionnee.id %}
                 
+                {# ------------------------------- #}
+                {# Sous-menu URSSAF regroupé       #}
+                {# ------------------------------- #}
+
+                <a class="nav-link text-white d-flex align-items-center gap-2"
+                   data-bs-toggle="collapse"
+                   href="#menuURSSAF"
+                   role="button"
+                   aria-expanded="false"
+                   aria-controls="menuURSSAF">
+
+                    <span class="sidebar-text">URSSAF</span>
+                    <i class="bi bi-chevron-down ms-auto small"></i>
+                </a>
+
+                <div class="collapse ps-4" id="menuURSSAF">
+
+                    <a class="nav-link text-white d-flex align-items-center gap-2
+                        {% if request.resolver_match.url_name == 'urssaf_mensuel_gestion' or request.resolver_match.url_name == 'urssaf_mensuel_saisie' %}active{% endif %}"
+                        href="{% url 'urssaf_mensuel_gestion' annee_id %}">
+                        <span class="sidebar-text">URSSAF Mensuel</span>
+                    </a>
+
+                    <a class="nav-link text-white d-flex align-items-center gap-2
+                        {% if request.resolver_match.url_name == 'urssaf_trimestriel_gestion' or request.resolver_match.url_name == 'urssaf_trimestriel_saisie' %}active{% endif %}"
+                        href="{% url 'urssaf_trimestriel_gestion' annee_id %}">
+                        <span class="sidebar-text">URSSAF Trimestriel</span>
+                    </a>
+                
+                </div>
+
                 <a class="nav-link text-white d-flex align-items-center gap-2
                    {% if request.resolver_match.url_name == 'is_gestion' %}active{% endif %}"
                    href="{% url 'is_gestion' annee_id %}">
@@ -391,8 +422,33 @@
         {# ------------------------------------------------------ #}
 
         {% elif last_year %}
-
+            
             <a class="nav-link text-white d-flex align-items-center gap-2"
+               data-bs-toggle="collapse"
+               href="#menuURSSAF"
+               role="button"
+               aria-expanded="false"
+               aria-controls="menuURSSAF">
+
+                <span class="sidebar-text">URSSAF</span>
+                <i class="bi bi-chevron-down ms-auto small"></i>
+            </a>
+
+            <div class="collapse ps-4" id="menuURSSAF">
+
+                <a class="nav-link text-white d-flex align-items-center gap-2"
+                    href="{% url 'urssaf_mensuel_gestion' last_year %}">
+                    <span class="sidebar-text">URSSAF Mensuel</span>
+                </a>
+
+                <a class="nav-link text-white d-flex align-items-center gap-2"
+                    href="{% url 'urssaf_trimestriel_gestion' last_year %}">
+                    <span class="sidebar-text">URSSAF Trimestriel</span>
+                </a>
+            
+            </div>
+
+        <a class="nav-link text-white d-flex align-items-center gap-2"
                href="{% url 'is_gestion' last_year %}">
                 <span class="sidebar-text">IS</span>
             </a>

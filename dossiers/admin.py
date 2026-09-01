@@ -69,3 +69,56 @@ class ClientAdmin(admin.ModelAdmin):
             )
         }),
     )
+
+from django.contrib import admin
+from dossiers.models import AuditLog
+
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "client", "user", "app", "action")
+    list_filter = ("app", "client", "user")
+    search_fields = ("action", "metadata")
+    ordering = ("-created_at",)
+
+
+from django.contrib import admin
+from django.apps import apps
+
+app = apps.get_app_config("dossiers")  # le label de ton app (celui dans INSTALLED_APPS)
+
+for model in app.get_models():
+    try:
+        admin.site.register(model)
+    except admin.sites.AlreadyRegistered:
+        # On ignore les modèles déjà enregistrés (Client, AuditLog, etc.)
+        pass
+
+
+from django.contrib import admin
+from dossiers.models import (
+    TVA_CA12,
+    TVA,
+    NoteTag,
+    NoteCategorie,
+    UserNoteCategorie,
+    UserNote,
+    KanbanColumn,
+    KanbanTag,
+    KanbanCard,
+    KanbanCardTag,
+    Todo,
+    SubTask,
+)
+
+admin.site.unregister(TVA_CA12)
+admin.site.unregister(TVA)
+admin.site.unregister(NoteTag)
+admin.site.unregister(NoteCategorie)
+admin.site.unregister(UserNoteCategorie)
+admin.site.unregister(UserNote)
+admin.site.unregister(KanbanColumn)
+admin.site.unregister(KanbanTag)
+admin.site.unregister(KanbanCard)
+admin.site.unregister(KanbanCardTag)
+admin.site.unregister(Todo)
+admin.site.unregister(SubTask)

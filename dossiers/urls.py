@@ -380,6 +380,15 @@ urlpatterns = [
     path("dividendes/gestion/<int:annee_id>/", views.dividendes_gestion, name="dividendes_gestion"),
 
     # ============================
+    # MODULE URSSAF
+    # ============================
+
+    path("urssaf/mensuel/<int:annee_id>/", views.urssaf_mensuel_gestion, name="urssaf_mensuel_gestion"),
+    path("urssaf/mensuel/saisie/<int:cm_id>/", views.urssaf_mensuel_saisie, name="urssaf_mensuel_saisie"),
+    path("urssaf/trimestriel/<int:annee_id>/", views.urssaf_trimestriel_gestion, name="urssaf_trimestriel_gestion"),
+    path("urssaf/trimestriel/saisie/<int:cm_id>/", views.urssaf_trimestriel_saisie, name="urssaf_trimestriel_saisie"),
+
+    # ============================
     # MODULE DP
     # ============================
 
