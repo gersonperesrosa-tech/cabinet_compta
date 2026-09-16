@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load cloture_tags %}
+{% load cloture_tags static %}
 
 {% block content %}
 <section class="section">
@@ -16,6 +16,8 @@
     </h1>
 
     <div class="d-flex align-items-center gap-3">
+
+        {% include "cloture/_status_filter.html" %}
 
         <!-- Recherche -->
         <input id="searchInput" type="text" class="form-control" 
@@ -100,18 +102,8 @@
     </tbody>
 </table>
 
-<!-- Recherche dynamique -->
-<script>
-document.getElementById("searchInput").addEventListener("keyup", function() {
-    let filter = this.value.toLowerCase();
-    let rows = document.querySelectorAll("#missionTable tbody tr");
-
-    rows.forEach(row => {
-        let clientName = row.cells[1].innerText.toLowerCase();
-        row.style.display = clientName.includes(filter) ? "" : "none";
-    });
-});
-</script>
+<script src="{% static 'cloture/js/table_filters.js' %}"></script>
+<script>initializeClotureTableFilters("missionTable");</script>
 
 <!-- Tri dynamique sur toutes les colonnes -->
 <script>

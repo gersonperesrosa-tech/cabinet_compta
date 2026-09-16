@@ -221,6 +221,7 @@ def gestion_revisions(request):
         "annees": annees,
         "selected_year": selected_year,
         "statuts": ClotureStatus.choices,
+        "filter_columns": [(2, "Pré-révision"), (3, "Relance pièces"), (4, "Relevé bancaire"), (5, "Révision AD"), (6, "Plaquette"), (7, "Liasse"), (8, "Statut général")],
     })
 
 
@@ -389,6 +390,8 @@ def gestion_declarations(request):
         "modules": modules,
         "annees": annees,
         "selected_year": selected_year,
+        "statuts": ClotureStatus.choices,
+        "filter_columns": [(2, "CA12"), (3, "IS / CI"), (4, "VA1330"), (5, "1329DEF"), (6, "DECLOYER"), (7, "DAS2"), (8, "DRI"), (9, "Statut général")],
     })
 
 
@@ -445,6 +448,8 @@ def gestion_mission(request):
         "modules": modules,
         "annees": annees,
         "selected_year": selected_year,
+        "statuts": ClotureStatus.choices,
+        "filter_columns": [(2, "LAB/Maintien"), (3, "Dossier travail"), (4, "Attestation"), (5, "CR Mission"), (6, "Statut général")],
     })
 
 
@@ -495,6 +500,8 @@ def gestion_juridique(request):
         "modules": modules,
         "annees": annees,
         "selected_year": selected_year,
+        "statuts": ClotureStatus.choices,
+        "filter_columns": [(2, "Juridique fait"), (3, "Envoi client"), (4, "Retour client"), (5, "Envoi greffe"), (6, "Validation greffe"), (7, "Statut général")],
     })
 
 
@@ -582,4 +589,6 @@ def gestion_globale_cloture(request):
         "annees": annees,
         "selected_year": selected_year,
         "data": data,
+        "statuts": ClotureStatus.choices,
+        "filter_columns": [(2, "Révisions, Plaquette et Liasse"), (3, "Déclarations"), (4, "Mission"), (5, "Juridique"), (6, "Statut général")],
     })

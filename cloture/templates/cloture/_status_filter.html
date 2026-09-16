@@ -1,0 +1,16 @@
+<div class="d-flex align-items-center gap-2">
+    <select id="columnFilter" class="form-select" style="width: 190px;" aria-label="Colonne à filtrer">
+        <option value="">Filtrer une colonne...</option>
+        {% for index, label in filter_columns %}
+            <option value="{{ index }}">{{ label }}</option>
+        {% endfor %}
+    </select>
+
+    <select id="statusFilter" class="form-select" style="width: 190px;" aria-label="Statut à filtrer" disabled>
+        <option value="">Tous les statuts</option>
+        {% for value, label in statuts %}
+            <option value="{{ value }}">{{ label }}</option>
+        {% endfor %}
+        <option value="__empty__">Sans statut</option>
+    </select>
+</div>

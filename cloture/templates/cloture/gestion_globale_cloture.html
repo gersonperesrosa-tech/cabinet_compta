@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load cloture_tags %}
+{% load cloture_tags static %}
 
 {% block content %}
 <section class="section">
@@ -8,6 +8,13 @@
     <h1 class="mb-4">Gestion Globale Clôture</h1>
 
     <div class="d-flex align-items-center gap-3">
+        <div class="form-check mb-0 text-nowrap">
+            <input id="hideCompleted" class="form-check-input" type="checkbox">
+            <label class="form-check-label" for="hideCompleted">Masquer les terminés</label>
+        </div>
+
+        {% include "cloture/_status_filter.html" %}
+
         <input id="searchInput" type="text" class="form-control"
                style="width: 250px;" placeholder="Rechercher un client...">
 
@@ -127,18 +134,8 @@
 
 {% endif %}
 
-<!-- Recherche dynamique -->
-<script>
-document.getElementById("searchInput").addEventListener("keyup", function() {
-    let filter = this.value.toLowerCase();
-    let rows = document.querySelectorAll("#globalTable tbody tr");
-
-    rows.forEach(row => {
-        let clientName = row.cells[1].innerText.toLowerCase();
-        row.style.display = clientName.includes(filter) ? "" : "none";
-    });
-});
-</script>
+<script src="{% static 'cloture/js/table_filters.js' %}"></script>
+<script>initializeClotureTableFilters("globalTable", {completedColumnIndex: 6});</script>
 
 <!-- Tri dynamique -->
 <script>
