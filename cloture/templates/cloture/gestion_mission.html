@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load cloture_tags static %}
+{% load cloture_tags %}
 
 {% block content %}
 <section class="section">
@@ -102,8 +102,7 @@
     </tbody>
 </table>
 
-<script src="{% static 'cloture/js/table_filters.js' %}"></script>
-<script>initializeClotureTableFilters("missionTable");</script>
+{% include "cloture/_table_filters_js.html" with table_id="missionTable" %}
 
 <!-- Tri dynamique sur toutes les colonnes -->
 <script>

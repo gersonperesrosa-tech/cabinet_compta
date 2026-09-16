@@ -1,0 +1,54 @@
+<script>
+(function () {
+    const table = document.getElementById("{{ table_id|escapejs }}");
+    const searchInput = document.getElementById("searchInput");
+    const columnFilter = document.getElementById("columnFilter");
+    const statusFilter = document.getElementById("statusFilter");
+    const hideCompleted = document.getElementById("hideCompleted");
+    const completedColumnIndex = {{ completed_column|default:"null" }};
+
+    if (!table) return;
+
+    const rows = Array.from(table.querySelectorAll("tbody tr"));
+
+    function applyFilters() {
+        const search = searchInput ? searchInput.value.trim().toLowerCase() : "";
+        const columnIndex = columnFilter ? columnFilter.value : "";
+        const selectedStatus = statusFilter ? statusFilter.value : "";
+
+        rows.forEach(row => {
+            const clientName = row.cells[1]?.innerText.toLowerCase() || "";
+            const matchesSearch = clientName.includes(search);
+
+            let matchesStatus = true;
+            if (columnIndex !== "" && selectedStatus !== "") {
+                const cellStatus = row.cells[Number(columnIndex)]?.dataset.sort || "";
+                matchesStatus = selectedStatus === "__empty__"
+                    ? cellStatus === ""
+                    : cellStatus === selectedStatus;
+            }
+
+            let matchesCompleted = true;
+            if (hideCompleted?.checked && Number.isInteger(completedColumnIndex)) {
+                const generalStatus = row.cells[completedColumnIndex]?.dataset.sort || "";
+                matchesCompleted = generalStatus !== "termine";
+            }
+
+            row.style.display = matchesSearch && matchesStatus && matchesCompleted ? "" : "none";
+        });
+    }
+
+    searchInput?.addEventListener("input", applyFilters);
+    columnFilter?.addEventListener("change", function () {
+        if (statusFilter) {
+            statusFilter.disabled = this.value === "";
+            if (this.value === "") statusFilter.value = "";
+        }
+        applyFilters();
+    });
+    statusFilter?.addEventListener("change", applyFilters);
+    hideCompleted?.addEventListener("change", applyFilters);
+
+    applyFilters();
+})();
+</script>

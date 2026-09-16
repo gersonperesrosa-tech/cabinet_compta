@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load cloture_tags static %}
+{% load cloture_tags %}
 
 {% block content %}
 <section class="section">
@@ -134,8 +134,7 @@
 
 {% endif %}
 
-<script src="{% static 'cloture/js/table_filters.js' %}"></script>
-<script>initializeClotureTableFilters("globalTable", {completedColumnIndex: 6});</script>
+{% include "cloture/_table_filters_js.html" with table_id="globalTable" completed_column=6 %}
 
 <!-- Tri dynamique -->
 <script>
