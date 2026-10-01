@@ -485,40 +485,83 @@
 
 
 		<!-- SECTION : Paie -->
-		<hr class="sidebar-separator my-3 opacity-25">
-		<div class="sidebar-section-title text-uppercase small opacity-75 mb-2">
-		    Paie
-		</div>
-		
-		<div class="nav-item">
-		
-		    <a class="nav-link text-white d-flex align-items-center gap-2"
-		       data-bs-toggle="collapse"
-		       href="#menuPAIE"
-		       role="button"
-		       aria-expanded="false"
-		       aria-controls="menuPAIE">
-		
-		        <i class="bi bi-people"></i>
-		        <span class="sidebar-text">Paie</span>
-		        <i class="bi bi-chevron-down ms-auto small"></i>
-		    </a>
-		
-		    <div class="collapse ps-4" id="menuPAIE">
+<!-- SECTION : SOCIAL -->
+<hr class="sidebar-separator my-3 opacity-25">
 
-                <a class="nav-link text-white d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'paie:cabinet_clients_paie' %}active{% endif %}"
-                   href="{% url 'paie:cabinet_clients_paie' %}">
-                   <span class="sidebar-text">Clients paie</span>
-                </a>
+<div class="sidebar-section-title text-uppercase small opacity-75 mb-2">
+    SOCIAL
+</div>
 
-                <a class="nav-link text-white d-flex align-items-center gap-2 {% if request.resolver_match.url_name == 'paie:cabinet_suivi_annuel' %}active{% endif %}"
-                   href="{% url 'paie:cabinet_suivi_annuel' %}">
-                   <span class="sidebar-text">Gestion paie</span>
-                </a>
+<!-- PAIE -->
+<div class="nav-item">
 
+    <a class="nav-link text-white d-flex align-items-center gap-2"
+       data-bs-toggle="collapse"
+       href="#menuPAIE"
+       role="button"
+       aria-expanded="false"
+       aria-controls="menuPAIE">
+
+        <i class="bi bi-people"></i>
+        <span class="sidebar-text">Paie</span>
+        <i class="bi bi-chevron-down ms-auto small"></i>
+    </a>
+
+    <div class="collapse ps-4" id="menuPAIE">
+
+        <a class="nav-link text-white d-flex align-items-center gap-2
+           {% if request.resolver_match.url_name == 'paie:cabinet_clients_paie' %}active{% endif %}"
+           href="{% url 'paie:cabinet_clients_paie' %}">
+            <span class="sidebar-text">Clients paie</span>
+        </a>
+
+        <a class="nav-link text-white d-flex align-items-center gap-2
+           {% if request.resolver_match.url_name == 'paie:cabinet_suivi_annuel' %}active{% endif %}"
+           href="{% url 'paie:cabinet_suivi_annuel' %}">
+            <span class="sidebar-text">Gestion paie</span>
+        </a>
 
     </div>
+</div>
+
+
+<!-- FACTURATION -->
+<div class="nav-item mt-1">
+
+    <a class="nav-link text-white d-flex align-items-center gap-2"
+       data-bs-toggle="collapse"
+       href="#menuFACTURATION"
+       role="button"
+       aria-expanded="false"
+       aria-controls="menuFACTURATION">
+
+        <i class="bi bi-cash-coin"></i>
+        <span class="sidebar-text">Facturation</span>
+        <i class="bi bi-chevron-down ms-auto small"></i>
+    </a>
+
+    <div class="collapse ps-4" id="menuFACTURATION">
+
+        <a class="nav-link text-white d-flex align-items-center gap-2
+           {% if request.resolver_match.url_name == 'facturation_sociale:gestion' %}active{% endif %}"
+           href="{% url 'facturation_sociale:gestion' %}">
+            <span class="sidebar-text">Gestion</span>
+        </a>
+
+        <a class="nav-link text-white d-flex align-items-center gap-2
+           {% if request.resolver_match.url_name == 'facturation_sociale:nouvelle_prestation' %}active{% endif %}"
+           href="{% url 'facturation_sociale:nouvelle_prestation' %}">
+            <span class="sidebar-text">Nouvelle prestation</span>
+        </a>
+
+        <a class="nav-link text-white d-flex align-items-center gap-2
+           {% if request.resolver_match.url_name == 'facturation_sociale:configurations' %}active{% endif %}"
+           href="{% url 'facturation_sociale:configurations' %}">
+            <span class="sidebar-text">Configurations</span>
+        </a>
+
     </div>
+</div>
 
 
 <!-- SECTION : Clôture -->

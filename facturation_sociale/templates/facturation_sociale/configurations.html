@@ -1,0 +1,185 @@
+﻿{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+<div class="container-fluid">
+
+    <!-- EN-TÊTE -->
+    <div class="mb-4">
+        <h1 class="h3 mb-1">Configurations</h1>
+
+        <p class="text-muted mb-0">
+            Paramétrez la facturation sociale du cabinet.
+        </p>
+    </div>
+
+
+    <div class="row g-4">
+
+        <!-- ================================================= -->
+        <!-- PRESTATIONS                                      -->
+        <!-- ================================================= -->
+
+        <div class="col-lg-4">
+
+            <div class="card border-0 shadow-sm h-100 d-flex flex-column">
+
+                <div class="card-body p-4 flex-grow-1">
+
+                    <div class="d-flex align-items-center mb-3">
+
+                        <div class="fs-2 me-3 text-primary">
+                            <i class="bi bi-list-check"></i>
+                        </div>
+
+                        <div>
+                            <h5 class="mb-1">
+                                Prestations
+                            </h5>
+
+                            <div class="text-muted small">
+                                Types de prestations et tarifs clients
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    <p class="text-muted mb-0">
+                        Gérez les prestations facturables au client :
+                        bulletins de paie, contrats, DPAE, entrées,
+                        sorties et autres prestations.
+                    </p>
+
+                </div>
+
+
+                <div class="card-footer bg-white border-0 p-4 pt-0 mt-auto">
+
+                    <a href="{% url 'facturation_sociale:prestations' %}"
+                       class="btn btn-outline-primary w-100">
+
+                        <i class="bi bi-gear me-1"></i>
+                        Gérer les prestations
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- PRESTATAIRES                                     -->
+        <!-- ================================================= -->
+
+        <div class="col-lg-4">
+
+            <div class="card border-0 shadow-sm h-100 d-flex flex-column">
+
+                <div class="card-body p-4 flex-grow-1">
+
+                    <div class="d-flex align-items-center mb-3">
+
+                        <div class="fs-2 me-3 text-primary">
+                            <i class="bi bi-building"></i>
+                        </div>
+
+                        <div>
+                            <h5 class="mb-1">
+                                Prestataires
+                            </h5>
+
+                            <div class="text-muted small">
+                                Fournisseurs de prestations sociales
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    <p class="text-muted mb-0">
+                        Gérez les prestataires utilisés par le cabinet
+                        pour réaliser les différentes prestations sociales.
+                    </p>
+
+                </div>
+
+
+                <div class="card-footer bg-white border-0 p-4 pt-0 mt-auto">
+
+                    <a href="{% url 'facturation_sociale:prestataires' %}"
+                       class="btn btn-outline-primary w-100">
+
+                        <i class="bi bi-gear me-1"></i>
+                        Gérer les prestataires
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- TARIFS PRESTATAIRES                              -->
+        <!-- ================================================= -->
+
+        <div class="col-lg-4">
+
+            <div class="card border-0 shadow-sm h-100 d-flex flex-column">
+
+                <div class="card-body p-4 flex-grow-1">
+
+                    <div class="d-flex align-items-center mb-3">
+
+                        <div class="fs-2 me-3 text-primary">
+                            <i class="bi bi-currency-euro"></i>
+                        </div>
+
+                        <div>
+                            <h5 class="mb-1">
+                                Tarifs prestataires
+                            </h5>
+
+                            <div class="text-muted small">
+                                Coûts unitaires par prestation
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    <p class="text-muted mb-0">
+                        Définissez le coût facturé par chaque prestataire
+                        pour chaque type de prestation.
+                    </p>
+
+                </div>
+
+
+                <div class="card-footer bg-white border-0 p-4 pt-0 mt-auto">
+
+                    <a href="{% url 'facturation_sociale:tarifs_prestataires' %}"
+                       class="btn btn-outline-primary w-100">
+
+                        <i class="bi bi-gear me-1"></i>
+                        Gérer les tarifs
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

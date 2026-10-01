@@ -1,0 +1,354 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <!-- EN-TÊTE -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1 class="h3 mb-1">Prestations</h1>
+            <p class="text-muted mb-0">
+                Gérez les prestations disponibles pour la facturation sociale.
+            </p>
+        </div>
+
+        <a href="{% url 'facturation_sociale:configurations' %}"
+           class="btn btn-outline-secondary">
+
+            <i class="bi bi-arrow-left me-1"></i>
+            Configurations
+
+        </a>
+
+    </div>
+
+
+    {% if messages %}
+        {% for message in messages %}
+
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+
+                {{ message }}
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert">
+                </button>
+
+            </div>
+
+        {% endfor %}
+    {% endif %}
+
+
+    <div class="row g-4">
+
+        <!-- ================================================= -->
+        <!-- LISTE DES PRESTATIONS                             -->
+        <!-- ================================================= -->
+
+        <div class="col-xl-8">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-white py-3">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <h5 class="mb-0">
+                            Prestations configurées
+                        </h5>
+
+                        <span class="badge bg-light text-dark border">
+                            {{ prestations|length }}
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="card-body p-0">
+
+                    <div class="table-responsive">
+
+                        <table class="table table-hover align-middle mb-0">
+
+                            <thead class="table-light">
+
+                                <tr>
+                                    <th class="ps-4">
+                                        Prestation
+                                    </th>
+
+                                    <th>
+                                        Tarif client standard
+                                    </th>
+
+                                    <th class="text-center">
+                                        Statut
+                                    </th>
+
+                                    <th class="text-end pe-4">
+                                        Actions
+                                    </th>
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+                                {% for prestation in prestations %}
+
+                                    <tr>
+
+                                        <td class="ps-4">
+
+                                            <strong>
+                                                {{ prestation.nom }}
+                                            </strong>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <strong>
+                                                {{ prestation.tarif_client_standard|floatformat:2 }} €
+                                            </strong>
+
+                                            <div class="small text-muted">
+                                                par unité
+                                            </div>
+
+                                        </td>
+
+
+                                        <td class="text-center">
+
+                                            {% if prestation.actif %}
+
+                                                <span class="badge bg-success">
+                                                    Active
+                                                </span>
+
+                                            {% else %}
+
+                                                <span class="badge bg-secondary">
+                                                    Inactive
+                                                </span>
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <td class="text-end pe-4">
+
+                                            <a href="{% url 'facturation_sociale:modifier_prestation' prestation.pk %}"
+                                               class="btn btn-sm btn-outline-primary">
+
+                                                <i class="bi bi-pencil me-1"></i>
+                                                Modifier
+
+                                            </a>
+
+                                        </td>
+
+                                    </tr>
+
+                                {% empty %}
+
+                                    <tr>
+
+                                        <td colspan="4"
+                                            class="text-center text-muted py-5">
+
+                                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+
+                                            Aucune prestation configurée.
+
+                                        </td>
+
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- FORMULAIRE                                       -->
+        <!-- ================================================= -->
+
+        <div class="col-xl-4">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-white py-3">
+
+                    {% if prestation_modifiee %}
+
+                        <h5 class="mb-0">
+                            <i class="bi bi-pencil me-1"></i>
+                            Modifier la prestation
+                        </h5>
+
+                    {% else %}
+
+                        <h5 class="mb-0">
+                            <i class="bi bi-plus-lg me-1"></i>
+                            Nouvelle prestation
+                        </h5>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="card-body">
+
+                    {% if prestation_modifiee %}
+
+                        <div class="alert alert-light border mb-4">
+
+                            Modification de
+                            <strong>{{ prestation_modifiee.nom }}</strong>
+
+                        </div>
+
+                    {% endif %}
+
+
+                    <form method="post">
+
+                        {% csrf_token %}
+
+
+                        <div class="mb-3">
+
+                            <label class="form-label fw-semibold">
+                                {{ form_prestation.nom.label }}
+                            </label>
+
+                            {{ form_prestation.nom }}
+
+                            {% for error in form_prestation.nom.errors %}
+
+                                <div class="text-danger small mt-1">
+                                    {{ error }}
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+
+                        <div class="mb-4">
+
+                            <label class="form-label fw-semibold">
+                                {{ form_prestation.tarif_client_standard.label }}
+                            </label>
+
+                            {{ form_prestation.tarif_client_standard }}
+
+                            <div class="form-text">
+                                Tarif unitaire facturé par défaut au client.
+                            </div>
+
+                            {% for error in form_prestation.tarif_client_standard.errors %}
+
+                                <div class="text-danger small mt-1">
+                                    {{ error }}
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+
+                        <div class="border rounded p-3 bg-light mb-4">
+
+                            <div class="form-check">
+
+                                {{ form_prestation.actif }}
+
+                                <label class="form-check-label fw-semibold"
+                                       for="{{ form_prestation.actif.id_for_label }}">
+
+                                    {{ form_prestation.actif.label }}
+
+                                </label>
+
+                            </div>
+
+                            <div class="small text-muted mt-1 ms-4">
+
+                                Les prestations inactives restent dans
+                                l'historique mais ne seront plus proposées
+                                pour les nouvelles saisies.
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="d-flex gap-2">
+
+                            {% if prestation_modifiee %}
+
+                                <a href="{% url 'facturation_sociale:prestations' %}"
+                                   class="btn btn-outline-secondary flex-fill">
+
+                                    Annuler
+
+                                </a>
+
+                                <button type="submit"
+                                        class="btn btn-primary flex-fill">
+
+                                    <i class="bi bi-check-lg me-1"></i>
+                                    Enregistrer
+
+                                </button>
+
+                            {% else %}
+
+                                <button type="submit"
+                                        class="btn btn-primary w-100">
+
+                                    <i class="bi bi-plus-lg me-1"></i>
+                                    Ajouter la prestation
+
+                                </button>
+
+                            {% endif %}
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

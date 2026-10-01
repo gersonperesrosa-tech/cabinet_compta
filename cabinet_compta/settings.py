@@ -1,4 +1,4 @@
-from pathlib import Path
+﻿from pathlib import Path
 import os
 import dj_database_url
 from dotenv import load_dotenv
@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'paie',
     'cloture',
     'administration',
+    'facturation_sociale',
 ]
 
 MIDDLEWARE = [
@@ -73,7 +74,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'cabinet_compta.wsgi.application'
 
-# DATABASES — local = SQLite, Render = PostgreSQL
+# DATABASES â€” local = SQLite, Render = PostgreSQL
 DATABASES = {
     "default": dj_database_url.config(
         default=os.environ.get("DATABASE_URL"),
@@ -102,7 +103,7 @@ LOGIN_URL = "/login/"
 LOGOUT_REDIRECT_URL = "/login/"
 
 # ============================================
-# EMAIL — CONFIGURATION SMTP EXPERTEA
+# EMAIL â€” CONFIGURATION SMTP EXPERTEA
 # ============================================
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -129,7 +130,8 @@ CSRF_TRUSTED_ORIGINS = [
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
-# Optionnel mais recommandé
+# Optionnel mais recommandÃ©
 SECURE_SSL_REDIRECT = True
+
 
 

@@ -1,0 +1,367 @@
+﻿{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <!-- EN-TÊTE -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1 class="h3 mb-1">Tarifs prestataires</h1>
+            <p class="text-muted mb-0">
+                Définissez le coût unitaire de chaque prestation selon le prestataire.
+            </p>
+        </div>
+
+        <a href="{% url 'facturation_sociale:configurations' %}"
+           class="btn btn-outline-secondary">
+
+            <i class="bi bi-arrow-left me-1"></i>
+            Configurations
+
+        </a>
+
+    </div>
+
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+
+                {{ message }}
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert">
+                </button>
+
+            </div>
+        {% endfor %}
+    {% endif %}
+
+
+    <div class="row g-4">
+
+        <!-- LISTE DES TARIFS -->
+        <div class="col-xl-8">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-white py-3">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <h5 class="mb-0">
+                            Tarifs configurés
+                        </h5>
+
+                        <span class="badge bg-light text-dark border">
+                            {{ tarifs|length }}
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="card-body p-0">
+
+                    <div class="table-responsive">
+
+                        <table class="table table-hover align-middle mb-0">
+
+                            <thead class="table-light">
+
+                                <tr>
+                                    <th class="ps-4">
+                                        Prestation
+                                    </th>
+
+                                    <th>
+                                        Prestataire
+                                    </th>
+
+                                    <th class="text-end">
+                                        Coût unitaire
+                                    </th>
+
+                                    <th class="text-center">
+                                        Statut
+                                    </th>
+
+                                    <th class="text-end pe-4">
+                                        Actions
+                                    </th>
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+                                {% for tarif in tarifs %}
+
+                                    <tr>
+
+                                        <td class="ps-4">
+                                            <strong>
+                                                {{ tarif.prestation.nom }}
+                                            </strong>
+                                        </td>
+
+
+                                        <td>
+                                            {{ tarif.prestataire.nom }}
+                                        </td>
+
+
+                                        <td class="text-end">
+
+                                            <strong>
+                                                {{ tarif.cout_unitaire|floatformat:2 }} €
+                                            </strong>
+
+                                            <div class="small text-muted">
+                                                par unité
+                                            </div>
+
+                                        </td>
+
+
+                                        <td class="text-center">
+
+                                            {% if tarif.actif %}
+
+                                                <span class="badge bg-success">
+                                                    Actif
+                                                </span>
+
+                                            {% else %}
+
+                                                <span class="badge bg-secondary">
+                                                    Inactif
+                                                </span>
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <td class="text-end pe-4">
+
+                                            <a href="{% url 'facturation_sociale:modifier_tarif_prestataire' tarif.pk %}"
+                                               class="btn btn-sm btn-outline-primary">
+
+                                                <i class="bi bi-pencil me-1"></i>
+                                                Modifier
+
+                                            </a>
+
+                                        </td>
+
+                                    </tr>
+
+                                {% empty %}
+
+                                    <tr>
+
+                                        <td colspan="5"
+                                            class="text-center text-muted py-5">
+
+                                            <i class="bi bi-currency-euro fs-3 d-block mb-2"></i>
+
+                                            Aucun tarif prestataire configuré.
+
+                                        </td>
+
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- FORMULAIRE -->
+        <div class="col-xl-4">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-white py-3">
+
+                    {% if tarif_modifie %}
+
+                        <h5 class="mb-0">
+                            <i class="bi bi-pencil me-1"></i>
+                            Modifier le tarif
+                        </h5>
+
+                    {% else %}
+
+                        <h5 class="mb-0">
+                            <i class="bi bi-plus-lg me-1"></i>
+                            Nouveau tarif
+                        </h5>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="card-body">
+
+                    {% if tarif_modifie %}
+
+                        <div class="alert alert-light border mb-4">
+
+                            <strong>{{ tarif_modifie.prestation.nom }}</strong>
+                            <br>
+
+                            <span class="text-muted">
+                                {{ tarif_modifie.prestataire.nom }}
+                            </span>
+
+                        </div>
+
+                    {% endif %}
+
+
+                    <form method="post">
+
+                        {% csrf_token %}
+
+
+                        <div class="mb-3">
+
+                            <label class="form-label fw-semibold">
+                                {{ form_tarif.prestation.label }}
+                            </label>
+
+                            {{ form_tarif.prestation }}
+
+                            {% for error in form_tarif.prestation.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+
+                        </div>
+
+
+                        <div class="mb-3">
+
+                            <label class="form-label fw-semibold">
+                                {{ form_tarif.prestataire.label }}
+                            </label>
+
+                            {{ form_tarif.prestataire }}
+
+                            {% for error in form_tarif.prestataire.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+
+                        </div>
+
+
+                        <div class="mb-4">
+
+                            <label class="form-label fw-semibold">
+                                {{ form_tarif.cout_unitaire.label }}
+                            </label>
+
+                            {{ form_tarif.cout_unitaire }}
+
+                            <div class="form-text">
+                                Coût facturé par le prestataire pour une unité de cette prestation.
+                            </div>
+
+                            {% for error in form_tarif.cout_unitaire.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+
+                        </div>
+
+
+                        <div class="border rounded p-3 bg-light mb-4">
+
+                            <div class="form-check">
+
+                                {{ form_tarif.actif }}
+
+                                <label class="form-check-label fw-semibold"
+                                       for="{{ form_tarif.actif.id_for_label }}">
+
+                                    {{ form_tarif.actif.label }}
+
+                                </label>
+
+                            </div>
+
+                            <div class="small text-muted mt-1 ms-4">
+                                Un tarif inactif reste dans l'historique
+                                mais ne sera plus utilisé pour les nouvelles saisies.
+                            </div>
+
+                        </div>
+
+
+                        <div class="d-flex gap-2">
+
+                            {% if tarif_modifie %}
+
+                                <a href="{% url 'facturation_sociale:tarifs_prestataires' %}"
+                                   class="btn btn-outline-secondary flex-fill">
+
+                                    Annuler
+
+                                </a>
+
+                                <button type="submit"
+                                        class="btn btn-primary flex-fill">
+
+                                    <i class="bi bi-check-lg me-1"></i>
+                                    Enregistrer
+
+                                </button>
+
+                            {% else %}
+
+                                <button type="submit"
+                                        class="btn btn-primary w-100">
+
+                                    <i class="bi bi-plus-lg me-1"></i>
+                                    Ajouter le tarif
+
+                                </button>
+
+                            {% endif %}
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

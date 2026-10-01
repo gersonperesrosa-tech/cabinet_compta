@@ -1,0 +1,2205 @@
+﻿{% extends "base.html" %}
+
+{% block content %}
+
+<section class="section">
+{{ tarifs_prestataires|json_script:"tarifs-prestataires-data" }}
+{{ prestations_data|json_script:"prestations-data" }}
+{{ clients_paie_ids|json_script:"clients-paie-data" }}
+
+
+<style>
+/* =========================================================
+   SELECTEUR CLIENT
+   Même style que les champs Bootstrap du projet
+   ========================================================= */
+
+.client-picker {
+    position: relative;
+}
+
+
+/* Champ principal */
+.client-picker-button {
+    width: 100%;
+    min-height: 38px;
+    padding: .375rem 2.25rem .375rem .75rem;
+
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
+
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+
+    cursor: pointer;
+    text-align: left;
+
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+
+    transition:
+        border-color .15s ease-in-out,
+        box-shadow .15s ease-in-out;
+}
+
+
+/* Même focus que les autres form-control / form-select */
+.client-picker-button:focus,
+.client-picker-button:focus-visible,
+.client-picker.open .client-picker-button {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .25);
+}
+
+
+/* Menu déroulant */
+.client-picker-menu {
+    position: absolute;
+
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+
+    z-index: 1050;
+
+    display: none;
+
+    background-color: var(--bs-body-bg);
+
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+
+    box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .10);
+
+    overflow: hidden;
+}
+
+
+.client-picker-menu.show {
+    display: block;
+}
+
+
+/* Recherche */
+.client-picker-search {
+    padding: .75rem;
+
+    background-color: var(--bs-body-bg);
+
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+
+.client-picker-search .form-control,
+.client-picker-search .input-group-text {
+    font-size: .95rem;
+}
+
+
+/* Filtres Tous / Paie */
+.client-picker-filters {
+    padding: .65rem .75rem;
+
+    background-color: var(--bs-tertiary-bg);
+
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+
+/* Liste */
+.client-picker-results {
+    max-height: 280px;
+    overflow-y: auto;
+
+    background-color: var(--bs-body-bg);
+}
+
+
+/* Une ligne client */
+.client-picker-item {
+    padding: .65rem .85rem;
+
+    cursor: pointer;
+
+    background-color: var(--bs-body-bg);
+
+    border-bottom: 1px solid var(--bs-border-color);
+
+    font-size: .95rem;
+
+    transition: background-color .1s ease-in-out;
+}
+
+
+.client-picker-item:last-child {
+    border-bottom: 0;
+}
+
+
+.client-picker-item:hover {
+    background-color: var(--bs-tertiary-bg);
+}
+
+
+/* Client actuellement sélectionné */
+.client-picker-item.selected {
+    background-color: var(--bs-primary-bg-subtle);
+    color: var(--bs-primary-text-emphasis);
+}
+
+
+/* Aucun résultat */
+.client-picker-empty {
+    padding: 1.5rem;
+
+    text-align: center;
+
+    color: var(--bs-secondary-color);
+
+    background-color: var(--bs-body-bg);
+}
+
+
+/* Barre compteur en bas */
+#client-picker-count {
+    background-color: var(--bs-tertiary-bg) !important;
+}
+</style>
+<style>
+    .client-result {
+        cursor: pointer;
+        transition: background-color .15s ease;
+    }
+
+    .client-result:hover {
+        background-color: var(--bs-light);
+    }
+
+    .client-result.selected {
+        background-color: rgba(13, 110, 253, .08);
+    }
+
+    .client-results-box {
+        max-height: 260px;
+        overflow-y: auto;
+    }
+
+    .tarif-choice {
+        border: 1px solid var(--bs-border-color);
+        border-radius: .5rem;
+        padding: 1rem;
+        cursor: pointer;
+        height: 100%;
+        transition: border-color .15s ease, background-color .15s ease;
+    }
+
+    .tarif-choice:hover {
+        border-color: var(--bs-primary);
+    }
+
+    .tarif-choice.active {
+        border-color: var(--bs-primary);
+        background-color: rgba(13, 110, 253, .06);
+    }
+
+    .tarif-choice input[type="radio"] {
+        width: 1rem;
+        height: 1rem;
+        margin-top: .25rem;
+        flex: 0 0 auto;
+    }
+</style>
+
+
+<div class="container-fluid">
+
+    <div class="mb-4">
+
+        {% if mode_modification %}
+
+            <h1 class="h3 mb-1">
+                Modifier la prestation
+            </h1>
+
+            <p class="text-muted mb-0">
+                Modification de
+                <strong>{{ ligne_modifiee.prestation.nom }}</strong>
+                pour
+                <strong>{{ ligne_modifiee.client.nom }}</strong>.
+            </p>
+
+        {% else %}
+
+            <h1 class="h3 mb-1">
+                Nouvelle prestation
+            </h1>
+
+            <p class="text-muted mb-0">
+                Enregistrez une prestation sociale réalisée pour un client.
+            </p>
+
+        {% endif %}
+
+    </div>
+
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert">
+                </button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}
+                <div>{{ error }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+
+    <form method="post" id="prestation-form">
+        {% csrf_token %}
+
+        <!--
+            Le vrai select Django reste présent pour l'envoi du formulaire,
+            mais il est caché. L'utilisateur utilise le moteur de recherche.
+        -->
+        <div class="d-none">
+            {{ form.client }}
+        </div>
+
+
+        <div class="row g-4">
+
+            <!-- COLONNE PRINCIPALE -->
+            <div class="col-xl-8">
+
+
+                <!-- PÉRIODE -->
+                <div class="card border-0 shadow-sm mb-4">
+
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">
+                            <i class="bi bi-calendar3 me-2"></i>
+                            Période de prestation
+                        </h5>
+                    </div>
+
+                    <div class="card-body">
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
+                                    {{ form.mois.label }}
+                                </label>
+
+                                {{ form.mois }}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
+                                    {{ form.annee.label }}
+                                </label>
+
+                                {{ form.annee }}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- CLIENT -->
+<div class="card border-0 shadow-sm mb-4">
+
+    <div class="card-header bg-white py-3">
+
+        <h5 class="mb-0">
+            <i class="bi bi-building me-2"></i>
+            Client
+        </h5>
+
+    </div>
+
+
+    <div class="card-body">
+
+        <label class="form-label fw-semibold">
+            Client
+        </label>
+
+
+        <div class="client-picker"
+             id="client-picker">
+
+            <!-- CHAMP PRINCIPAL -->
+            <button type="button"
+                    class="form-select client-picker-button"
+                    id="client-picker-button">
+
+                <span id="client-picker-label"
+                      class="text-muted">
+                    Sélectionner un client...
+                </span>
+
+            </button>
+
+
+            <!-- MENU -->
+            <div class="client-picker-menu"
+                 id="client-picker-menu">
+
+                <!-- RECHERCHE -->
+                <div class="client-picker-search">
+
+                    <div class="input-group">
+
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+
+                        <input type="text"
+                               class="form-control"
+                               id="client-picker-search"
+                               autocomplete="off"
+                               placeholder="Rechercher par nom ou numéro...">
+
+                    </div>
+
+                </div>
+
+
+                <!-- FILTRE -->
+                <div class="client-picker-filters">
+
+                    <div class="btn-group w-100"
+                         role="group">
+
+                        <input type="radio"
+                               class="btn-check"
+                               name="client_picker_filter"
+                               id="picker-filter-tous"
+                               value="tous"
+                               checked>
+
+                        <label class="btn btn-sm btn-outline-secondary"
+                               for="picker-filter-tous">
+                            Tous les clients
+                        </label>
+
+
+                        <input type="radio"
+                               class="btn-check"
+                               name="client_picker_filter"
+                               id="picker-filter-paie"
+                               value="paie">
+
+                        <label class="btn btn-sm btn-outline-secondary"
+                               for="picker-filter-paie">
+
+                            <i class="bi bi-people me-1"></i>
+                            Clients paie
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+
+                <!-- RÉSULTATS -->
+                <div class="client-picker-results"
+                     id="client-picker-results">
+                </div>
+
+
+                <!-- COMPTEUR -->
+                <div class="small text-muted px-3 py-2 border-top bg-light"
+                     id="client-picker-count">
+                </div>
+
+            </div>
+
+        </div>
+
+
+        {% for error in form.client.errors %}
+            <div class="text-danger small mt-2">
+                {{ error }}
+            </div>
+        {% endfor %}
+
+        <div class="form-text">
+            Tous les clients non archivés sont disponibles.
+        </div>
+
+    </div>
+
+</div>
+
+<!-- PRESTATION -->
+                <div class="card border-0 shadow-sm mb-4">
+
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">
+                            <i class="bi bi-list-check me-2"></i>
+                            Prestation
+                        </h5>
+                    </div>
+
+
+                    <div class="card-body">
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-semibold">
+                                    {{ form.prestation.label }}
+                                </label>
+
+                                {{ form.prestation }}
+
+                                {% for error in form.prestation.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-semibold">
+                                    {{ form.prestataire.label }}
+                                </label>
+
+                                {{ form.prestataire }}
+
+                                {% for error in form.prestataire.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+
+                                <div class="form-text"
+                                     id="prestataire-help">
+                                    Sélectionnez d'abord une prestation.
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-md-8">
+
+                                <label class="form-label fw-semibold">
+                                    {{ form.detail.label }}
+                                </label>
+
+                                {{ form.detail }}
+
+                                <div class="form-text">
+                                    Facultatif.
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-md-4">
+
+                                <label class="form-label fw-semibold">
+                                    {{ form.quantite.label }}
+                                </label>
+
+                                {{ form.quantite }}
+
+                                {% for error in form.quantite.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- COÛT PRESTATAIRE -->
+                <div class="card border-0 shadow-sm">
+
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">
+                            <i class="bi bi-building me-2"></i>
+                            Coût prestataire
+                        </h5>
+                    </div>
+
+                    <div class="card-body">
+
+                        <!-- RadioSelect Django caché -->
+                        <div class="d-none">
+                            {{ form.mode_cout_prestataire }}
+                        </div>
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <div class="tarif-choice active"
+                                     id="cout-choice-standard"
+                                     data-mode="standard">
+
+                                    <div class="d-flex align-items-start gap-3">
+                                        <input type="radio"
+                                               id="cout-ui-standard"
+                                               name="cout_ui"
+                                               checked>
+
+                                        <div>
+                                            <label for="cout-ui-standard"
+                                                   class="fw-semibold d-block"
+                                                   style="cursor:pointer;">
+                                                Coût standard
+                                            </label>
+
+                                            <div class="fs-5 fw-semibold mt-2 text-primary">
+                                                <span id="cout-standard-display">0,00</span> €
+                                            </div>
+
+                                            <div class="small text-muted">
+                                                par unité
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="tarif-choice"
+                                     id="cout-choice-personnalise"
+                                     data-mode="personnalise">
+
+                                    <div class="d-flex align-items-start gap-3">
+                                        <input type="radio"
+                                               id="cout-ui-personnalise"
+                                               name="cout_ui">
+
+                                        <div>
+                                            <label for="cout-ui-personnalise"
+                                                   class="fw-semibold d-block"
+                                                   style="cursor:pointer;">
+                                                Coût exceptionnel
+                                            </label>
+
+                                            <div class="mt-2">
+                                                Définir un autre coût
+                                            </div>
+
+                                            <div class="small text-muted">
+                                                pour cette prestation uniquement
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div id="cout-personnalise-zone"
+                             class="border rounded bg-light p-3 mt-3"
+                             style="display:none;">
+
+                            <div class="row g-3">
+
+                                <div class="col-md-5">
+                                    <label class="form-label fw-semibold">
+                                        {{ form.cout_prestataire_personnalise.label }}
+                                    </label>
+
+                                    <div class="input-group">
+                                        {{ form.cout_prestataire_personnalise }}
+                                        <span class="input-group-text">€</span>
+                                    </div>
+
+                                    {% for error in form.cout_prestataire_personnalise.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ error }}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+
+                                <div class="col-md-7">
+                                    <label class="form-label fw-semibold">
+                                        {{ form.motif_cout_prestataire_personnalise.label }}
+                                    </label>
+
+                                    {{ form.motif_cout_prestataire_personnalise }}
+
+                                    {% for error in form.motif_cout_prestataire_personnalise.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ error }}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- TARIFICATION CLIENT -->
+                <div class="card border-0 shadow-sm">
+
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">
+                            <i class="bi bi-currency-euro me-2"></i>
+                            Tarification client
+                        </h5>
+                    </div>
+
+
+                    <div class="card-body">
+
+                        <!-- On cache le RadioSelect Django -->
+                        <div class="d-none">
+                            {{ form.mode_tarification }}
+                        </div>
+
+
+                        <div class="row g-3">
+
+                            <!-- STANDARD -->
+                            <div class="col-md-6">
+
+                                <div class="tarif-choice active"
+                                     id="tarif-choice-standard"
+                                     data-mode="standard">
+
+                                    <div class="d-flex align-items-start gap-3">
+
+                                        <input type="radio"
+                                               id="tarif-ui-standard"
+                                               name="tarif_ui"
+                                               checked>
+
+                                        <div>
+
+                                            <label for="tarif-ui-standard"
+                                                   class="fw-semibold d-block"
+                                                   style="cursor:pointer;">
+                                                Tarif standard
+                                            </label>
+
+                                            <div class="fs-5 fw-semibold mt-2 text-primary">
+                                                <span id="tarif-standard-display">
+                                                    0,00
+                                                </span>
+                                                €
+                                            </div>
+
+                                            <div class="small text-muted">
+                                                par unité
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- PERSONNALISÉ -->
+                            <div class="col-md-6">
+
+                                <div class="tarif-choice"
+                                     id="tarif-choice-personnalise"
+                                     data-mode="personnalise">
+
+                                    <div class="d-flex align-items-start gap-3">
+
+                                        <input type="radio"
+                                               id="tarif-ui-personnalise"
+                                               name="tarif_ui">
+
+                                        <div>
+
+                                            <label for="tarif-ui-personnalise"
+                                                   class="fw-semibold d-block"
+                                                   style="cursor:pointer;">
+                                                Tarif personnalisé
+                                            </label>
+
+                                            <div class="mt-2">
+                                                Définir un autre prix
+                                            </div>
+
+                                            <div class="small text-muted">
+                                                pour cette prestation uniquement
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ZONE PERSONNALISÉE -->
+                        <div id="tarif-personnalise-zone"
+                             class="border rounded bg-light p-3 mt-3"
+                             style="display:none;">
+
+                            <div class="row g-3">
+
+                                <div class="col-md-5">
+
+                                    <label class="form-label fw-semibold">
+                                        {{ form.tarif_client_personnalise.label }}
+                                    </label>
+
+                                    <div class="input-group">
+
+                                        {{ form.tarif_client_personnalise }}
+
+                                        <span class="input-group-text">
+                                            €
+                                        </span>
+
+                                    </div>
+
+                                    {% for error in form.tarif_client_personnalise.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ error }}
+                                        </div>
+                                    {% endfor %}
+
+                                </div>
+
+
+                                <div class="col-md-7">
+
+                                    <label class="form-label fw-semibold">
+                                        {{ form.motif_tarif_personnalise.label }}
+                                    </label>
+
+                                    {{ form.motif_tarif_personnalise }}
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- RÉSUMÉ -->
+            <div class="col-xl-4">
+
+                <div class="card border-0 shadow-sm
+                "
+                     style="top:1rem;">
+
+                    <div class="card-header bg-white py-3">
+
+                        <h5 class="mb-0">
+                            <i class="bi bi-calculator me-2"></i>
+                            Résumé
+                        </h5>
+
+                    </div>
+
+
+                    <div class="card-body">
+
+                        <div class="mb-3">
+
+                            <div class="small text-muted mb-1">
+                                Période
+                            </div>
+
+                            <div class="fw-semibold"
+                                 id="resume-periode">
+                                —
+                            </div>
+
+                        </div>
+
+
+                        <div class="mb-3">
+
+                            <div class="small text-muted mb-1">
+                                Client
+                            </div>
+
+                            <div class="fw-semibold"
+                                 id="resume-client">
+                                Aucun client sélectionné
+                            </div>
+
+                        </div>
+
+
+                        <hr>
+
+
+                        <div class="d-flex justify-content-between mb-3">
+
+                            <span class="text-muted">
+                                Tarif client unitaire
+                            </span>
+
+                            <div class="text-end">
+
+                                <strong id="resume-tarif-client">
+                                    0,00 €
+                                </strong>
+
+                                <div id="resume-tarif-badge"
+                                     class="mt-1 d-none">
+
+                                    <span class="badge bg-warning text-dark">
+                                        Tarif personnalisé
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="d-flex justify-content-between mb-3">
+
+                            <span class="text-muted">
+                                Coût prestataire unitaire
+                            </span>
+
+                            <strong id="resume-cout-unitaire">
+                                0,00 €
+                            </strong>
+
+                        </div>
+
+
+                        <div class="d-flex justify-content-between mb-3">
+
+                            <span class="text-muted">
+                                Quantité
+                            </span>
+
+                            <strong id="resume-quantite">
+                                1
+                            </strong>
+
+                        </div>
+
+
+                        <hr>
+
+
+                        <div class="d-flex justify-content-between mb-3">
+
+                            <span>
+                                Facturé client
+                            </span>
+
+                            <strong class="fs-5"
+                                    id="resume-facture">
+                                0,00 €
+                            </strong>
+
+                        </div>
+
+
+                        <div class="d-flex justify-content-between mb-3">
+
+                            <span>
+                                Coût prestataire
+                            </span>
+
+                            <strong id="resume-cout">
+                                0,00 €
+                            </strong>
+
+                        </div>
+
+
+                        <div class="d-flex justify-content-between">
+
+                            <span class="fw-semibold">
+                                Marge
+                            </span>
+
+                            <strong class="fs-5"
+                                    id="resume-marge">
+                                0,00 €
+                            </strong>
+
+                        </div>
+
+
+                        <hr class="my-4">
+
+
+                        {% if mode_modification %}
+
+                            <button type="submit"
+                                    class="btn btn-primary w-100"
+                                    id="submit-prestation">
+
+                                <i class="bi bi-check-lg me-1"></i>
+                                Enregistrer les modifications
+
+                            </button>
+
+
+                            <a href="{% url 'facturation_sociale:gestion' %}?mois={{ ligne_modifiee.mois }}&annee={{ ligne_modifiee.annee }}"
+                               class="btn btn-outline-secondary w-100 mt-2">
+
+                                <i class="bi bi-x-lg me-1"></i>
+                                Annuler
+
+                            </a>
+
+                        {% else %}
+
+                            <button type="submit"
+                                    class="btn btn-primary w-100"
+                                    id="submit-prestation">
+
+                                <i class="bi bi-check-lg me-1"></i>
+                                Enregistrer la prestation
+
+                            </button>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const tarifs = JSON.parse(
+        document.getElementById("tarifs-prestataires-data").textContent
+    );
+
+    const prestations = JSON.parse(
+        document.getElementById("prestations-data").textContent
+    );
+
+    const clientsPaie = new Set(
+        JSON.parse(
+            document.getElementById("clients-paie-data").textContent
+        ).map(String)
+    );
+
+
+    /*
+     * =========================================================
+     * CLIENT PICKER
+     * =========================================================
+     */
+
+    const clientSelect =
+        document.getElementById("id_client");
+
+    const picker =
+        document.getElementById("client-picker");
+
+    const pickerButton =
+        document.getElementById("client-picker-button");
+
+    const pickerMenu =
+        document.getElementById("client-picker-menu");
+
+    const pickerLabel =
+        document.getElementById("client-picker-label");
+
+    const pickerSearch =
+        document.getElementById("client-picker-search");
+
+    const pickerResults =
+        document.getElementById("client-picker-results");
+
+    const pickerCount =
+        document.getElementById("client-picker-count");
+
+
+    const clients = Array.from(
+        clientSelect.options
+    )
+    .filter(option => option.value)
+    .map(option => ({
+        value: String(option.value),
+        text: option.text,
+        selected: option.selected
+    }));
+
+
+    let selectedClient =
+        clients.find(client => client.selected)
+        || null;
+
+
+    function filtreClientActuel() {
+
+        const checked =
+            document.querySelector(
+                'input[name="client_picker_filter"]:checked'
+            );
+
+        return checked
+            ? checked.value
+            : "tous";
+    }
+
+
+    function obtenirClientsFiltres() {
+
+        const recherche =
+            pickerSearch.value
+                .trim()
+                .toLowerCase();
+
+        const filtre =
+            filtreClientActuel();
+
+
+        return clients.filter(client => {
+
+            const texteOk =
+                !recherche
+                || client.text
+                    .toLowerCase()
+                    .includes(recherche);
+
+            const paieOk =
+                filtre === "tous"
+                || clientsPaie.has(
+                    client.value
+                );
+
+            return texteOk && paieOk;
+        });
+    }
+
+
+    function afficherClients() {
+
+        const resultats =
+            obtenirClientsFiltres();
+
+        pickerResults.innerHTML = "";
+
+
+        pickerCount.textContent =
+            resultats.length
+            + (
+                resultats.length > 1
+                ? " clients trouvés"
+                : " client trouvé"
+            );
+
+
+        if (!resultats.length) {
+
+            pickerResults.innerHTML = `
+                <div class="client-picker-empty">
+                    <i class="bi bi-search fs-4 d-block mb-2"></i>
+                    Aucun client trouvé
+                </div>
+            `;
+
+            return;
+        }
+
+
+        resultats.forEach(client => {
+
+            const item =
+                document.createElement("div");
+
+            item.className =
+                "client-picker-item";
+
+
+            if (
+                selectedClient
+                && selectedClient.value
+                    === client.value
+            ) {
+                item.classList.add(
+                    "selected"
+                );
+            }
+
+
+            const estPaie =
+                clientsPaie.has(
+                    client.value
+                );
+
+
+            const row =
+                document.createElement("div");
+
+            row.className =
+                "d-flex justify-content-between align-items-center gap-3";
+
+
+            const nom =
+                document.createElement("div");
+
+            nom.className =
+                "fw-semibold";
+
+            nom.textContent =
+                client.text;
+
+
+            row.appendChild(nom);
+
+
+            if (estPaie) {
+
+                const badge =
+                    document.createElement("span");
+
+                badge.className =
+                    "badge bg-light text-primary border";
+
+                badge.textContent =
+                    "PAIE";
+
+                row.appendChild(
+                    badge
+                );
+            }
+
+
+            item.appendChild(row);
+
+
+            item.addEventListener(
+                "click",
+                function () {
+
+                    selectedClient =
+                        client;
+
+                    clientSelect.value =
+                        client.value;
+
+                    pickerLabel.textContent =
+                        client.text;
+
+                    pickerLabel.classList.remove(
+                        "text-muted"
+                    );
+
+                    pickerMenu.classList.remove(
+                        "show"
+                    );
+
+                    pickerSearch.value = "";
+
+                    document.getElementById(
+                        "resume-client"
+                    ).textContent =
+                        client.text;
+
+                    actualiserResume();
+                }
+            );
+
+
+            pickerResults.appendChild(
+                item
+            );
+        });
+    }
+
+
+    pickerButton.addEventListener(
+        "click",
+        function () {
+
+            const ouverture =
+                !pickerMenu.classList.contains(
+                    "show"
+                );
+
+            pickerMenu.classList.toggle(
+                "show"
+            );
+
+
+            if (ouverture) {
+
+                afficherClients();
+
+                setTimeout(
+                    function () {
+                        pickerSearch.focus();
+                    },
+                    50
+                );
+            }
+        }
+    );
+
+
+    pickerSearch.addEventListener(
+        "input",
+        afficherClients
+    );
+
+
+    document.querySelectorAll(
+        'input[name="client_picker_filter"]'
+    ).forEach(radio => {
+
+        radio.addEventListener(
+            "change",
+            function () {
+                afficherClients();
+                pickerSearch.focus();
+            }
+        );
+
+    });
+
+
+    /*
+     * Fermer le menu si on clique ailleurs.
+     */
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                !picker.contains(
+                    event.target
+                )
+            ) {
+                pickerMenu.classList.remove(
+                    "show"
+                );
+            }
+        }
+    );
+
+
+    /*
+     * Empêcher un clic dans le menu
+     * de fermer le sélecteur.
+     */
+
+    pickerMenu.addEventListener(
+        "click",
+        function (event) {
+            event.stopPropagation();
+        }
+    );
+
+
+    /*
+     * =========================================================
+     * PRESTATAIRES
+     * =========================================================
+     */
+
+    const prestationSelect =
+        document.getElementById(
+            "id_prestation"
+        );
+
+    const prestataireSelect =
+        document.getElementById(
+            "id_prestataire"
+        );
+
+
+    const prestataireOptions =
+        Array.from(
+            prestataireSelect.options
+        )
+        .filter(option => option.value)
+        .map(option => ({
+            value: String(option.value),
+            text: option.text
+        }));
+
+
+    function filtrerPrestataires() {
+
+        const prestationId =
+            String(
+                prestationSelect.value
+                || ""
+            );
+
+        const valeurActuelle =
+            String(
+                prestataireSelect.value
+                || ""
+            );
+
+
+        const idsDisponibles =
+            new Set(
+                tarifs
+                    .filter(
+                        tarif =>
+                            String(
+                                tarif.prestation_id
+                            ) === prestationId
+                    )
+                    .map(
+                        tarif =>
+                            String(
+                                tarif.prestataire_id
+                            )
+                    )
+            );
+
+
+        prestataireSelect.innerHTML = "";
+
+        prestataireSelect.add(
+            new Option(
+                "---------",
+                ""
+            )
+        );
+
+
+        prestataireOptions.forEach(
+            option => {
+
+                if (
+                    idsDisponibles.has(
+                        option.value
+                    )
+                ) {
+
+                    const nouvelle =
+                        new Option(
+                            option.text,
+                            option.value
+                        );
+
+                    if (
+                        option.value
+                        === valeurActuelle
+                    ) {
+                        nouvelle.selected =
+                            true;
+                    }
+
+                    prestataireSelect.add(
+                        nouvelle
+                    );
+                }
+
+            }
+        );
+
+
+        if (
+            prestataireSelect.options.length
+            === 2
+            && !prestataireSelect.value
+        ) {
+            prestataireSelect.selectedIndex =
+                1;
+        }
+
+
+        const help =
+            document.getElementById(
+                "prestataire-help"
+            );
+
+
+        if (!prestationId) {
+
+            help.textContent =
+                "Sélectionnez d'abord une prestation.";
+        }
+        else if (!idsDisponibles.size) {
+
+            help.textContent =
+                "Aucun prestataire n'a de tarif actif pour cette prestation.";
+        }
+        else {
+
+            help.textContent =
+                "Seuls les prestataires ayant un tarif actif sont proposés.";
+        }
+
+
+        actualiserResume();
+    }
+
+
+    /*
+     * =========================================================
+     * TARIFICATION
+     * =========================================================
+     */
+
+    const quantiteInput =
+        document.getElementById(
+            "id_quantite"
+        );
+
+    const tarifPersonnaliseInput =
+        document.getElementById(
+            "id_tarif_client_personnalise"
+        );
+
+    const tarifPersonnaliseZone =
+        document.getElementById(
+            "tarif-personnalise-zone"
+        );
+
+    const choiceStandard =
+        document.getElementById(
+            "tarif-choice-standard"
+        );
+
+    const choicePersonnalise =
+        document.getElementById(
+            "tarif-choice-personnalise"
+        );
+
+    const radioUiStandard =
+        document.getElementById(
+            "tarif-ui-standard"
+        );
+
+    const radioUiPersonnalise =
+        document.getElementById(
+            "tarif-ui-personnalise"
+        );
+
+
+    const coutPersonnaliseInput =
+        document.getElementById(
+            "id_cout_prestataire_personnalise"
+        );
+
+    const coutPersonnaliseZone =
+        document.getElementById(
+            "cout-personnalise-zone"
+        );
+
+    const coutChoiceStandard =
+        document.getElementById(
+            "cout-choice-standard"
+        );
+
+    const coutChoicePersonnalise =
+        document.getElementById(
+            "cout-choice-personnalise"
+        );
+
+    const coutRadioUiStandard =
+        document.getElementById(
+            "cout-ui-standard"
+        );
+
+    const coutRadioUiPersonnalise =
+        document.getElementById(
+            "cout-ui-personnalise"
+        );
+
+
+    function modeTarification() {
+
+        const checked =
+            document.querySelector(
+                'input[name="mode_tarification"]:checked'
+            );
+
+        return checked
+            ? checked.value
+            : "standard";
+    }
+
+
+    function definirModeTarification(mode) {
+
+        document.querySelectorAll(
+            'input[name="mode_tarification"]'
+        ).forEach(radio => {
+
+            radio.checked =
+                radio.value === mode;
+
+        });
+
+
+        const personnalise =
+            mode === "personnalise";
+
+
+        radioUiStandard.checked =
+            !personnalise;
+
+        radioUiPersonnalise.checked =
+            personnalise;
+
+
+        choiceStandard.classList.toggle(
+            "active",
+            !personnalise
+        );
+
+        choicePersonnalise.classList.toggle(
+            "active",
+            personnalise
+        );
+
+
+        tarifPersonnaliseZone.style.display =
+            personnalise
+            ? "block"
+            : "none";
+
+
+        if (
+            personnalise
+            && !tarifPersonnaliseInput.value
+        ) {
+            tarifPersonnaliseInput.value =
+                tarifStandard().toFixed(2);
+        }
+
+
+        actualiserResume();
+    }
+
+
+    choiceStandard.addEventListener(
+        "click",
+        function () {
+            definirModeTarification(
+                "standard"
+            );
+        }
+    );
+
+
+    choicePersonnalise.addEventListener(
+        "click",
+        function () {
+            definirModeTarification(
+                "personnalise"
+            );
+        }
+    );
+
+
+    function tarifStandard() {
+
+        const prestation =
+            prestations.find(
+                item =>
+                    String(item.id)
+                    === String(
+                        prestationSelect.value
+                    )
+            );
+
+        return prestation
+            ? parseFloat(
+                prestation.tarif_client_standard
+            ) || 0
+            : 0;
+    }
+
+
+    function modeCoutPrestataire() {
+
+        const checked =
+            document.querySelector(
+                'input[name="mode_cout_prestataire"]:checked'
+            );
+
+        return checked
+            ? checked.value
+            : "standard";
+    }
+
+
+    function coutPrestataireStandard() {
+
+        const tarif =
+            tarifs.find(
+                item =>
+                    String(
+                        item.prestation_id
+                    ) === String(
+                        prestationSelect.value
+                    )
+                    &&
+                    String(
+                        item.prestataire_id
+                    ) === String(
+                        prestataireSelect.value
+                    )
+            );
+
+        return tarif
+            ? parseFloat(
+                tarif.cout_unitaire
+            ) || 0
+            : 0;
+    }
+
+
+    function definirModeCoutPrestataire(mode) {
+
+        document.querySelectorAll(
+            'input[name="mode_cout_prestataire"]'
+        ).forEach(radio => {
+
+            radio.checked =
+                radio.value === mode;
+
+        });
+
+
+        const personnalise =
+            mode === "personnalise";
+
+
+        coutRadioUiStandard.checked =
+            !personnalise;
+
+        coutRadioUiPersonnalise.checked =
+            personnalise;
+
+
+        coutChoiceStandard.classList.toggle(
+            "active",
+            !personnalise
+        );
+
+        coutChoicePersonnalise.classList.toggle(
+            "active",
+            personnalise
+        );
+
+
+        coutPersonnaliseZone.style.display =
+            personnalise
+            ? "block"
+            : "none";
+
+
+        if (
+            personnalise
+            && !coutPersonnaliseInput.value
+        ) {
+            coutPersonnaliseInput.value =
+                coutPrestataireStandard().toFixed(2);
+        }
+
+
+        actualiserResume();
+    }
+
+
+    coutChoiceStandard.addEventListener(
+        "click",
+        function () {
+            definirModeCoutPrestataire(
+                "standard"
+            );
+        }
+    );
+
+
+    coutChoicePersonnalise.addEventListener(
+        "click",
+        function () {
+            definirModeCoutPrestataire(
+                "personnalise"
+            );
+        }
+    );
+
+
+    function coutPrestataire() {
+
+        if (
+            modeCoutPrestataire()
+            === "personnalise"
+        ) {
+            return parseFloat(
+                coutPersonnaliseInput.value
+            ) || 0;
+        }
+
+        return coutPrestataireStandard();
+    }
+
+
+    function ancienCoutPrestataireASupprimer() {
+
+        const tarif =
+            tarifs.find(
+                item =>
+                    String(
+                        item.prestation_id
+                    ) === String(
+                        prestationSelect.value
+                    )
+                    &&
+                    String(
+                        item.prestataire_id
+                    ) === String(
+                        prestataireSelect.value
+                    )
+            );
+
+        return tarif
+            ? parseFloat(
+                tarif.cout_unitaire
+            ) || 0
+            : 0;
+    }
+
+
+    function tarifClientApplique() {
+
+        if (
+            modeTarification()
+            === "personnalise"
+        ) {
+
+            return parseFloat(
+                tarifPersonnaliseInput.value
+            ) || 0;
+        }
+
+        return tarifStandard();
+    }
+
+
+    function euros(value) {
+
+        return Number(value).toLocaleString(
+            "fr-FR",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        ) + " €";
+    }
+
+
+    /*
+     * =========================================================
+     * RÉSUMÉ
+     * =========================================================
+     */
+
+    function actualiserResume() {
+
+        const standard =
+            tarifStandard();
+
+        const applique =
+            tarifClientApplique();
+
+        const coutUnitaire =
+            coutPrestataire();
+
+        const quantite =
+            parseFloat(
+                quantiteInput.value
+            ) || 0;
+
+
+        document.getElementById(
+            "tarif-standard-display"
+        ).textContent =
+            standard.toLocaleString(
+                "fr-FR",
+                {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }
+            );
+
+
+        document.getElementById(
+            "resume-tarif-client"
+        ).textContent =
+            euros(applique);
+
+        document.getElementById(
+            "resume-cout-unitaire"
+        ).textContent =
+            euros(coutUnitaire);
+
+        document.getElementById(
+            "resume-quantite"
+        ).textContent =
+            quantite.toLocaleString(
+                "fr-FR"
+            );
+
+
+        const facture =
+            applique * quantite;
+
+        const cout =
+            coutUnitaire * quantite;
+
+        const marge =
+            facture - cout;
+
+
+        document.getElementById(
+            "resume-facture"
+        ).textContent =
+            euros(facture);
+
+        document.getElementById(
+            "resume-cout"
+        ).textContent =
+            euros(cout);
+
+
+        const margeElement =
+            document.getElementById(
+                "resume-marge"
+            );
+
+        margeElement.textContent =
+            euros(marge);
+
+        margeElement.classList.remove(
+            "text-success",
+            "text-danger"
+        );
+
+
+        if (marge > 0) {
+
+            margeElement.classList.add(
+                "text-success"
+            );
+        }
+        else if (marge < 0) {
+
+            margeElement.classList.add(
+                "text-danger"
+            );
+        }
+
+
+        document.getElementById(
+            "resume-tarif-badge"
+        ).classList.toggle(
+            "d-none",
+            modeTarification()
+            !== "personnalise"
+        );
+
+
+        const moisSelect =
+            document.getElementById(
+                "id_mois"
+            );
+
+        const anneeInput =
+            document.getElementById(
+                "id_annee"
+            );
+
+        const moisTexte =
+            moisSelect.options[
+                moisSelect.selectedIndex
+            ]?.text || "";
+
+
+        document.getElementById(
+            "resume-periode"
+        ).textContent =
+            moisTexte
+            + " "
+            + anneeInput.value;
+
+
+        document.getElementById(
+            "resume-client"
+        ).textContent =
+            selectedClient
+            ? selectedClient.text
+            : "Aucun client sélectionné";
+    }
+
+
+    /*
+     * =========================================================
+     * ÉVÉNEMENTS
+     * =========================================================
+     */
+
+    prestationSelect.addEventListener(
+        "change",
+        filtrerPrestataires
+    );
+
+    prestataireSelect.addEventListener(
+        "change",
+        actualiserResume
+    );
+
+    quantiteInput.addEventListener(
+        "input",
+        actualiserResume
+    );
+
+    tarifPersonnaliseInput.addEventListener(
+        "input",
+        actualiserResume
+    );
+
+    document.getElementById(
+        "id_mois"
+    ).addEventListener(
+        "change",
+        actualiserResume
+    );
+
+    document.getElementById(
+        "id_annee"
+    ).addEventListener(
+        "input",
+        actualiserResume
+    );
+
+
+    /*
+     * =========================================================
+     * VALIDATION CLIENT
+     * =========================================================
+     */
+
+    document.getElementById(
+        "prestation-form"
+    ).addEventListener(
+        "submit",
+        function (event) {
+
+            if (!clientSelect.value) {
+
+                event.preventDefault();
+
+                pickerMenu.classList.add(
+                    "show"
+                );
+
+                pickerSearch.focus();
+
+                alert(
+                    "Sélectionnez un client avant d'enregistrer la prestation."
+                );
+            }
+        }
+    );
+
+
+    /*
+     * =========================================================
+     * INITIALISATION
+     * =========================================================
+     */
+
+    if (selectedClient) {
+
+        pickerLabel.textContent =
+            selectedClient.text;
+
+        pickerLabel.classList.remove(
+            "text-muted"
+        );
+    }
+
+
+    afficherClients();
+
+    filtrerPrestataires();
+
+    definirModeTarification(
+        modeTarification()
+    );
+
+    definirModeCoutPrestataire(
+        modeCoutPrestataire()
+    );
+
+    actualiserResume();
+
+});
+</script>
+
+{% endblock %}
+
+
+
+<style>
+/* Harmonisation du sélecteur client avec le style du projet */
+
+.client-picker {
+    position: relative;
+}
+
+.client-picker-button {
+    width: 100%;
+    min-height: 38px;
+    padding: .375rem 2.25rem .375rem .75rem;
+    background-color: #fff;
+    color: #212529;
+    border: 1px solid #dee2e6;
+    border-radius: .375rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+.client-picker-button:hover {
+    border-color: #adb5bd;
+}
+
+.client-picker-button:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .25);
+}
+
+.client-picker-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    display: none;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: .375rem;
+    box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .10);
+    overflow: hidden;
+}
+
+.client-picker-menu.show {
+    display: block;
+}
+
+.client-picker-search {
+    padding: .75rem;
+    background: #fff;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.client-picker-filters {
+    padding: .65rem .75rem;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.client-picker-results {
+    max-height: 280px;
+    overflow-y: auto;
+    background: #fff;
+}
+
+.client-picker-item {
+    padding: .65rem .85rem;
+    cursor: pointer;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: .95rem;
+}
+
+.client-picker-item:last-child {
+    border-bottom: 0;
+}
+
+.client-picker-item:hover {
+    background: #f8f9fa;
+}
+
+.client-picker-item.selected {
+    background: #e7f1ff;
+    color: #0d6efd;
+}
+
+.client-picker-empty {
+    padding: 1.5rem;
+    text-align: center;
+    color: #6c757d;
+}
+
+#client-picker-count {
+    background: #f8f9fa !important;
+}
+</style>
+
+
+

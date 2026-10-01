@@ -10,6 +10,7 @@ urlpatterns = [
     path('', CustomLoginView.as_view(), name='login'),
     path('dossiers/', include('dossiers.urls')),
     path('paie/', include('paie.urls')),
+    path('facturation-sociale/', include('facturation_sociale.urls')),
     path("cloture/", include("cloture.urls")),
     path("admin-panel/", include("administration.urls")),
     path("cron/ping/", lambda request: HttpResponse("OK"), name="cron_ping"),
