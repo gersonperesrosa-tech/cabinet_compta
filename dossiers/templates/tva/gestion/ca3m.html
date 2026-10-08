@@ -51,6 +51,22 @@
     </div>
 </div>
 
+<!-- Colonnes fixes pendant le défilement horizontal -->
+<style>
+#tvaTable { border-collapse: separate; border-spacing: 0; }
+#tvaTable th, #tvaTable td { background-clip: padding-box; }
+#tvaTable tr > :nth-child(1),
+#tvaTable tr > :nth-child(2),
+#tvaTable tr > :nth-child(3),
+#tvaTable tr > :nth-child(4) {
+    position: sticky;
+    z-index: 2;
+    background-color: #fff;
+}
+#tvaTable thead tr > :nth-child(-n+4) { z-index: 3; background-color: #f8f9fa; }
+#tvaTable tr > :nth-child(4) { box-shadow: 3px 0 5px -3px rgba(0,0,0,.28); }
+#tvaTable .archived-row > :nth-child(-n+4) { background-color: #f4f4f4; }
+</style>
 <!-- TABLEAU -->
 <div style="width:100%; max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch;">
 <table class="table table-bordered align-middle" id="tvaTable" style="width:max-content; min-width:100%; white-space:nowrap;">
@@ -156,6 +172,29 @@
 
 </section>
 
+<!-- Calcul des décalages selon la largeur réelle des colonnes fixes -->
+<script>
+(function () {
+    const table = document.getElementById('tvaTable');
+    const wrapper = table.parentElement;
+    function updateStickyOffsets() {
+        const headers = Array.from(table.tHead.rows[0].cells).slice(0, 4);
+        let left = 0;
+        headers.forEach((header, index) => {
+            table.querySelectorAll('tr').forEach(row => {
+                if (row.cells[index]) row.cells[index].style.left = left + 'px';
+            });
+            left += header.getBoundingClientRect().width;
+        });
+    }
+    updateStickyOffsets();
+    window.addEventListener('resize', updateStickyOffsets);
+    if (window.ResizeObserver) {
+        const observer = new ResizeObserver(updateStickyOffsets);
+        Array.from(table.tHead.rows[0].cells).slice(0, 4).forEach(th => observer.observe(th));
+    }
+})();
+</script>
 <!-- Recherche dynamique -->
 <script>
 document.getElementById("searchInput").addEventListener("keyup", function () {
