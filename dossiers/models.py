@@ -405,6 +405,8 @@ class TVAClientAnnee(models.Model):
         return self.declarations.first()
 
 class TVADeclaration(models.Model):
+    responsable_declaration = models.CharField(max_length=3, blank=True, default="")
+
 
     TVA_STATUTS = [
         ("BLANC", "Blanc"),

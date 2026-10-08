@@ -52,9 +52,11 @@
 </div>
 
 <!-- TABLEAU -->
-<table class="table table-bordered align-middle" id="tvaTable">
+<div style="width:100%; max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch;">
+<table class="table table-bordered align-middle" id="tvaTable" style="width:max-content; min-width:100%; white-space:nowrap;">
     <thead class="table-light">
         <tr>
+            <th>Resp.</th>
             <th>N°</th>
             <th>Client</th>
             <th>Échéance</th>
@@ -82,6 +84,8 @@
 {% for tca in tca_list %}
 
     <tr class="{% if tca.client.archive %}archived-row{% endif %}">
+
+        <td>{{ tca.declaration_obj.responsable_declaration|default:"" }}</td>
 
         <!-- N° -->
         <td>{{ tca.client.numero }}</td>
@@ -148,6 +152,7 @@
 </tbody>
 
 </table>
+</div>
 
 </section>
 
@@ -158,11 +163,13 @@ document.getElementById("searchInput").addEventListener("keyup", function () {
     const rows = document.querySelectorAll("#tvaTable tbody tr");
 
     rows.forEach(row => {
-        const numero = row.children[0].textContent.toLowerCase();
+        const numero = row.children[1].textContent.toLowerCase();
         const nom = row.querySelector(".client-name").textContent.toLowerCase();
-        const echeance = row.children[2].textContent.toLowerCase();
+        const echeance = row.children[3].textContent.toLowerCase();
+        const responsable = row.children[0].textContent.toLowerCase();
 
         row.style.display =
+            responsable.includes(filter) ||
             numero.includes(filter) ||
             nom.includes(filter) ||
             echeance.includes(filter)
@@ -193,7 +200,7 @@ document.getElementById("resetSuiviBtn").addEventListener("click", function () {
 
 <!-- Tri dynamique sur toutes les colonnes -->
 <script>
-document.querySelectorAll("table thead th").forEach((header, index) => {
+document.querySelectorAll("#tvaTable thead th").forEach((header, index) => {
     header.style.cursor = "pointer";
 
     header.addEventListener("click", () => {

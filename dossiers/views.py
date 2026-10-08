@@ -1522,6 +1522,7 @@ def tva_saisie_ca3m(request, tva_client_annee_id):
     ]
 
     if request.method == "POST":
+        declaration.responsable_declaration = request.POST.get("responsable_declaration", "").strip().upper()[:3]
 
         for m in mois:
             montant_key = f"tva_{m}"

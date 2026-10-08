@@ -11,6 +11,14 @@
 <form method="POST">
     {% csrf_token %}
 
+    <div class="mb-3" style="max-width:320px;">
+        <label for="responsable_declaration" class="form-label fw-semibold">Responsable de la déclaration</label>
+        <input type="text" id="responsable_declaration" name="responsable_declaration"
+               maxlength="3" class="form-control text-uppercase"
+               value="{{ declaration.responsable_declaration|default_if_none:'' }}"
+               style="max-width:110px;" oninput="this.value=this.value.toUpperCase().slice(0,3)">
+    </div>
+
     <table class="table table-bordered align-middle mt-4">
         <thead>
             <tr>
