@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section">
+    {{ tarifs_prestataires|json_script:"tarifs-prestataires-data" }}
+    {{ prestations_data|json_script:"prestations-data" }}
+    {{ clients_paie_ids|json_script:"clients-paie-data" }}
+
+    <ul class="nav nav-tabs mb-4" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" href="{% url 'facturation_sociale:nouvelle_prestation' %}">Nouvelle prestation</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link active" aria-current="page"
+               href="{% url 'facturation_sociale:prestations_par_client' %}">Prestations par client</a>
+        </li>
+    </ul>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h1 class="h3 mb-1">Prestations par client</h1>
+            <p class="text-muted mb-0">Saisissez et corrigez toutes les prestations d'un client pour une période.</p>
+        </div>
+        <span id="save-status" class="badge text-bg-secondary">Aucune modification</span>
+    </div>
+
+    <form id="scope-form" method="get" class="card card-body mb-3">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label" for="scope-client">Client</label>
+                <select class="form-select" id="scope-client" name="client">
+                    <option value="">— Sélectionnez un client —</option>
+                    {% for client in clients %}
+                        <option value="{{ client.pk }}" data-paie="{% if client.module_paie %}1{% else %}0{% endif %}"
+                                {% if scope_client and scope_client.pk == client.pk %}selected{% endif %}>
+                            {% if client.numero %}{{ client.numero }} - {% endif %}{{ client.nom }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <div class="form-text"><label><input id="paie-only" type="checkbox"> Afficher uniquement les clients Paie</label></div>
+            </div>
+        </div>
+        <div class="row g-3 align-items-end mt-1">
+            <div class="col-md-3">
+                <label class="form-label" for="scope-mois">Période de prestation — Mois</label>
+                <select class="form-select" id="scope-mois" name="mois" {% if not scope_client %}disabled{% endif %}>
+                    <option value="1" {% if mois == 1 %}selected{% endif %}>Janvier</option>
+                    <option value="2" {% if mois == 2 %}selected{% endif %}>Février</option>
+                    <option value="3" {% if mois == 3 %}selected{% endif %}>Mars</option>
+                    <option value="4" {% if mois == 4 %}selected{% endif %}>Avril</option>
+                    <option value="5" {% if mois == 5 %}selected{% endif %}>Mai</option>
+                    <option value="6" {% if mois == 6 %}selected{% endif %}>Juin</option>
+                    <option value="7" {% if mois == 7 %}selected{% endif %}>Juillet</option>
+                    <option value="8" {% if mois == 8 %}selected{% endif %}>Août</option>
+                    <option value="9" {% if mois == 9 %}selected{% endif %}>Septembre</option>
+                    <option value="10" {% if mois == 10 %}selected{% endif %}>Octobre</option>
+                    <option value="11" {% if mois == 11 %}selected{% endif %}>Novembre</option>
+                    <option value="12" {% if mois == 12 %}selected{% endif %}>Décembre</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="scope-annee">Année</label>
+                <input class="form-control" id="scope-annee" name="annee" type="number" min="2000" max="2100" value="{{ annee }}" {% if not scope_client %}disabled{% endif %}>
+            </div>
+            <div class="col-md-2 d-grid">
+                <button class="btn btn-outline-primary" type="submit">Charger</button>
+            </div>
+        </div>
+        {% if scope_error %}<div class="alert alert-danger mt-3 mb-0">{{ scope_error }}</div>{% endif %}
+    </form>
+
+    {% if selected_client %}
+    <form method="post" id="batch-form" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="client" value="{{ selected_client.pk }}">
+        <input type="hidden" name="mois" value="{{ mois }}">
+        <input type="hidden" name="annee" value="{{ annee }}">
+        <input type="hidden" name="submission_id" value="{{ submission_id }}">
+        {{ formset.management_form }}
+
+        {% if formset.non_form_errors %}
+            <div class="alert alert-danger">{{ formset.non_form_errors }}</div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center gap-2">
+                <span><strong>{{ selected_client }}</strong> — {{ mois|stringformat:"02d" }}/{{ annee }}</span>
+                <button id="add-line" class="btn btn-sm btn-outline-primary" type="button">+ Ajouter une prestation</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0" id="prestations-table">
+                    <thead>
+                        <tr>
+                            <th>Prestation</th><th>Quantité</th><th>Salarié / détail</th><th>Prestataire</th>
+                            <th>Coût prestataire</th><th>Tarification client</th><th>Marge</th><th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lines-body">
+                        {% for form in formset.forms %}
+                            {% include "facturation_sociale/includes/prestation_ligne.html" with form=form %}
+                        {% empty %}
+                            <tr id="empty-row"><td colspan="8" class="text-center text-muted py-4">Aucune prestation enregistrée pour cette période.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th colspan="4" class="text-end">Totaux</th>
+                            <th id="total-cout">0,00 €</th><th id="total-facture">0,00 €</th><th id="total-marge">0,00 €</th><th></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+            <div class="text-muted small">Les tarifs historiques sont conservés tant que la prestation ou le prestataire ne change pas.</div>
+            <button id="save-batch" class="btn btn-primary" type="submit">Enregistrer toutes les modifications</button>
+        </div>
+    </form>
+
+    <template id="empty-line-template">
+        {% include "facturation_sociale/includes/prestation_ligne.html" with form=formset.empty_form %}
+    </template>
+    {% else %}
+        <div class="alert alert-info">Sélectionnez un client, un mois et une année pour afficher ses prestations.</div>
+    {% endif %}
+</section>
+
+<style>
+    #prestations-table { min-width: 1150px; }
+    #prestations-table th { white-space: nowrap; }
+    .price-cell { min-width: 180px; }
+    .exception-fields { display: none; margin-top: .4rem; min-width: 210px; }
+    .exception-fields.visible { display: block; }
+    .line-deleted { opacity: .55; text-decoration: line-through; background: var(--bs-warning-bg-subtle); }
+    .negative-margin { color: var(--bs-danger); font-weight: 600; }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const tableBody = document.getElementById("lines-body");
+    const batchForm = document.getElementById("batch-form");
+    const scopeForm = document.getElementById("scope-form");
+    const scopeClient = document.getElementById("scope-client");
+    const scopeMois = document.getElementById("scope-mois");
+    const scopeAnnee = document.getElementById("scope-annee");
+    const loadedScope = {
+        client: scopeClient.value,
+        mois: scopeMois.value,
+        annee: scopeAnnee.value,
+    };
+    const totalForms = document.getElementById("id_form-TOTAL_FORMS");
+    const tarifs = JSON.parse(document.getElementById("tarifs-prestataires-data").textContent);
+    const prestations = JSON.parse(document.getElementById("prestations-data").textContent);
+    const standardClient = new Map(prestations.map(item => [String(item.id), Number(item.tarif_client_standard)]));
+    const standardCost = new Map(tarifs.map(item => [String(item.prestation_id) + ":" + String(item.prestataire_id), Number(item.cout_unitaire)]));
+    let dirty = false;
+    let submitting = false;
+
+    const money = value => `${(Number(value) || 0).toLocaleString("fr-FR", {minimumFractionDigits: 2, maximumFractionDigits: 2})} €`;
+    const priceInput = (row, name) => row.querySelector(`[name$="-${name}"]`);
+    const field = (row, name) => row.querySelector(`[name$="-${name}"]`);
+    const markDirty = () => {
+        dirty = true;
+        const status = document.getElementById("save-status");
+        status.textContent = "Modifications non enregistrées";
+        status.className = "badge text-bg-warning";
+    };
+
+    function setExceptionVisible(row, kind, active) {
+        const block = row.querySelector(`.exception-${kind}`);
+        const button = row.querySelector(`.toggle-${kind}`);
+        block.classList.toggle("visible", active);
+        button.classList.toggle("btn-warning", active);
+        button.classList.toggle("btn-outline-secondary", !active);
+        button.title = active ? "Désactiver l'exception" : "Ajouter une exception";
+    }
+
+    function filterProviders(row) {
+        const prestation = field(row, "prestation");
+        const prestataire = field(row, "prestataire");
+        const selected = prestataire.value;
+        [...prestataire.options].forEach(option => {
+            if (!option.value) return;
+            const allowed = standardCost.has(prestation.value + ":" + option.value);
+            option.hidden = !allowed && option.value !== selected;
+            option.disabled = !allowed && option.value !== selected;
+        });
+        if (prestataire.selectedOptions[0] && prestataire.selectedOptions[0].disabled) prestataire.value = "";
+    }
+
+    function refreshPrices(row, refreshClient, refreshCost) {
+        const prestation = field(row, "prestation");
+        const prestataire = field(row, "prestataire");
+        if (refreshClient) {
+            field(row, "mode_tarification").value = "standard";
+            setExceptionVisible(row, "client", false);
+            priceInput(row, "tarif_client_affiche").value = (standardClient.get(prestation.value) || 0).toFixed(2);
+        }
+        if (refreshCost) {
+            field(row, "mode_cout_prestataire").value = "standard";
+            setExceptionVisible(row, "cout", false);
+            priceInput(row, "cout_prestataire_affiche").value = (standardCost.get(prestation.value + ":" + prestataire.value) || 0).toFixed(2);
+        }
+        refreshTotals();
+    }
+
+    function refreshTotals() {
+        let facture = 0, cout = 0, marge = 0;
+        tableBody.querySelectorAll("tr.prestation-line").forEach(row => {
+            if (row.dataset.deleted === "1") return;
+            const qty = Number(field(row, "quantite").value) || 0;
+            const client = Number(priceInput(row, "tarif_client_affiche").value) || 0;
+            const provider = Number(priceInput(row, "cout_prestataire_affiche").value) || 0;
+            const lineFacture = qty * client, lineCout = qty * provider, lineMarge = lineFacture - lineCout;
+            const marginCell = row.querySelector(".margin-value");
+            marginCell.textContent = money(lineMarge);
+            marginCell.classList.toggle("negative-margin", lineMarge < 0);
+            facture += lineFacture; cout += lineCout; marge += lineMarge;
+        });
+        document.getElementById("total-facture").textContent = money(facture);
+        document.getElementById("total-cout").textContent = money(cout);
+        const totalMargin = document.getElementById("total-marge");
+        totalMargin.textContent = money(marge);
+        totalMargin.classList.toggle("negative-margin", marge < 0);
+    }
+
+    function removeOrMark(row) {
+        const id = field(row, "id").value;
+        if (!id) {
+            row.remove();
+        } else {
+            const deleted = row.dataset.deleted === "1";
+            row.dataset.deleted = deleted ? "0" : "1";
+            field(row, "DELETE").value = deleted ? "" : "on";
+            row.classList.toggle("line-deleted", !deleted);
+            row.querySelector(".delete-line").textContent = deleted ? "Supprimer" : "Annuler";
+        }
+        if (!tableBody.querySelector("tr.prestation-line")) {
+            tableBody.insertAdjacentHTML("beforeend", '<tr id="empty-row"><td colspan="8" class="text-center text-muted py-4">Aucune prestation dans le tableau.</td></tr>');
+        }
+        markDirty(); refreshTotals();
+    }
+
+    function setupRow(row, isNew = false) {
+        const prestation = field(row, "prestation"), prestataire = field(row, "prestataire");
+        setExceptionVisible(row, "client", field(row, "mode_tarification").value === "personnalise");
+        setExceptionVisible(row, "cout", field(row, "mode_cout_prestataire").value === "personnalise");
+        filterProviders(row);
+        if (isNew) refreshPrices(row, true, true);
+        prestation.addEventListener("change", () => { filterProviders(row); refreshPrices(row, true, true); markDirty(); });
+        prestataire.addEventListener("change", () => { refreshPrices(row, false, true); markDirty(); });
+        row.querySelector(".toggle-client").addEventListener("click", () => {
+            const active = field(row, "mode_tarification").value !== "personnalise";
+            field(row, "mode_tarification").value = active ? "personnalise" : "standard";
+            setExceptionVisible(row, "client", active);
+            if (!active) refreshPrices(row, true, false); else markDirty();
+        });
+        row.querySelector(".toggle-cout").addEventListener("click", () => {
+            const active = field(row, "mode_cout_prestataire").value !== "personnalise";
+            field(row, "mode_cout_prestataire").value = active ? "personnalise" : "standard";
+            setExceptionVisible(row, "cout", active);
+            if (!active) refreshPrices(row, false, true); else markDirty();
+        });
+        ["tarif_client_personnalise", "cout_prestataire_personnalise"].forEach(name => {
+            field(row, name).addEventListener("input", () => {
+                const target = name === "tarif_client_personnalise" ? "tarif_client_affiche" : "cout_prestataire_affiche";
+                priceInput(row, target).value = field(row, name).value;
+                refreshTotals(); markDirty();
+            });
+        });
+        row.querySelector(".delete-line").addEventListener("click", () => removeOrMark(row));
+        row.querySelectorAll("input, select").forEach(control => control.addEventListener("input", () => { refreshTotals(); markDirty(); }));
+    }
+
+    if (batchForm) {
+        tableBody.querySelectorAll("tr.prestation-line").forEach(row => setupRow(row));
+        refreshTotals();
+        document.getElementById("add-line").addEventListener("click", () => {
+            document.getElementById("empty-row")?.remove();
+            const index = Number(totalForms.value);
+            const html = document.getElementById("empty-line-template").innerHTML.replaceAll("__prefix__", index);
+            tableBody.insertAdjacentHTML("beforeend", html);
+            totalForms.value = index + 1;
+            const row = tableBody.lastElementChild;
+            setupRow(row, true); markDirty();
+        });
+        batchForm.addEventListener("submit", event => {
+            if (submitting) { event.preventDefault(); return; }
+            if (tableBody.querySelector('[data-deleted="1"]') && !window.confirm("Confirmez-vous la suppression définitive des prestations marquées ?")) {
+                event.preventDefault(); return;
+            }
+            submitting = true;
+            document.getElementById("save-batch").disabled = true;
+            document.getElementById("save-batch").textContent = "Enregistrement…";
+        });
+        window.addEventListener("beforeunload", event => { if (dirty && !submitting) { event.preventDefault(); event.returnValue = ""; } });
+    }
+
+    function setPeriodEnabled(enabled) {
+        scopeMois.disabled = !enabled;
+        scopeAnnee.disabled = !enabled;
+    }
+
+    function confirmDiscard() {
+        return !dirty || window.confirm("Les modifications non enregistrées seront perdues. Continuer ?");
+    }
+
+    function restoreScope() {
+        scopeClient.value = loadedScope.client;
+        scopeMois.value = loadedScope.mois;
+        scopeAnnee.value = loadedScope.annee;
+        setPeriodEnabled(Boolean(loadedScope.client));
+    }
+
+    document.getElementById("paie-only").addEventListener("change", event => {
+        [...scopeClient.options].forEach(option => {
+            option.hidden = event.target.checked && option.dataset.paie === "0";
+        });
+    });
+    scopeForm.addEventListener("submit", event => {
+        if (!scopeClient.value) {
+            event.preventDefault();
+            setPeriodEnabled(false);
+            return;
+        }
+        if (!confirmDiscard()) {
+            event.preventDefault();
+            restoreScope();
+        }
+    });
+    scopeClient.addEventListener("change", () => {
+        if (!confirmDiscard()) {
+            restoreScope();
+            return;
+        }
+        if (!scopeClient.value) {
+            setPeriodEnabled(false);
+            window.location.assign(scopeForm.action);
+            return;
+        }
+        setPeriodEnabled(true);
+        scopeForm.submit();
+    });
+    [scopeMois, scopeAnnee].forEach(control => {
+        control.addEventListener("change", () => {
+            if (!scopeClient.value) return;
+            if (!confirmDiscard()) {
+                restoreScope();
+                return;
+            }
+            scopeForm.submit();
+        });
+    });
+});
+</script>
+{% endblock %}

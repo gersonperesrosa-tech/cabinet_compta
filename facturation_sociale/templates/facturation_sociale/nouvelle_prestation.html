@@ -7,6 +7,20 @@
 {{ prestations_data|json_script:"prestations-data" }}
 {{ clients_paie_ids|json_script:"clients-paie-data" }}
 
+<ul class="nav nav-tabs mb-4" role="tablist">
+    <li class="nav-item" role="presentation">
+        <a class="nav-link active" aria-current="page"
+           href="{% url 'facturation_sociale:nouvelle_prestation' %}">
+            Nouvelle prestation
+        </a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link" href="{% url 'facturation_sociale:prestations_par_client' %}">
+            Prestations par client
+        </a>
+    </li>
+</ul>
+
 
 <style>
 /* =========================================================

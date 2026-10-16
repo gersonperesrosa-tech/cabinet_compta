@@ -1,0 +1,18 @@
+<tr class="prestation-line" data-deleted="{% if form.DELETE.value %}1{% else %}0{% endif %}">
+    <td>{{ form.id }}{{ form.DELETE }}{{ form.prestation }}{% for error in form.prestation.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}{% for error in form.id.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</td>
+    <td>{{ form.quantite }}{% for error in form.quantite.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</td>
+    <td>{{ form.detail }}{% for error in form.detail.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</td>
+    <td>{{ form.prestataire }}{% for error in form.prestataire.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</td>
+    <td class="price-cell">
+        <div class="input-group input-group-sm"><span class="input-group-text">€</span>{{ form.cout_prestataire_affiche }}<button class="btn btn-outline-secondary toggle-cout" type="button" title="Ajouter une exception">⚙</button></div>
+        {{ form.mode_cout_prestataire }}
+        <div class="exception-fields exception-cout"><label class="form-label small mb-1">Coût exceptionnel</label>{{ form.cout_prestataire_personnalise }}{% for error in form.cout_prestataire_personnalise.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}<input class="form-control form-control-sm mt-1" name="{{ form.motif_cout_prestataire_personnalise.html_name }}" value="{{ form.motif_cout_prestataire_personnalise.value|default_if_none:'' }}" placeholder="Motif facultatif"></div>
+    </td>
+    <td class="price-cell">
+        <div class="input-group input-group-sm"><span class="input-group-text">€</span>{{ form.tarif_client_affiche }}<button class="btn btn-outline-secondary toggle-client" type="button" title="Ajouter une exception">⚙</button></div>
+        {{ form.mode_tarification }}
+        <div class="exception-fields exception-client"><label class="form-label small mb-1">Tarif exceptionnel</label>{{ form.tarif_client_personnalise }}{% for error in form.tarif_client_personnalise.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}<input class="form-control form-control-sm mt-1" name="{{ form.motif_tarif_personnalise.html_name }}" value="{{ form.motif_tarif_personnalise.value|default_if_none:'' }}" placeholder="Motif facultatif"></div>
+    </td>
+    <td><span class="margin-value">0,00 €</span>{% for error in form.non_field_errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</td>
+    <td><button class="btn btn-sm btn-outline-danger delete-line" type="button">{% if form.id.value %}Supprimer{% else %}Retirer{% endif %}</button></td>
+</tr>

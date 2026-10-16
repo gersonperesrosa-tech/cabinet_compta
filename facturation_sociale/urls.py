@@ -26,6 +26,11 @@ urlpatterns = [
         name="nouvelle_prestation",
     ),
     path(
+        "prestations-par-client/",
+        views.prestations_par_client,
+        name="prestations_par_client",
+    ),
+    path(
         "configurations/",
         views.configurations,
         name="configurations",

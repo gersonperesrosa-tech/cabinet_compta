@@ -1,12 +1,20 @@
 ﻿from django.contrib import messages
+from django.db import transaction
+from django.forms import formset_factory
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.crypto import get_random_string
+from django.utils.timezone import localdate
+
+from dossiers.models import Client
 
 from .forms import (
     NouvellePrestationForm,
+    PrestationLigneForm,
     PrestataireSocialForm,
     TarifPrestataireForm,
     TypePrestationForm,
+    get_tarif_prestataire_actif,
 )
 from .models import (
     PrestataireSocial,
@@ -14,6 +22,125 @@ from .models import (
     TarifPrestataire,
     TypePrestation,
 )
+
+
+PrestationLigneFormSet = formset_factory(
+    PrestationLigneForm,
+    extra=0,
+    max_num=500,
+    validate_max=True,
+)
+
+
+def _clients_facturation_sociale():
+    return Client.objects.filter(archive=False).order_by("nom")
+
+
+def _donnees_saisie_groupee():
+    """Données de référence consommées uniquement pour l'ergonomie JS."""
+    return {
+        "tarifs_prestataires": list(
+            TarifPrestataire.objects
+            .filter(
+                actif=True,
+                prestation__actif=True,
+                prestataire__actif=True,
+            )
+            .values("prestation_id", "prestataire_id", "cout_unitaire")
+        ),
+        "prestations_data": list(
+            TypePrestation.objects
+            .filter(actif=True)
+            .values("id", "tarif_client_standard")
+        ),
+    }
+
+
+def _initial_ligne(ligne):
+    return {
+        "id": ligne.pk,
+        "prestation": ligne.prestation_id,
+        "prestataire": ligne.prestataire_id,
+        "detail": ligne.detail,
+        "quantite": ligne.quantite,
+        "tarif_client_affiche": ligne.tarif_client_applique,
+        "cout_prestataire_affiche": ligne.cout_prestataire_unitaire_snapshot,
+        "mode_tarification": (
+            "personnalise" if ligne.tarif_personnalise else "standard"
+        ),
+        "tarif_client_personnalise": (
+            ligne.tarif_client_applique if ligne.tarif_personnalise else None
+        ),
+        "motif_tarif_personnalise": ligne.motif_tarif_personnalise,
+        "mode_cout_prestataire": (
+            "personnalise" if ligne.cout_prestataire_personnalise else "standard"
+        ),
+        "cout_prestataire_personnalise": (
+            ligne.cout_prestataire_unitaire_snapshot
+            if ligne.cout_prestataire_personnalise
+            else None
+        ),
+        "motif_cout_prestataire_personnalise": (
+            ligne.motif_cout_prestataire_personnalise
+        ),
+    }
+
+
+def _formset_kwargs(lignes):
+    return {
+        "form_kwargs": {
+            "historical_prestation_ids": [ligne.prestation_id for ligne in lignes],
+            "historical_prestataire_ids": [ligne.prestataire_id for ligne in lignes],
+        }
+    }
+
+
+def _appliquer_ligne_groupee(ligne, cleaned_data, tarif_prestataire, nouvelle):
+    """Applique les règles de snapshots sans réinitialiser l'historique."""
+    prestation_changee = (
+        nouvelle or ligne.prestation_id != cleaned_data["prestation"].pk
+    )
+    prestataire_change = (
+        nouvelle or ligne.prestataire_id != cleaned_data["prestataire"].pk
+    )
+    combinaison_changee = prestation_changee or prestataire_change
+
+    ligne.prestation = cleaned_data["prestation"]
+    ligne.prestataire = cleaned_data["prestataire"]
+    ligne.detail = cleaned_data.get("detail", "")
+    ligne.quantite = cleaned_data["quantite"]
+
+    if prestation_changee:
+        ligne.tarif_client_standard_snapshot = ligne.prestation.tarif_client_standard
+
+    if cleaned_data["mode_tarification"] == "personnalise":
+        ligne.tarif_client_applique = cleaned_data["tarif_client_personnalise"]
+        ligne.tarif_personnalise = True
+        ligne.motif_tarif_personnalise = cleaned_data.get(
+            "motif_tarif_personnalise", ""
+        )
+    else:
+        ligne.tarif_client_applique = ligne.tarif_client_standard_snapshot
+        ligne.tarif_personnalise = False
+        ligne.motif_tarif_personnalise = ""
+
+    if combinaison_changee:
+        ligne.cout_prestataire_standard_snapshot = tarif_prestataire.cout_unitaire
+
+    if cleaned_data["mode_cout_prestataire"] == "personnalise":
+        ligne.cout_prestataire_unitaire_snapshot = cleaned_data[
+            "cout_prestataire_personnalise"
+        ]
+        ligne.cout_prestataire_personnalise = True
+        ligne.motif_cout_prestataire_personnalise = cleaned_data.get(
+            "motif_cout_prestataire_personnalise", ""
+        )
+    else:
+        ligne.cout_prestataire_unitaire_snapshot = (
+            ligne.cout_prestataire_standard_snapshot
+        )
+        ligne.cout_prestataire_personnalise = False
+        ligne.motif_cout_prestataire_personnalise = ""
 
 
 def gestion(request):
@@ -240,7 +367,6 @@ def gestion(request):
 
 
 def modifier_prestation_sociale(request, pk):
-    from django.contrib import messages
     from django.shortcuts import get_object_or_404, redirect
 
     ligne = get_object_or_404(
@@ -550,11 +676,6 @@ def nouvelle_prestation(request):
 
             prestation_sociale.save()
 
-            messages.success(
-                request,
-                "La prestation a été enregistrée avec succès.",
-            )
-
             return redirect(
                 "facturation_sociale:nouvelle_prestation"
             )
@@ -604,6 +725,209 @@ def nouvelle_prestation(request):
         "facturation_sociale/nouvelle_prestation.html",
         context,
     )
+
+
+def prestations_par_client(request):
+    """Création et édition atomique des prestations d'un client/période."""
+    today = localdate()
+    scope_data = request.POST if request.method == "POST" else request.GET
+    raw_mois = scope_data.get("mois")
+    raw_annee = scope_data.get("annee")
+    raw_client_id = scope_data.get("client")
+    period_is_valid = False
+
+    try:
+        mois = int(raw_mois)
+        annee = int(raw_annee)
+        period_is_valid = 1 <= mois <= 12 and 2000 <= annee <= 2100
+    except (TypeError, ValueError):
+        mois, annee = today.month, today.year
+
+    if not period_is_valid:
+        mois = today.month
+        annee = today.year
+
+    try:
+        client_id = int(raw_client_id) if raw_client_id else None
+    except (TypeError, ValueError):
+        client_id = None
+
+    scope_client = (
+        _clients_facturation_sociale().filter(pk=client_id).first()
+        if client_id
+        else None
+    )
+    selected_client = scope_client if period_is_valid else None
+    lignes = []
+    scope_error = ""
+
+    if raw_client_id and not scope_client:
+        scope_error = "Le client sélectionné est invalide ou archivé."
+    elif scope_client and not period_is_valid:
+        scope_error = "Sélectionnez un mois et une année valides."
+
+    if selected_client:
+        lignes = list(
+            PrestationSociale.objects
+            .filter(client=selected_client, mois=mois, annee=annee)
+            .select_related("prestation", "prestataire")
+            .order_by("pk")
+        )
+
+    if request.method == "POST":
+        formset = PrestationLigneFormSet(
+            request.POST,
+            **_formset_kwargs(lignes),
+        )
+        is_valid = bool(selected_client) and formset.is_valid()
+
+        if not selected_client:
+            scope_error = (
+                "Sélectionnez un client non archivé ainsi qu'une période valide "
+                "avant d'enregistrer."
+            )
+
+        if is_valid:
+            existing_by_id = {ligne.pk: ligne for ligne in lignes}
+            lignes_a_supprimer = []
+            lignes_a_enregistrer = []
+            ids_vus = set()
+
+            for form in formset.forms:
+                cleaned_data = form.cleaned_data
+                ligne_id = cleaned_data.get("id")
+                ligne_existante = None
+
+                if ligne_id:
+                    if ligne_id in ids_vus:
+                        form.add_error("id", "Cette ligne est présente plusieurs fois.")
+                        is_valid = False
+                        continue
+                    ids_vus.add(ligne_id)
+                    ligne_existante = existing_by_id.get(ligne_id)
+                    if ligne_existante is None:
+                        form.add_error(
+                            "id",
+                            "Cette prestation n'appartient pas au client et à la période sélectionnés.",
+                        )
+                        is_valid = False
+                        continue
+
+                if cleaned_data.get("DELETE"):
+                    if ligne_existante:
+                        lignes_a_supprimer.append(ligne_existante.pk)
+                    continue
+
+                nouvelle = ligne_existante is None
+                prestation_changee = (
+                    nouvelle
+                    or ligne_existante.prestation_id != cleaned_data["prestation"].pk
+                )
+                prestataire_change = (
+                    nouvelle
+                    or ligne_existante.prestataire_id != cleaned_data["prestataire"].pk
+                )
+
+                tarif_prestataire = None
+                if prestation_changee or prestataire_change:
+                    tarif_prestataire = get_tarif_prestataire_actif(
+                        cleaned_data["prestation"],
+                        cleaned_data["prestataire"],
+                    )
+                    if not tarif_prestataire:
+                        form.add_error(
+                            "prestataire",
+                            "Aucun tarif actif n'est configuré pour cette prestation chez ce prestataire.",
+                        )
+                        is_valid = False
+                        continue
+
+                lignes_a_enregistrer.append(
+                    (
+                        ligne_existante or PrestationSociale(
+                            client=selected_client,
+                            mois=mois,
+                            annee=annee,
+                        ),
+                        cleaned_data,
+                        tarif_prestataire,
+                        nouvelle,
+                    )
+                )
+
+            if is_valid:
+                token = request.POST.get("submission_id", "")
+                processed_tokens = request.session.get(
+                    "prestations_sociales_batch_tokens", []
+                )
+                if token and token in processed_tokens:
+                    messages.info(request, "Cette saisie a déjà été enregistrée.")
+                    return redirect(
+                        f"{request.path}?client={selected_client.pk}&mois={mois}&annee={annee}"
+                    )
+
+                # Un second contrôle sous verrou protège les identifiants contre
+                # toute modification concurrente ou falsification de requête.
+                with transaction.atomic():
+                    locked_by_id = {
+                        ligne.pk: ligne
+                        for ligne in PrestationSociale.objects.select_for_update()
+                        .filter(
+                            client=selected_client,
+                            mois=mois,
+                            annee=annee,
+                        )
+                    }
+                    if any(pk not in locked_by_id for pk in lignes_a_supprimer):
+                        raise ValueError("Une prestation à supprimer n'est plus disponible.")
+
+                    for ligne, cleaned_data, tarif, nouvelle in lignes_a_enregistrer:
+                        if not nouvelle:
+                            ligne = locked_by_id.get(ligne.pk)
+                            if ligne is None:
+                                raise ValueError("Une prestation à modifier n'est plus disponible.")
+                        _appliquer_ligne_groupee(ligne, cleaned_data, tarif, nouvelle)
+                        ligne.save()
+
+                    if lignes_a_supprimer:
+                        PrestationSociale.objects.filter(
+                            pk__in=lignes_a_supprimer,
+                            client=selected_client,
+                            mois=mois,
+                            annee=annee,
+                        ).delete()
+
+                if token:
+                    request.session["prestations_sociales_batch_tokens"] = (
+                        processed_tokens[-19:] + [token]
+                    )
+
+                return redirect(
+                    f"{request.path}?client={selected_client.pk}&mois={mois}&annee={annee}"
+                )
+    else:
+        formset = PrestationLigneFormSet(
+            initial=[_initial_ligne(ligne) for ligne in lignes],
+            **_formset_kwargs(lignes),
+        )
+
+    context = {
+        "formset": formset,
+        "clients": _clients_facturation_sociale(),
+        "scope_client": scope_client,
+        "selected_client": selected_client,
+        "mois": mois,
+        "annee": annee,
+        "scope_error": scope_error,
+        "submission_id": get_random_string(32),
+        "clients_paie_ids": list(
+            _clients_facturation_sociale()
+            .filter(module_paie=True)
+            .values_list("pk", flat=True)
+        ),
+        **_donnees_saisie_groupee(),
+    }
+    return render(request, "facturation_sociale/prestations_par_client.html", context)
 
 
 def configurations(request):
