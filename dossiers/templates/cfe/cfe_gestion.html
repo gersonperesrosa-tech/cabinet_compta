@@ -17,6 +17,20 @@
                placeholder="Rechercher un client…"
                style="width: 220px; height: 38px;">
 
+        <select id="soldeStatusFilter"
+                class="form-select"
+                aria-label="Filtrer par statut du solde"
+                style="width: 210px; height: 38px;">
+            <option value="">Tous les statuts</option>
+            {% for code, libelle in cfe_statuts %}
+                <option value="{{ code }}">{{ libelle }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="button" id="toggleAcceptedNa" class="btn btn-outline-secondary">
+            Masquer CFE acceptées
+        </button>
+
         <!-- Sélecteur d'année -->
         <form method="GET" class="m-0">
             <select name="annee"
@@ -34,7 +48,7 @@
     </div>
 </div>
 
-<table class="table table-bordered align-middle mt-4">
+<table id="cfeGestionTable" class="table table-bordered align-middle mt-4">
     <thead class="table-light">
         <tr>
             <th>N°</th>
@@ -55,7 +69,9 @@
 <tbody>
     {% for cm in cms %}
 
-    <tr class="{% if cm.client.archive %}archived-row{% endif %}">
+    <tr class="{% if cm.client.archive %}archived-row{% endif %}"
+        data-solde-status="{{ cm.declaration.statut_solde|default:'' }}"
+        data-client-archived="{% if cm.client.archive %}true{% else %}false{% endif %}">
 
         <!-- N° client -->
         <td>{{ cm.client.numero }}</td>
@@ -126,105 +142,98 @@
 </tbody>
 </table>
 
+<p id="noCfeResults" class="text-muted small mt-3 mb-0" hidden>
+    Aucune CFE ne correspond aux filtres
+</p>
+
 </section>
 
-<!-- Filtre dynamique JS -->
 <script>
-document.getElementById("searchInput").addEventListener("keyup", function () {
-    let filter = this.value.toLowerCase();
-    let rows = document.querySelectorAll("table tbody tr");
+(() => {
+    const table = document.getElementById("cfeGestionTable");
+    const tbody = table.querySelector("tbody");
+    const headers = Array.from(table.querySelectorAll("thead th"));
+    const searchInput = document.getElementById("searchInput");
+    const statusFilter = document.getElementById("soldeStatusFilter");
+    const toggleAcceptedNa = document.getElementById("toggleAcceptedNa");
+    const noResults = document.getElementById("noCfeResults");
+    const originalRows = Array.from(tbody.querySelectorAll("tr"));
+    const hiddenStatuses = new Set(["VERT_FONCE", "NA"]);
+    let hideAcceptedNa = false;
+    let sortedColumn = null;
+    let sortState = 0; // 0 = initial, 1 = croissant, 2 = décroissant
 
-    rows.forEach(row => {
-        let clientName = row.querySelector("td a").textContent.toLowerCase();
-        row.style.display = clientName.includes(filter) ? "" : "none";
-    });
-});
-</script>
+    const getRows = () => Array.from(tbody.querySelectorAll("tr"));
 
-<!-- Tri dynamique -->
-<script>
-document.querySelectorAll("table thead th").forEach((header, index) => {
-    header.style.cursor = "pointer";
+    function applyFilters() {
+        const search = searchInput.value.trim().toLocaleLowerCase();
+        const selectedStatus = statusFilter.value;
+        let visibleCount = 0;
 
-    header.addEventListener("click", () => {
-        const table = header.closest("table");
-        const tbody = table.querySelector("tbody");
-        const rows = Array.from(tbody.querySelectorAll("tr"));
+        getRows().forEach((row) => {
+            const clientName = (row.cells[1].textContent || "").toLocaleLowerCase();
+            const status = row.dataset.soldeStatus || "";
+            const isArchived = row.dataset.clientArchived === "true";
+            const matches = clientName.includes(search)
+                && (!selectedStatus || status === selectedStatus)
+                && (!hideAcceptedNa || (!hiddenStatuses.has(status) && !isArchived));
 
-        const isAsc = header.classList.toggle("asc");
-
-        rows.sort((a, b) => {
-            const aVal = (a.cells[index].innerText || "").toLowerCase();
-            const bVal = (b.cells[index].innerText || "").toLowerCase();
-
-            if (aVal < bVal) return isAsc ? -1 : 1;
-            if (aVal > bVal) return isAsc ? 1 : -1;
-            return 0;
+            row.hidden = !matches;
+            if (matches) visibleCount += 1;
         });
 
-        rows.forEach(row => tbody.appendChild(row));
-    });
-});
-</script>
-<script>
-document.querySelectorAll("table thead th").forEach((header, index) => {
-    header.style.cursor = "pointer";
+        noResults.hidden = visibleCount !== 0;
+    }
 
-    // Sauvegarde de l'ordre original
-    const table = header.closest("table");
-    const tbody = table.querySelector("tbody");
-    const originalRows = Array.from(tbody.querySelectorAll("tr"));
+    function compareValues(a, b, ascending) {
+        const parseNumber = (value) => {
+            const normalized = value.trim().replace(/[\s€]/g, "").replace(",", ".");
+            return /^[-+]?\d+(\.\d+)?$/.test(normalized) ? Number(normalized) : null;
+        };
+        const aNumber = parseNumber(a);
+        const bNumber = parseNumber(b);
+        const comparison = aNumber !== null && bNumber !== null
+            ? aNumber - bNumber
+            : a.trim().localeCompare(b.trim(), "fr", { numeric: true, sensitivity: "base" });
+        return ascending ? comparison : -comparison;
+    }
 
-    // État du tri : 0 = original, 1 = asc, 2 = desc
-    let sortState = 0;
-
-    header.addEventListener("click", () => {
-
-        let rows = Array.from(tbody.querySelectorAll("tr"));
-
-        // Cycle : original → asc → desc → original
-        sortState = (sortState + 1) % 3;
-
-        // 0 = retour à l'ordre original
-        if (sortState === 0) {
-            tbody.innerHTML = "";
-            originalRows.forEach(r => tbody.appendChild(r));
-            return;
+    function sortRows(columnIndex) {
+        if (sortedColumn === columnIndex) {
+            sortState = (sortState + 1) % 3;
+        } else {
+            sortedColumn = columnIndex;
+            sortState = 1;
         }
 
-        const isAsc = sortState === 1;
+        const rows = sortState === 0
+            ? [...originalRows]
+            : getRows().sort((a, b) => compareValues(
+                a.cells[columnIndex].innerText,
+                b.cells[columnIndex].innerText,
+                sortState === 1
+            ));
+        rows.forEach((row) => tbody.appendChild(row));
+        applyFilters();
+    }
 
-        rows.sort((a, b) => {
-            const aVal = (a.cells[index].innerText || "").trim();
-            const bVal = (b.cells[index].innerText || "").trim();
-
-            // Conversion en nombre (en retirant espaces et virgules)
-            const aNum = parseFloat(aVal.replace(/\s/g, "").replace(",", "."));
-            const bNum = parseFloat(bVal.replace(/\s/g, "").replace(",", "."));
-
-            const aIsNum = !isNaN(aNum);
-            const bIsNum = !isNaN(bNum);
-
-            // Cas 1 : les deux sont numériques
-            if (aIsNum && bIsNum) {
-                return isAsc ? aNum - bNum : bNum - aNum;
-            }
-
-            // Cas 2 : un seul est numérique → le numérique passe avant
-            if (aIsNum && !bIsNum) return isAsc ? -1 : 1;
-            if (!aIsNum && bIsNum) return isAsc ? 1 : -1;
-
-            // Cas 3 : tri texte
-            return isAsc
-                ? aVal.localeCompare(bVal)
-                : bVal.localeCompare(aVal);
-        });
-
-        // Réinjection
-        tbody.innerHTML = "";
-        rows.forEach(row => tbody.appendChild(row));
+    searchInput.addEventListener("input", applyFilters);
+    statusFilter.addEventListener("change", applyFilters);
+    toggleAcceptedNa.addEventListener("click", () => {
+        hideAcceptedNa = !hideAcceptedNa;
+        toggleAcceptedNa.textContent = hideAcceptedNa
+            ? "Afficher toutes les CFE"
+            : "Masquer CFE acceptées";
+        applyFilters();
     });
-});
+
+    headers.forEach((header, index) => {
+        header.style.cursor = "pointer";
+        header.addEventListener("click", () => sortRows(index));
+    });
+
+    applyFilters();
+})();
 </script>
 
 

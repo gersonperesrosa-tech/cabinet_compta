@@ -2695,6 +2695,12 @@ def cfe_gestion(request, annee_id):
         "annees": annees,
         "cms": cms,
         "annee_selectionnee": annee,
+        # CFE utilise les mêmes statuts que le partial de saisie, à
+        # l'exception de ROUGE qui n'y est pas proposé.
+        "cfe_statuts": [
+            statut for statut in TVADeclaration.TVA_STATUTS
+            if statut[0] != "ROUGE"
+        ],
     })
 
 @login_required

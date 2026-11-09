@@ -5,7 +5,7 @@
 
 <section class="section">
 
-<h1>Saisie CFE – {{ client_module.client.nom }} ({{ client_module.annee.annee }})</h1>
+<h1>Saisie - CFE {{ client_module.client.nom }} - {{ client_module.client.numero }} ({{ client_module.annee.annee }})</h1>
 
 <form method="POST">
     {% csrf_token %}
