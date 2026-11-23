@@ -1,5 +1,11 @@
 from django.contrib.auth.decorators import login_required
+import json
+
+from django.db import transaction
+from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_POST
 from dossiers.models import Client
 from .models import (
     ModuleRevision,
@@ -10,8 +16,63 @@ from .models import (
     ModuleISCI,
     ModuleDeclarations,
     ModuleMission,
-    ModuleJuridique
+    ModuleJuridique,
+    ClotureExperimentaleLigne,
+    ClotureExperimentaleCellule,
 )
+
+
+EXPERIMENTAL_COLUMNS = (
+    ("pre_revision", "Pré-révision"),
+    ("relance_pieces", "Relance de pièces"),
+    ("releve_bancaire", "Relevé bancaire"),
+    ("revision_ad", "Révision AD"),
+    ("plaquette", "Plaquette"),
+    ("liasse", "Liasse"),
+    ("ca12", "CA12"),
+    ("is_ci", "IS/CI"),
+    ("va1330", "VA1330"),
+    ("def1329", "1329DEF"),
+    ("decloyer", "DECLOYER"),
+    ("das2", "DAS2"),
+    ("dri", "DRI"),
+    ("lab_maintien", "LAB/Laintien"),
+    ("dossier_travail", "Dossier travail"),
+    ("attestation", "Attestation"),
+    ("cr_mission", "CR Mission"),
+)
+EXPERIMENTAL_COLUMN_KEYS = {key for key, _label in EXPERIMENTAL_COLUMNS}
+EXPERIMENTAL_COLOR_ORDER = ("none", "gray", "yellow", "orange", "light_green", "dark_green", "red")
+EXPERIMENTAL_COLORS = set(EXPERIMENTAL_COLOR_ORDER)
+
+
+def _experimental_status(colors):
+    """Applique les règles de statut dans l'ordre demandé."""
+    if all(color == "none" for color in colors):
+        return ClotureExperimentaleLigne.STATUT_NON_COMMENCE
+    if all(color in {"gray", "dark_green"} for color in colors):
+        return ClotureExperimentaleLigne.STATUT_TERMINE
+    return ClotureExperimentaleLigne.STATUT_EN_COURS
+
+
+def _experimental_status_label(status):
+    return dict(ClotureExperimentaleLigne.STATUT_CHOICES)[status]
+
+
+def _serialize_experimental_row(row):
+    cells = {cell.colonne: cell for cell in row.cellules.all()}
+    colors = {key: cells.get(key).couleur if key in cells else "none" for key in EXPERIMENTAL_COLUMN_KEYS}
+    return {
+        "id": row.client_id,
+        "client_id": row.client_id,
+        "numero_client": row.client.numero,
+        "client": row.client.nom,
+        "version": row.version,
+        "colors": colors,
+        "statut_general": _experimental_status_label(row.statut_general),
+        "statut_code": row.statut_general,
+        **{key: cells.get(key).texte if key in cells else "" for key in EXPERIMENTAL_COLUMN_KEYS},
+    }
 
 
 # ----------------------------------------------------
@@ -591,4 +652,120 @@ def gestion_globale_cloture(request):
         "data": data,
         "statuts": ClotureStatus.choices,
         "filter_columns": [(2, "Révisions, Plaquette et Liasse"), (3, "Déclarations"), (4, "Mission"), (5, "Juridique"), (6, "Statut général")],
+    })
+
+
+# ----------------------------------------------------
+#   Tableau expérimental (stockage totalement séparé)
+# ----------------------------------------------------
+
+@login_required
+@ensure_csrf_cookie
+def tableau_experimental_cloture(request):
+    annees = ClotureAnnee.objects.order_by("-annee")
+    selected_year = request.GET.get("annee")
+    cloture = None
+    if selected_year:
+        cloture = ClotureAnnee.objects.filter(annee=selected_year).first()
+    elif annees.exists():
+        cloture = annees.first()
+        selected_year = str(cloture.annee)
+
+    rows = []
+    if cloture:
+        # Seuls les clients effectivement liés à cette clôture figurent ici.
+        for client in cloture.clients.order_by("nom", "id"):
+            row, _created = ClotureExperimentaleLigne.objects.get_or_create(
+                cloture=cloture,
+                client=client,
+            )
+            existing_columns = set(row.cellules.values_list("colonne", flat=True))
+            missing_cells = [
+                ClotureExperimentaleCellule(ligne=row, colonne=key)
+                for key in EXPERIMENTAL_COLUMN_KEYS - existing_columns
+            ]
+            if missing_cells:
+                ClotureExperimentaleCellule.objects.bulk_create(missing_cells)
+        rows = list(
+            ClotureExperimentaleLigne.objects.filter(cloture=cloture)
+            .select_related("client")
+            .prefetch_related("cellules")
+            .order_by("client__nom", "client__id")
+        )
+
+    return render(request, "cloture/tableau_experimental.html", {
+        "annees": annees,
+        "selected_year": selected_year,
+        "selected_cloture_id": cloture.id if cloture else None,
+        "table_rows": [_serialize_experimental_row(row) for row in rows],
+        "experimental_columns": EXPERIMENTAL_COLUMNS,
+        "experimental_color_order": EXPERIMENTAL_COLOR_ORDER,
+    })
+
+
+@login_required
+@require_POST
+def sauvegarder_cellule_experimentale(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return JsonResponse({"error": "Données de sauvegarde invalides."}, status=400)
+
+    client_id = payload.get("client_id")
+    column = payload.get("column")
+    text = payload.get("text")
+    color = payload.get("color")
+    expected_version = payload.get("version")
+    try:
+        cloture_id = int(payload.get("cloture_id"))
+        client_id = int(client_id)
+        expected_version = int(expected_version)
+    except (TypeError, ValueError):
+        return JsonResponse({"error": "Identifiant ou version invalide."}, status=400)
+
+    if column not in EXPERIMENTAL_COLUMN_KEYS or color not in EXPERIMENTAL_COLORS:
+        return JsonResponse({"error": "Colonne ou couleur non autorisée."}, status=400)
+    if not isinstance(text, str):
+        return JsonResponse({"error": "Le texte doit être une chaîne."}, status=400)
+    if len(text) > 10000:
+        return JsonResponse({"error": "Le texte est trop long."}, status=400)
+
+    with transaction.atomic():
+        cloture = get_object_or_404(ClotureAnnee, pk=cloture_id)
+        # Cette vérification interdit toute écriture sur un client hors du
+        # périmètre réel de l'année de clôture.
+        client = get_object_or_404(cloture.clients, pk=client_id)
+        row, _created = ClotureExperimentaleLigne.objects.select_for_update().get_or_create(
+            cloture=cloture,
+            client=client,
+        )
+        if row.version != expected_version:
+            row = ClotureExperimentaleLigne.objects.select_related("client").prefetch_related("cellules").get(pk=row.pk)
+            return JsonResponse({
+                "error": "Cette ligne a été modifiée dans un autre onglet. Actualisez-la avant de continuer.",
+                "row": _serialize_experimental_row(row),
+            }, status=409)
+
+        cell, _created = ClotureExperimentaleCellule.objects.get_or_create(
+            ligne=row,
+            colonne=column,
+            defaults={"texte": text, "couleur": color},
+        )
+        if not _created:
+            cell.texte = text
+            cell.couleur = color
+            cell.save(update_fields=("texte", "couleur", "updated_at"))
+
+        colors = dict(row.cellules.values_list("colonne", "couleur"))
+        colors[column] = color
+        row.statut_general = _experimental_status([
+            colors.get(key, "none") for key in EXPERIMENTAL_COLUMN_KEYS
+        ])
+        row.version += 1
+        row.save(update_fields=("statut_general", "version", "updated_at"))
+
+    return JsonResponse({
+        "version": row.version,
+        "statut_code": row.statut_general,
+        "statut_general": _experimental_status_label(row.statut_general),
     })

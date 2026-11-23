@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.6.1/dist/css/tabulator_bootstrap5.min.css">
+
+<section class="section cloture-experimentale">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h1 class="mb-1">Clôture — Tableau expérimental</h1>
+            <p class="text-muted mb-0">Espace de test indépendant : aucune donnée des clôtures existantes n’est modifiée.</p>
+        </div>
+        <span id="save-indicator" class="badge text-bg-secondary" role="status" aria-live="polite">Prêt</span>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="d-flex flex-wrap align-items-end gap-3 mb-3">
+                <div>
+                    <label for="year-select" class="form-label">Année de clôture</label>
+                    <select id="year-select" class="form-select">
+                        {% for annee in annees %}
+                        <option value="{{ annee.annee }}" {% if selected_year == annee.annee|stringformat:"s" %}selected{% endif %}>{{ annee.annee }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="status-filter" class="form-label">Statut général</label>
+                    <select id="status-filter" class="form-select">
+                        <option value="">Tous les statuts</option>
+                        <option value="non_commence">Non commencé</option>
+                        <option value="en_cours">En cours</option>
+                        <option value="termine">Terminé</option>
+                    </select>
+                </div>
+                <button id="toggle-completed" type="button" class="btn btn-outline-secondary">Masquer les terminés</button>
+            </div>
+
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-3" aria-label="Palette de couleurs">
+                <span class="fw-semibold me-1">Couleur de la cellule sélectionnée :</span>
+                <button type="button" class="color-choice color-none" data-color="none" title="Sans couleur / blanc" aria-label="Blanc"></button>
+                <button type="button" class="color-choice color-gray" data-color="gray" title="Gris" aria-label="Gris"></button>
+                <button type="button" class="color-choice color-yellow" data-color="yellow" title="Jaune" aria-label="Jaune"></button>
+                <button type="button" class="color-choice color-orange" data-color="orange" title="Orange" aria-label="Orange"></button>
+                <button type="button" class="color-choice color-light-green" data-color="light_green" title="Vert clair" aria-label="Vert clair"></button>
+                <button type="button" class="color-choice color-dark-green" data-color="dark_green" title="Vert foncé" aria-label="Vert foncé"></button>
+                <button type="button" class="color-choice color-red" data-color="red" title="Rouge" aria-label="Rouge"></button>
+                <small class="text-muted ms-1">Cliquez une cellule de suivi, puis une couleur. Ctrl/Cmd+C et Ctrl/Cmd+V sont pris en charge.</small>
+            </div>
+
+            {% if selected_year %}
+            <div class="experimental-table-frame">
+                <div id="experimental-table" aria-label="Tableau expérimental de clôture"></div>
+            </div>
+            <p id="no-matches" class="text-center text-muted py-4 d-none">Aucun dossier ne correspond aux filtres.</p>
+            {% else %}
+            <p class="text-muted mb-0">Aucune année de clôture n’est disponible.</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<style>
+/* The main element is a flex child. This page-only stylesheet lets it shrink
+   so Tabulator's internal scroller, rather than the browser window, handles width. */
+.layout-container > main.flex-grow-1 { min-width: 0; }
+.cloture-experimentale { width: 100%; min-width: 0; }
+.cloture-experimentale > .card { width: 100%; min-width: 0; overflow: hidden; }
+.cloture-experimentale .card-body { min-width: 0; }
+.cloture-experimentale .experimental-table-frame { width: 100%; min-width: 0; max-width: 100%; }
+.cloture-experimentale .experimental-table-frame > .tabulator { width: 100%; max-width: 100%; }
+.cloture-experimentale .tabulator {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    color: #212529;
+    font-family: "Inter", sans-serif;
+    font-size: 11.5px;
+}
+.cloture-experimentale .tabulator-header {
+    background: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    color: #34495e;
+    font-weight: 600;
+}
+.cloture-experimentale .tabulator-header .tabulator-col {
+    background: #f8f9fa;
+    border-right: 0;
+    min-width: 115px;
+}
+.cloture-experimentale .tabulator-header .tabulator-col-content {
+    padding: 6px 8px;
+}
+.cloture-experimentale .tabulator-header .tabulator-col[tabulator-field="client"] .tabulator-col-content {
+    text-align: left;
+}
+.cloture-experimentale .tabulator .tabulator-tableholder .tabulator-table .tabulator-row {
+    background-color: #fff;
+    border-bottom: 0;
+    margin: 0;
+    min-height: 30px;
+    padding: 0;
+}
+.cloture-experimentale .tabulator .tabulator-tableholder .tabulator-table .tabulator-row.tabulator-row-even {
+    background-color: #fff;
+}
+.cloture-experimentale .tabulator-cell {
+    border-bottom: 1px solid #e5e7eb;
+    border-right: 0;
+    box-sizing: border-box;
+    line-height: 1.1;
+    min-height: 30px;
+    padding: 4px 8px;
+    text-align: center;
+    white-space: pre-wrap;
+}
+.cloture-experimentale .tabulator-cell[tabulator-field="client"] {
+    font-weight: 600;
+    text-align: left;
+}
+/* Tabulator alternates row backgrounds. The two frozen identity columns must
+   remain white, including on an even or hovered row. */
+.cloture-experimentale .tabulator .tabulator-cell.experimental-identity-cell {
+    background-color: #fff !important;
+    color: #212529 !important;
+}
+.cloture-experimentale .tabulator .tabulator-cell.experimental-active-cell {
+    box-shadow: inset 0 0 0 2px #0d6efd;
+}
+.color-choice { border: 1px solid #6c757d; border-radius: 4px; box-sizing: border-box; height: 26px; min-width: 26px; padding: 0; width: 26px; }
+.color-choice:focus-visible { outline: 3px solid #0d6efd; outline-offset: 2px; }
+.color-none { background: #fff; }.color-gray { background: #d1d5db; }.color-yellow { background: #fff3a3; }
+.color-orange { background: #ffd08a; }.color-light-green { background: #bfe7b8; }.color-dark-green { background: #5e9b66; color: #fff; }.color-red { background: #f4a3a3; }
+</style>
+
+{{ table_rows|json_script:"experimental-row-data" }}
+{{ experimental_columns|json_script:"experimental-columns" }}
+{% if selected_year %}
+<script src="https://unpkg.com/tabulator-tables@6.6.1/dist/js/tabulator.min.js"></script>
+<script>
+(() => {
+    const rows = JSON.parse(document.getElementById("experimental-row-data").textContent);
+    const trackedColumns = JSON.parse(document.getElementById("experimental-columns").textContent);
+    const clotureId = {{ selected_cloture_id|default:"null" }};
+    const tableElement = document.getElementById("experimental-table");
+    const indicator = document.getElementById("save-indicator");
+    const noMatches = document.getElementById("no-matches");
+    const statusFilter = document.getElementById("status-filter");
+    const toggleCompleted = document.getElementById("toggle-completed");
+    let activeCell = null;
+    let activeCellKey = null;
+    let hideCompleted = false;
+    const saveQueues = new Map();
+    const cellMutationNumbers = new Map();
+    const colorRank = {none: 0, gray: 1, yellow: 2, orange: 3, light_green: 4, dark_green: 5, red: 6};
+    const statusRank = {non_commence: 0, en_cours: 1, termine: 2};
+    const backgrounds = {none: "#ffffff", gray: "#d1d5db", yellow: "#fff3a3", orange: "#ffd08a", light_green: "#bfe7b8", dark_green: "#5e9b66", red: "#f4a3a3"};
+
+    function csrfToken() {
+        const match = document.cookie.match(/(?:^|; )csrftoken=([^;]*)/);
+        return match ? decodeURIComponent(match[1]) : "";
+    }
+    function setIndicator(message, kind) {
+        indicator.textContent = message;
+        indicator.className = `badge text-bg-${kind}`;
+    }
+    function setCellColor(cell, color) {
+        const element = cell.getElement();
+        // Tabulator may add its own editing or hover color. The persisted cell
+        // color takes precedence and is deliberately independent of its text.
+        element.style.setProperty("background-color", backgrounds[color], "important");
+        if (color === "dark_green") {
+            element.style.setProperty("color", "#fff", "important");
+        } else {
+            element.style.removeProperty("color");
+        }
+    }
+    function colorFormatter(cell) {
+        const field = cell.getField();
+        setCellColor(cell, cell.getRow().getData().colors[field] || "none");
+        return cell.getValue();
+    }
+    function statusFormatter(cell) {
+        const code = cell.getRow().getData().statut_code;
+        setCellColor(cell, code === "termine" ? "dark_green" : (code === "en_cours" ? "yellow" : "none"));
+        return cell.getValue();
+    }
+    function getActiveCell() {
+        if (!activeCellKey) return null;
+        const row = table.getRows().find(candidate => candidate.getData().id === activeCellKey.rowId);
+        const cell = row ? row.getCell(activeCellKey.field) : null;
+        if (cell) activeCell = cell;
+        return cell;
+    }
+    function refreshActiveCellOutline() {
+        tableElement.querySelectorAll(".experimental-active-cell").forEach(element => {
+            element.classList.remove("experimental-active-cell");
+        });
+        const cell = getActiveCell();
+        if (cell) cell.getElement().classList.add("experimental-active-cell");
+    }
+    function selectCell(cell) {
+        tableElement.querySelectorAll(".experimental-active-cell").forEach(element => {
+            element.classList.remove("experimental-active-cell");
+        });
+        activeCellKey = {rowId: cell.getRow().getData().id, field: cell.getField()};
+        activeCell = cell;
+        cell.getElement().classList.add("experimental-active-cell");
+    }
+    function saveCell(cell, change, previousValue) {
+        const row = cell.getRow();
+        const rowId = row.getData().client_id;
+        const mutationKey = `${rowId}:${change.column}`;
+        const mutationNumber = (cellMutationNumbers.get(mutationKey) || 0) + 1;
+        cellMutationNumbers.set(mutationKey, mutationNumber);
+        const previous = saveQueues.get(rowId) || Promise.resolve();
+        const next = previous.catch(() => undefined).then(async () => {
+            const data = row.getData();
+            const payload = {
+                cloture_id: clotureId,
+                client_id: data.client_id,
+                column: change.column,
+                text: change.text,
+                color: change.color,
+                version: data.version,
+            };
+            setIndicator("Enregistrement…", "warning");
+            const response = await fetch("{% url 'sauvegarder_cellule_experimentale' %}", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: {"Content-Type": "application/json", "X-CSRFToken": csrfToken()},
+                body: JSON.stringify(payload),
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                if (response.status === 409 && result.row) {
+                    await row.update(result.row);
+                    row.reformat();
+                    refreshActiveCellOutline();
+                    applyFilters();
+                    setIndicator("Conflit : ligne actualisée", "danger");
+                    return;
+                }
+                if (response.status === 403) {
+                    throw new Error("Session de sécurité expirée : actualisez la page puis réessayez.");
+                }
+                throw new Error(result.error || "La sauvegarde a échoué.");
+            }
+            await row.update({version: result.version, statut_code: result.statut_code, statut_general: result.statut_general});
+            row.reformat();
+            refreshActiveCellOutline();
+            applyFilters();
+            setIndicator("Enregistré", "success");
+        }).catch(error => {
+            // Roll back only when this remains the latest action for the cell.
+            // A later queued edit keeps its local state and will still be sent.
+            if (cellMutationNumbers.get(mutationKey) === mutationNumber) {
+                const currentData = row.getData();
+                const colors = {...currentData.colors, [change.column]: previousValue.color};
+                row.update({[change.column]: previousValue.text, colors}).then(() => {
+                    row.reformat();
+                    refreshActiveCellOutline();
+                });
+            }
+            setIndicator(error.message || "Erreur de sauvegarde", "danger");
+            console.error("Sauvegarde du tableau expérimental", error);
+        });
+        saveQueues.set(rowId, next);
+    }
+
+    const columns = [
+        {title: "N°", field: "numero_client", frozen: true, cssClass: "experimental-identity-cell", sorter: "number", headerSortTristate: true, width: 135},
+        {title: "Client", field: "client", frozen: true, cssClass: "experimental-identity-cell", sorter: "string", headerSortTristate: true, width: 220},
+        ...trackedColumns.map(([field, title]) => ({
+            title, field, editor: "input", editorParams: {selectContents: true}, formatter: colorFormatter,
+            sorter: (a, b, aRow, bRow) => colorRank[(aRow.getData().colors[field] || "none")] - colorRank[(bRow.getData().colors[field] || "none")],
+            headerSortTristate: true, width: 150, minWidth: 125,
+        })),
+        {title: "Statut général", field: "statut_general", sorter: (a, b, aRow, bRow) => statusRank[aRow.getData().statut_code] - statusRank[bRow.getData().statut_code], formatter: statusFormatter, headerSortTristate: true, width: 155},
+    ];
+    const table = new Tabulator(tableElement, {
+        // fitData keeps the table element within its container and lets
+        // Tabulator's own tableholder provide the single horizontal scrollbar.
+        data: rows, columns, layout: "fitData", height: "65vh", clipboard: true,
+        clipboardPasteParser: "range", clipboardPasteAction: "range", clipboardCopyRowRange: "range",
+        selectableRange: true, editTriggerEvent: "dblclick", placeholder: "Aucun dossier ne correspond aux filtres.",
+    });
+    // In Tabulator 6, interaction and edit notifications are registered with
+    // table.on(). Constructor options with these names do not subscribe to the
+    // events, so saveCell() and the palette would never be reached.
+    table.on("cellClick", (event, cell) => {
+        if (trackedColumns.some(([key]) => key === cell.getField())) {
+            // The selected CellComponent remains available when the user then
+            // clicks a palette button outside the table.
+            selectCell(cell);
+            console.debug("Tableau expérimental : cellule sélectionnée", {
+                rowId: cell.getRow().getIndex(), field: cell.getField(),
+            });
+        }
+    });
+    table.on("cellEdited", cell => {
+        const field = cell.getField();
+        const data = cell.getRow().getData();
+        console.debug("Tableau expérimental : édition validée", {rowId: data.client_id, field});
+        saveCell(cell, {
+            column: field,
+            text: data[field] || "",
+            color: data.colors[field] || "none",
+        }, {
+            text: cell.getOldValue() || "",
+            color: data.colors[field] || "none",
+        });
+    });
+    table.on("dataFiltered", (filters, filteredRows) => {
+        noMatches.classList.toggle("d-none", filteredRows.length !== 0);
+    });
+    function applyFilters() {
+        table.setFilter(data => (!statusFilter.value || data.statut_code === statusFilter.value) && !(hideCompleted && data.statut_code === "termine"));
+    }
+    statusFilter.addEventListener("change", applyFilters);
+    toggleCompleted.addEventListener("click", () => {
+        hideCompleted = !hideCompleted;
+        toggleCompleted.textContent = hideCompleted ? "Afficher les terminés" : "Masquer les terminés";
+        applyFilters();
+    });
+    document.getElementById("year-select").addEventListener("change", event => {
+        window.location.assign(`{% url 'tableau_experimental_cloture' %}?annee=${encodeURIComponent(event.target.value)}`);
+    });
+    document.querySelectorAll(".color-choice").forEach(button => button.addEventListener("click", () => {
+        const selectedCell = getActiveCell();
+        if (!selectedCell) { setIndicator("Sélectionnez une cellule de suivi", "secondary"); return; }
+        const row = selectedCell.getRow();
+        const data = row.getData();
+        const column = selectedCell.getField();
+        const color = button.dataset.color;
+        const previousValue = {text: data[column] || "", color: data.colors[column] || "none"};
+        const colors = {...data.colors, [column]: color};
+        // Render immediately. The later reformat reads the same color from the
+        // row data, so the visual state does not depend on the server latency.
+        setCellColor(selectedCell, color);
+        console.debug("Tableau expérimental : couleur appliquée", {
+            rowId: data.client_id, column, color,
+        });
+        row.update({colors}).then(() => {
+            row.reformat();
+            refreshActiveCellOutline();
+            const refreshedCell = getActiveCell();
+            if (refreshedCell) setCellColor(refreshedCell, color);
+        });
+        saveCell(selectedCell, {column, text: previousValue.text, color}, previousValue);
+    }));
+})();
+</script>
+{% endif %}
+{% endblock %}

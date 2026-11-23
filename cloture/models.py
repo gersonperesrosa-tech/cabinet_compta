@@ -24,6 +24,93 @@ class ClotureAnnee(models.Model):
     def __str__(self):
         return str(self.annee)
 
+
+# Les modèles ci-dessous sont volontairement indépendants des modules de
+# clôture existants. Ils constituent le stockage de la maquette "tableau
+# expérimental" et peuvent donc évoluer sans modifier les écrans actuels.
+class ClotureExperimentaleLigne(models.Model):
+    STATUT_NON_COMMENCE = "non_commence"
+    STATUT_EN_COURS = "en_cours"
+    STATUT_TERMINE = "termine"
+    STATUT_CHOICES = (
+        (STATUT_NON_COMMENCE, "Non commencé"),
+        (STATUT_EN_COURS, "En cours"),
+        (STATUT_TERMINE, "Terminé"),
+    )
+
+    cloture = models.ForeignKey(
+        ClotureAnnee,
+        on_delete=models.CASCADE,
+        related_name="lignes_experimentales",
+    )
+    client = models.ForeignKey(
+        Client,
+        on_delete=models.CASCADE,
+        related_name="lignes_cloture_experimentales",
+    )
+    statut_general = models.CharField(
+        max_length=20,
+        choices=STATUT_CHOICES,
+        default=STATUT_NON_COMMENCE,
+    )
+    # Version optimiste : une sauvegarde d'un onglet ancien ne peut pas écraser
+    # silencieusement une modification plus récente.
+    version = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("cloture", "client"),
+                name="cloture_experimentale_ligne_unique",
+            )
+        ]
+        ordering = ("client__nom",)
+
+    def __str__(self):
+        return f"Expérimental — {self.client} ({self.cloture.annee})"
+
+
+class ClotureExperimentaleCellule(models.Model):
+    COULEUR_NONE = "none"
+    COULEUR_GRAY = "gray"
+    COULEUR_YELLOW = "yellow"
+    COULEUR_ORANGE = "orange"
+    COULEUR_LIGHT_GREEN = "light_green"
+    COULEUR_DARK_GREEN = "dark_green"
+    COULEUR_RED = "red"
+    COULEUR_CHOICES = (
+        (COULEUR_NONE, "Sans couleur / blanc"),
+        (COULEUR_GRAY, "Gris"),
+        (COULEUR_YELLOW, "Jaune"),
+        (COULEUR_ORANGE, "Orange"),
+        (COULEUR_LIGHT_GREEN, "Vert clair"),
+        (COULEUR_DARK_GREEN, "Vert foncé"),
+        (COULEUR_RED, "Rouge"),
+    )
+
+    ligne = models.ForeignKey(
+        ClotureExperimentaleLigne,
+        on_delete=models.CASCADE,
+        related_name="cellules",
+    )
+    colonne = models.CharField(max_length=40)
+    texte = models.TextField(blank=True, default="")
+    couleur = models.CharField(max_length=20, choices=COULEUR_CHOICES, default=COULEUR_NONE)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("ligne", "colonne"),
+                name="cloture_experimentale_cellule_unique",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.ligne} — {self.colonne}"
+
 class ClotureModuleBase(models.Model):
     cloture = models.ForeignKey(ClotureAnnee, on_delete=models.CASCADE)
     client = models.ForeignKey(Client, on_delete=models.CASCADE)

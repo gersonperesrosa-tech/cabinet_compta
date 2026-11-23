@@ -630,6 +630,12 @@
 </a>
 {% endif %}
 
+<a class="nav-link text-white d-flex align-items-center gap-2
+   {% if request.resolver_match.url_name == 'tableau_experimental_cloture' %}active{% endif %}"
+   href="{% url 'tableau_experimental_cloture' %}{% if latest_cloture_year %}?annee={{ latest_cloture_year }}{% endif %}">
+    <span class="sidebar-text">Tableau expérimental</span>
+</a>
+
 
     </div>
 </div>

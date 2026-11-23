@@ -40,4 +40,8 @@ urlpatterns = [
     # Sous-module : Gestion globale
     path("global/", views.gestion_globale_cloture, name="gestion_globale_cloture"),
 
+    # Maquette indépendante des modules de clôture actuels
+    path("tableau-experimental/", views.tableau_experimental_cloture, name="tableau_experimental_cloture"),
+    path("tableau-experimental/sauvegarder-cellule/", views.sauvegarder_cellule_experimentale, name="sauvegarder_cellule_experimentale"),
+
 ]

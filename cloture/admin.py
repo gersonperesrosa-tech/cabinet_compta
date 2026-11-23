@@ -6,6 +6,8 @@ from .models import (
     ModuleDeclarations,
     ModuleMission,
     ModuleJuridique,
+    ClotureExperimentaleLigne,
+    ClotureExperimentaleCellule,
 )
 
 @admin.register(ClotureAnnee)
@@ -63,3 +65,17 @@ class ModuleJuridiqueAdmin(admin.ModelAdmin):
     list_display = ("client", "cloture", "statut_general")
     list_filter = ("statut_general", "cloture")
     search_fields = ("client__nom",)
+
+
+class ClotureExperimentaleCelluleInline(admin.TabularInline):
+    model = ClotureExperimentaleCellule
+    extra = 0
+    readonly_fields = ("updated_at",)
+
+
+@admin.register(ClotureExperimentaleLigne)
+class ClotureExperimentaleLigneAdmin(admin.ModelAdmin):
+    list_display = ("client", "cloture", "statut_general", "version", "updated_at")
+    list_filter = ("statut_general", "cloture")
+    search_fields = ("client__nom", "client__numero")
+    inlines = (ClotureExperimentaleCelluleInline,)
