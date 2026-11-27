@@ -1,4 +1,6 @@
 from decimal import Decimal
+from html.parser import HTMLParser
+from pathlib import Path
 
 from django.test import TestCase
 from django.urls import reverse
@@ -13,7 +15,74 @@ from .models import (
 )
 
 
-class PrestationsParClientTests(TestCase):
+class _BatchFormReader(HTMLParser):
+    """Reconstitue ce qu'un navigateur enverrait pour <form id="batch-form">.
+
+    Ignore le contenu des <template>, les champs désactivés, les cases non
+    cochées et les champs rattachés à un autre formulaire (attribut form).
+    """
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.in_form = False
+        self.template_depth = 0
+        self.select_name = None
+        self.select_value = None
+        self.select_first = None
+        self.option_value = None
+        self.fields = []
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == "template":
+            self.template_depth += 1
+        if self.template_depth:
+            return
+        if tag == "form" and attrs.get("id") == "batch-form":
+            self.in_form = True
+        if not self.in_form or "disabled" in attrs:
+            return
+        if attrs.get("form") not in (None, "batch-form"):
+            return
+        name = attrs.get("name")
+        if tag == "input" and name:
+            kind = attrs.get("type", "text")
+            if kind in ("button", "submit", "reset"):
+                return
+            if kind in ("checkbox", "radio"):
+                if "checked" in attrs:
+                    self.fields.append((name, attrs.get("value", "on")))
+                return
+            self.fields.append((name, attrs.get("value", "")))
+        elif tag == "select" and name:
+            self.select_name, self.select_value, self.select_first = name, None, None
+        elif tag == "option" and self.select_name:
+            value = attrs.get("value", "")
+            if self.select_first is None:
+                self.select_first = value
+            if "selected" in attrs:
+                self.select_value = value
+
+    def handle_endtag(self, tag):
+        if tag == "template":
+            self.template_depth -= 1
+        elif tag == "form" and self.in_form and not self.template_depth:
+            self.in_form = False
+        elif tag == "select" and self.select_name:
+            value = self.select_value if self.select_value is not None else self.select_first
+            self.fields.append((self.select_name, value or ""))
+            self.select_name = None
+
+
+def submitted_fields(response):
+    reader = _BatchFormReader()
+    reader.feed(response.content.decode())
+    return reader.fields
+
+
+class DonneesFacturationSociale:
+    """Jeu de données et aides communs aux tests de l'app."""
+
     def setUp(self):
         self.client_a = Client.objects.create(nom="Alpha", forme_juridique="SARL")
         self.client_b = Client.objects.create(nom="Beta", forme_juridique="SAS")
@@ -90,6 +159,8 @@ class PrestationsParClientTests(TestCase):
         values.update(overrides)
         return PrestationSociale.objects.create(**values)
 
+
+class PrestationsParClientTests(DonneesFacturationSociale, TestCase):
     def test_creates_multiple_identical_prestations(self):
         response = self.client.post(self.url, self.payload([{}, {"detail": "Paul"}]))
         self.assertRedirects(response, f"{self.url}?client={self.client_a.pk}&mois=4&annee=2026")
@@ -431,3 +502,168 @@ class PrestationsParClientTests(TestCase):
             self.assertNotContains(
                 response, reverse(f"facturation_sociale:{name}", args=[line.pk])
             )
+
+
+class SaisieRefonteTests(DonneesFacturationSociale, TestCase):
+    """Écran de saisie refondu : le POST doit rester celui d'avant."""
+
+    LIGNE_CHAMPS = [
+        "id", "DELETE", "mode_tarification", "mode_cout_prestataire",
+        "prestation", "detail", "quantite", "prestataire",
+        "tarif_client_personnalise", "motif_tarif_personnalise",
+        "cout_prestataire_personnalise", "motif_cout_prestataire_personnalise",
+        "deja_facturee",
+    ]
+
+    def page(self):
+        return self.client.get(f"{self.url}?client={self.client_a.pk}&mois=4&annee=2026")
+
+    def post_like_browser(self, response, token, **changes):
+        data = dict(submitted_fields(response))
+        data["submission_id"] = token
+        data.update(changes)
+        return self.client.post(self.url, data)
+
+    def test_page_layout(self):
+        self.create_existing()
+        response = self.page()
+        self.assertContains(response, "Saisie des prestations")
+        self.assertContains(response, "Toutes les prestations d'un client pour un mois")
+        self.assertContains(response, "Avril 2026")
+        self.assertNotContains(response, "nav-tabs")
+        self.assertNotContains(response, "None - Alpha")
+        self.assertNotContains(response, ">Charger<")
+        self.assertContains(response, 'id="save-status"')
+        self.assertContains(response, 'aria-label="Tarif et coût de la ligne"')
+        self.assertContains(response, 'id="fs-panneau-form-0"')
+        self.assertContains(response, 'colspan="9"')
+        self.assertContains(response, "Supprimer la ligne")
+        self.assertContains(response, 'id="total-reste"')
+        self.assertContains(response, "ⓘ au survol : détail d'une exception")
+        # Le gabarit des nouvelles lignes contient ligne + panneau.
+        self.assertContains(response, 'id="fs-panneau-form-__prefix__"')
+        self.assertContains(response, 'name="form-__prefix__-mode_tarification"')
+
+    def test_templates_have_no_overlay(self):
+        folder = Path(__file__).parent / "templates" / "facturation_sociale"
+        for name in ("prestations_par_client.html", "includes/prestation_ligne.html"):
+            source = (folder / name).read_text(encoding="utf-8")
+            for forbidden in ("z-index", "position: absolute", "position: fixed",
+                              "position:absolute", "position:fixed", "modal",
+                              "data-bs-toggle"):
+                self.assertNotIn(forbidden, source, f"{forbidden} dans {name}")
+
+    def test_submitted_field_names_are_unchanged(self):
+        self.create_existing()
+        self.create_existing(detail="Deuxième")
+        names = sorted(name for name, _ in submitted_fields(self.page()))
+        expected = [
+            "annee", "client", "csrfmiddlewaretoken",
+            "form-INITIAL_FORMS", "form-MAX_NUM_FORMS", "form-MIN_NUM_FORMS",
+            "form-TOTAL_FORMS", "mois", "submission_id",
+        ]
+        for index in range(2):
+            for champ in self.LIGNE_CHAMPS:
+                # Une case non cochée n'est pas envoyée, comme avant.
+                if champ != "deja_facturee":
+                    expected.append(f"form-{index}-{champ}")
+        self.assertEqual(names, sorted(expected))
+
+    def test_browser_roundtrip_keeps_historical_snapshots(self):
+        line = self.create_existing(
+            tarif_personnalise=True,
+            tarif_client_applique=Decimal("55.00"),
+            motif_tarif_personnalise="Négocié",
+        )
+        self.prestation.tarif_client_standard = Decimal("99.00")
+        self.prestation.save()
+        TarifPrestataire.objects.filter(
+            prestation=self.prestation, prestataire=self.prestataire
+        ).update(cout_unitaire=Decimal("77.00"))
+
+        response = self.page()
+        # Le standard affiché est le snapshot historique, pas le tarif actuel.
+        self.assertContains(response, 'data-std-client="50.00"')
+        self.assertContains(response, 'data-std-cout="20.00"')
+        self.assertContains(response, 'data-anomalie-cout="0"')
+
+        result = self.post_like_browser(response, "roundtrip", **{"form-0-quantite": "2.00"})
+        self.assertEqual(result.status_code, 302)
+        line.refresh_from_db()
+        self.assertEqual(line.quantite, Decimal("2.00"))
+        self.assertEqual(line.tarif_client_standard_snapshot, Decimal("50.00"))
+        self.assertEqual(line.tarif_client_applique, Decimal("55.00"))
+        self.assertTrue(line.tarif_personnalise)
+        self.assertEqual(line.motif_tarif_personnalise, "Négocié")
+        self.assertEqual(line.cout_prestataire_standard_snapshot, Decimal("20.00"))
+        self.assertEqual(line.cout_prestataire_unitaire_snapshot, Decimal("20.00"))
+
+    def new_line(self, token, **row):
+        response = self.client.post(self.url, self.payload([row], token=token))
+        self.assertEqual(response.status_code, 302)
+        return PrestationSociale.objects.get()
+
+    def test_new_standard_line(self):
+        line = self.new_line("std", detail="Paul", quantite="2.00")
+        self.assertEqual(line.tarif_client_standard_snapshot, Decimal("50.00"))
+        self.assertEqual(line.tarif_client_applique, Decimal("50.00"))
+        self.assertEqual(line.cout_prestataire_unitaire_snapshot, Decimal("20.00"))
+        self.assertFalse(line.tarif_personnalise or line.cout_prestataire_personnalise)
+        self.assertEqual(line.montant_facture, Decimal("100.00"))
+
+    def test_new_line_with_exceptional_price(self):
+        line = self.new_line(
+            "prix",
+            mode_tarification="personnalise",
+            tarif_client_personnalise="45.00",
+            motif_tarif_personnalise="Geste commercial",
+        )
+        self.assertTrue(line.tarif_personnalise)
+        self.assertEqual(line.tarif_client_applique, Decimal("45.00"))
+        self.assertEqual(line.tarif_client_standard_snapshot, Decimal("50.00"))
+        self.assertEqual(line.motif_tarif_personnalise, "Geste commercial")
+
+    def test_new_line_with_exceptional_cost(self):
+        line = self.new_line(
+            "cout",
+            mode_cout_prestataire="personnalise",
+            cout_prestataire_personnalise="12.50",
+            motif_cout_prestataire_personnalise="Remise",
+        )
+        self.assertTrue(line.cout_prestataire_personnalise)
+        self.assertEqual(line.cout_prestataire_unitaire_snapshot, Decimal("12.50"))
+        self.assertEqual(line.cout_prestataire_standard_snapshot, Decimal("20.00"))
+        self.assertEqual(line.marge, Decimal("37.50"))
+
+    def test_new_line_already_billed(self):
+        self.assertTrue(self.new_line("facturee", deja_facturee="on").deja_facturee)
+
+    def test_browser_roundtrip_deletes_marked_line(self):
+        keep = self.create_existing(detail="Garder")
+        drop = self.create_existing(detail="Supprimer")
+        response = self.page()
+        result = self.post_like_browser(response, "suppr", **{"form-1-DELETE": "on"})
+        self.assertEqual(result.status_code, 302)
+        self.assertEqual(list(PrestationSociale.objects.values_list("pk", flat=True)), [keep.pk])
+        self.assertFalse(PrestationSociale.objects.filter(pk=drop.pk).exists())
+
+    def test_panel_opens_on_validation_error(self):
+        response = self.client.post(
+            self.url,
+            self.payload([{}, {"mode_tarification": "personnalise"}], token="err"),
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("Indiquez le prix unitaire exceptionnel.", content)
+        panneau_0 = content.split('id="fs-panneau-form-0"')[1].split(">")[0]
+        panneau_1 = content.split('id="fs-panneau-form-1"')[1].split(">")[0]
+        self.assertIn("hidden", panneau_0)
+        self.assertNotIn("hidden", panneau_1)
+        self.assertEqual(PrestationSociale.objects.count(), 0)
+
+    def test_warns_about_lines_whose_standard_cost_is_missing(self):
+        # Lignes créées avant la migration 0002 : coût standard à 0.
+        self.create_existing(cout_prestataire_standard_snapshot=Decimal("0.00"))
+        response = self.page()
+        self.assertContains(response, 'data-anomalie-cout="1"')
+        self.assertContains(response, "Enregistrer cette page remplacera leur coût")

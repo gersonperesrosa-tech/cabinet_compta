@@ -1,19 +1,119 @@
-<tr class="prestation-line" data-deleted="{% if form.DELETE.value %}1{% else %}0{% endif %}">
-    <td>{{ form.id }}{{ form.DELETE }}{{ form.prestation }}{% for error in form.prestation.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}{% for error in form.id.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</td>
-    <td>{{ form.quantite }}{% for error in form.quantite.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</td>
+{% load fs_saisie %}{% with ref=fs_refs|fs_reference:form %}
+{# Ligne principale. Les valeurs unitaires et le total sont calculés en JS. #}
+<tr class="fs-ligne prestation-line" data-prefix="{{ form.prefix }}"
+    data-deleted="{% if form.DELETE.value %}1{% else %}0{% endif %}"
+    data-prestation-initiale="{{ ref.prestation|default:'' }}"
+    data-prestataire-initial="{{ ref.prestataire|default:'' }}"
+    data-std-client="{{ ref.std_client|default:'' }}"
+    data-std-cout="{{ ref.std_cout|default:'' }}"
+    data-cout-enregistre="{{ ref.cout_enregistre|default:'' }}"
+    data-anomalie-cout="{% if ref.anomalie_cout %}1{% else %}0{% endif %}">
+    <td>
+        {{ form.id }}{{ form.DELETE }}{{ form.mode_tarification }}{{ form.mode_cout_prestataire }}
+        {{ form.prestation }}
+        {% for error in form.prestation.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        {% for error in form.id.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        {% for error in form.non_field_errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+    </td>
     <td>{{ form.detail }}{% for error in form.detail.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</td>
+    <td>{{ form.quantite }}{% for error in form.quantite.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</td>
     <td>{{ form.prestataire }}{% for error in form.prestataire.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</td>
-    <td class="price-cell">
-        <div class="input-group input-group-sm"><span class="input-group-text">€</span>{{ form.cout_prestataire_affiche }}<button class="btn btn-outline-secondary toggle-cout" type="button" title="Ajouter une exception">⚙</button></div>
-        {{ form.mode_cout_prestataire }}
-        <div class="exception-fields exception-cout"><label class="form-label small mb-1">Coût exceptionnel</label>{{ form.cout_prestataire_personnalise }}{% for error in form.cout_prestataire_personnalise.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}<input class="form-control form-control-sm mt-1" name="{{ form.motif_cout_prestataire_personnalise.html_name }}" value="{{ form.motif_cout_prestataire_personnalise.value|default_if_none:'' }}" placeholder="Motif facultatif"></div>
+    <td class="text-end text-nowrap">
+        <span class="fs-valeur" data-role="cout">—</span><span class="fs-info" data-role="cout-info" hidden>ⓘ</span><span class="fs-alerte" data-role="cout-alerte" hidden>⚠</span>
     </td>
-    <td class="price-cell">
-        <div class="input-group input-group-sm"><span class="input-group-text">€</span>{{ form.tarif_client_affiche }}<button class="btn btn-outline-secondary toggle-client" type="button" title="Ajouter une exception">⚙</button></div>
-        {{ form.mode_tarification }}
-        <div class="exception-fields exception-client"><label class="form-label small mb-1">Tarif exceptionnel</label>{{ form.tarif_client_personnalise }}{% for error in form.tarif_client_personnalise.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}<input class="form-control form-control-sm mt-1" name="{{ form.motif_tarif_personnalise.html_name }}" value="{{ form.motif_tarif_personnalise.value|default_if_none:'' }}" placeholder="Motif facultatif"></div>
+    <td class="text-end text-nowrap">
+        <span class="fs-valeur" data-role="prix">—</span><span class="fs-info" data-role="prix-info" hidden>ⓘ</span>
     </td>
-    <td class="text-center">{{ form.deja_facturee }}{% for error in form.deja_facturee.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</td>
-    <td><span class="margin-value">0,00 €</span>{% for error in form.non_field_errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</td>
-    <td><button class="btn btn-sm btn-outline-danger delete-line" type="button">{% if form.id.value %}Supprimer{% else %}Retirer{% endif %}</button></td>
+    <td class="text-end text-nowrap">
+        <strong data-role="total">—</strong>
+        <div class="fs-mention-facturee" data-role="mention-facturee" hidden>Facturée</div>
+    </td>
+    <td class="text-center">
+        {{ form.deja_facturee }}{% for error in form.deja_facturee.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+    </td>
+    <td class="text-end">
+        <button type="button" class="btn btn-sm btn-outline-secondary fs-plus" data-role="ouvrir"
+                aria-label="Tarif et coût de la ligne" title="Tarif et coût de la ligne"
+                aria-controls="fs-panneau-{{ form.prefix }}"
+                aria-expanded="{% if form.mode_tarification.errors or form.tarif_client_personnalise.errors or form.motif_tarif_personnalise.errors or form.mode_cout_prestataire.errors or form.cout_prestataire_personnalise.errors or form.motif_cout_prestataire_personnalise.errors %}true{% else %}false{% endif %}">⋯</button>
+    </td>
 </tr>
+
+{# Panneau sous la ligne : tarif client, coût prestataire et suppression. #}
+{# Les boutons radio sont rattachés au formulaire « fs-hors-envoi » : ils ne sont jamais envoyés, ils alimentent seulement les champs cachés mode_tarification et mode_cout_prestataire. #}
+<tr class="fs-panneau" id="fs-panneau-{{ form.prefix }}"
+    {% if not form.mode_tarification.errors and not form.tarif_client_personnalise.errors and not form.motif_tarif_personnalise.errors and not form.mode_cout_prestataire.errors and not form.cout_prestataire_personnalise.errors and not form.motif_cout_prestataire_personnalise.errors %}hidden{% endif %}>
+    <td colspan="9">
+        <div class="fs-panneau-contenu">
+
+            <fieldset class="fs-bloc">
+                <legend>Prix client</legend>
+                {% for error in form.mode_tarification.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                <div class="fs-choix">
+                    <input class="form-check-input" type="radio" form="fs-hors-envoi" autocomplete="off"
+                           name="fs-mode-client-{{ form.prefix }}" id="fs-client-std-{{ form.prefix }}"
+                           value="standard" data-role="radio-client"
+                           {% if form.mode_tarification.value != "personnalise" %}checked{% endif %}>
+                    <label class="form-check-label" for="fs-client-std-{{ form.prefix }}">Standard (<span data-role="std-client">—</span>)</label>
+                </div>
+                <div class="fs-choix">
+                    <input class="form-check-input" type="radio" form="fs-hors-envoi" autocomplete="off"
+                           name="fs-mode-client-{{ form.prefix }}" id="fs-client-exc-{{ form.prefix }}"
+                           value="personnalise" data-role="radio-client"
+                           {% if form.mode_tarification.value == "personnalise" %}checked{% endif %}>
+                    <label class="form-check-label" for="fs-client-exc-{{ form.prefix }}">Exceptionnel</label>
+                </div>
+                <div class="fs-exception" data-role="exception-client" {% if form.mode_tarification.value != "personnalise" %}hidden{% endif %}>
+                    <div class="fs-champ fs-champ-montant">
+                        <label class="form-label" for="{{ form.tarif_client_personnalise.id_for_label }}">Prix unitaire (€)</label>
+                        {{ form.tarif_client_personnalise }}
+                        {% for error in form.tarif_client_personnalise.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="fs-champ">
+                        <label class="form-label" for="{{ form.motif_tarif_personnalise.id_for_label }}">Motif</label>
+                        {{ form.motif_tarif_personnalise }}
+                        {% for error in form.motif_tarif_personnalise.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="fs-bloc">
+                <legend>Coût prestataire</legend>
+                {% for error in form.mode_cout_prestataire.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                <div class="fs-choix">
+                    <input class="form-check-input" type="radio" form="fs-hors-envoi" autocomplete="off"
+                           name="fs-mode-cout-{{ form.prefix }}" id="fs-cout-std-{{ form.prefix }}"
+                           value="standard" data-role="radio-cout"
+                           {% if form.mode_cout_prestataire.value != "personnalise" %}checked{% endif %}>
+                    <label class="form-check-label" for="fs-cout-std-{{ form.prefix }}">Standard (<span data-role="std-cout">—</span>)</label>
+                </div>
+                <div class="fs-choix">
+                    <input class="form-check-input" type="radio" form="fs-hors-envoi" autocomplete="off"
+                           name="fs-mode-cout-{{ form.prefix }}" id="fs-cout-exc-{{ form.prefix }}"
+                           value="personnalise" data-role="radio-cout"
+                           {% if form.mode_cout_prestataire.value == "personnalise" %}checked{% endif %}>
+                    <label class="form-check-label" for="fs-cout-exc-{{ form.prefix }}">Exceptionnel</label>
+                </div>
+                <div class="fs-exception" data-role="exception-cout" {% if form.mode_cout_prestataire.value != "personnalise" %}hidden{% endif %}>
+                    <div class="fs-champ fs-champ-montant">
+                        <label class="form-label" for="{{ form.cout_prestataire_personnalise.id_for_label }}">Coût unitaire (€)</label>
+                        {{ form.cout_prestataire_personnalise }}
+                        {% for error in form.cout_prestataire_personnalise.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="fs-champ">
+                        <label class="form-label" for="{{ form.motif_cout_prestataire_personnalise.id_for_label }}">Motif</label>
+                        {{ form.motif_cout_prestataire_personnalise }}
+                        {% for error in form.motif_cout_prestataire_personnalise.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+                <div class="text-danger small mt-2" data-role="cout-alerte-texte" hidden></div>
+            </fieldset>
+
+            <div class="fs-bloc-actions">
+                <button type="button" class="btn btn-sm btn-danger" data-role="supprimer">{% if form.id.value %}Supprimer la ligne{% else %}Retirer la ligne{% endif %}</button>
+            </div>
+
+        </div>
+    </td>
+</tr>
+{% endwith %}

@@ -1,32 +1,79 @@
 {% extends "base.html" %}
+{% load fs_saisie %}
 
 {% block content %}
-<section class="section">
+<style>
+    /* Styles locaux à la saisie. Aucun élément superposé (pas d'empilement). */
+
+    /* Neutralise les règles globales « form input » et « form label » du logiciel. */
+    .fs-saisie input.form-check-input { width: 1em; height: 1em; padding: 0; margin: 0; flex: none; border-radius: .25em; }
+    .fs-saisie input.form-check-input[type="radio"] { border-radius: 50%; }
+    .fs-saisie label.form-check-label { display: inline; margin: 0; font-weight: 400; font-size: .875rem; color: var(--bs-body-color); letter-spacing: normal; }
+    .fs-saisie label.form-label { margin-bottom: .25rem; }
+
+    /* Sélection client / période sur une ligne. */
+    .fs-scope { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .75rem 1rem; }
+    .fs-scope-client { flex: 1 1 320px; min-width: 240px; }
+    .fs-scope-mois { flex: 0 0 160px; }
+    .fs-scope-annee { flex: 0 0 110px; }
+    .fs-scope-paie { display: flex; align-items: center; gap: .4rem; height: calc(1.5em + .75rem + 2px); white-space: nowrap; }
+
+    /* Tableau : tient dans 1366 px, défile en dessous. */
+    .fs-defilement { overflow-x: auto; }
+    .fs-table { min-width: 980px; margin-bottom: 0; }
+    .fs-table th { white-space: nowrap; font-weight: 600; }
+    .fs-table select[name$="-prestation"] { min-width: 170px; }
+    .fs-table input[name$="-detail"] { min-width: 150px; }
+    .fs-table input[name$="-quantite"] { width: 75px; }
+    .fs-table select[name$="-prestataire"] { min-width: 140px; }
+    .fs-info, .fs-alerte { cursor: help; margin-left: .25rem; }
+    .fs-alerte { color: var(--bs-danger); }
+    .fs-valeur.fs-exceptionnel { text-decoration: underline dotted; text-underline-offset: 3px; cursor: help; }
+    .fs-mention-facturee { font-size: .75rem; color: #6c757d; }
+    .fs-plus { line-height: 1; padding: .25rem .55rem; }
+
+    /* Ligne déjà facturée : grisée. */
+    .fs-ligne.fs-facturee { --bs-table-bg: #f8f9fa; --bs-table-color: #6c757d; }
+    .fs-ligne.fs-facturee .form-control,
+    .fs-ligne.fs-facturee .form-select { color: #6c757d; background-color: #f8f9fa; }
+
+    /* Ligne marquée pour suppression. */
+    .fs-ligne.fs-supprimee { --bs-table-bg: var(--bs-warning-bg-subtle); }
+    .fs-ligne.fs-supprimee > td { opacity: .55; text-decoration: line-through; }
+
+    /* Panneau ouvert sous la ligne (deuxième <tr>). */
+    .fs-panneau > td { --bs-table-bg: #f1f4f8; padding: .75rem 1rem; }
+    .fs-panneau-contenu { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 1rem 2rem; }
+    .fs-bloc { flex: 1 1 320px; min-width: 0; margin: 0; }
+    .fs-bloc legend { font-size: .875rem; font-weight: 600; margin-bottom: .35rem; float: none; width: auto; }
+    .fs-choix { display: inline-flex; align-items: center; gap: .35rem; margin-right: 1.25rem; }
+    .fs-exception { display: flex; gap: .75rem; margin-top: .5rem; }
+    .fs-exception[hidden] { display: none; }
+    .fs-champ { flex: 1 1 auto; }
+    .fs-champ-montant { flex: 0 0 130px; }
+    .fs-bloc-actions { flex: 0 0 auto; align-self: flex-end; }
+
+    /* Pied du tableau. */
+    .fs-totaux { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .25rem 1.5rem; font-size: .9rem; }
+    .fs-totaux strong { margin-left: .35rem; }
+    .fs-negatif { color: var(--bs-danger); }
+</style>
+
+<section class="section fs-saisie">
     {{ tarifs_prestataires|json_script:"tarifs-prestataires-data" }}
     {{ prestations_data|json_script:"prestations-data" }}
-    {{ clients_paie_ids|json_script:"clients-paie-data" }}
-
-    <ul class="nav nav-tabs mb-4" role="tablist">
-        <li class="nav-item" role="presentation">
-            <a class="nav-link" href="{% url 'facturation_sociale:nouvelle_prestation' %}">Nouvelle prestation</a>
-        </li>
-        <li class="nav-item" role="presentation">
-            <a class="nav-link active" aria-current="page"
-               href="{% url 'facturation_sociale:prestations_par_client' %}">Prestations par client</a>
-        </li>
-    </ul>
 
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <div>
-            <h1 class="h3 mb-1">Prestations par client</h1>
-            <p class="text-muted mb-0">Saisissez et corrigez toutes les prestations d'un client pour une période.</p>
+            <h1 class="h3 mb-1">Saisie des prestations</h1>
+            <p class="text-muted mb-0">Toutes les prestations d'un client pour un mois</p>
         </div>
         <span id="save-status" class="badge text-bg-secondary">Aucune modification</span>
     </div>
 
     <form id="scope-form" method="get" class="card card-body mb-3">
-        <div class="row g-3">
-            <div class="col-md-6">
+        <div class="fs-scope">
+            <div class="fs-scope-client">
                 <label class="form-label" for="scope-client">Client</label>
                 <select class="form-select" id="scope-client" name="client">
                     <option value="">— Sélectionnez un client —</option>
@@ -37,12 +84,9 @@
                         </option>
                     {% endfor %}
                 </select>
-                <div class="form-text"><label><input id="paie-only" type="checkbox"> Afficher uniquement les clients Paie</label></div>
             </div>
-        </div>
-        <div class="row g-3 align-items-end mt-1">
-            <div class="col-md-3">
-                <label class="form-label" for="scope-mois">Période de prestation — Mois</label>
+            <div class="fs-scope-mois">
+                <label class="form-label" for="scope-mois">Mois</label>
                 <select class="form-select" id="scope-mois" name="mois" {% if not scope_client %}disabled{% endif %}>
                     <option value="1" {% if mois == 1 %}selected{% endif %}>Janvier</option>
                     <option value="2" {% if mois == 2 %}selected{% endif %}>Février</option>
@@ -58,18 +102,31 @@
                     <option value="12" {% if mois == 12 %}selected{% endif %}>Décembre</option>
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="fs-scope-annee">
                 <label class="form-label" for="scope-annee">Année</label>
                 <input class="form-control" id="scope-annee" name="annee" type="number" min="2000" max="2100" value="{{ annee }}" {% if not scope_client %}disabled{% endif %}>
             </div>
-            <div class="col-md-2 d-grid">
-                <button class="btn btn-outline-primary" type="submit">Charger</button>
+            <div class="fs-scope-paie">
+                <input class="form-check-input" id="paie-only" type="checkbox" autocomplete="off">
+                <label class="form-check-label" for="paie-only">Clients Paie uniquement</label>
             </div>
         </div>
         {% if scope_error %}<div class="alert alert-danger mt-3 mb-0">{{ scope_error }}</div>{% endif %}
     </form>
 
     {% if selected_client %}
+    {% fs_references formset selected_client mois annee as fs_refs %}
+    {% with nb_anomalies=fs_refs|fs_anomalies %}
+    {% if nb_anomalies %}
+        <div class="alert alert-danger">
+            <strong>Attention :</strong> {{ nb_anomalies }} ligne{{ nb_anomalies|pluralize }} marquée{{ nb_anomalies|pluralize }} ⚠
+            {{ nb_anomalies|pluralize:"a,ont" }} un coût standard historique différent du coût enregistré
+            (lignes créées avant l'ajout du coût exceptionnel).
+            Enregistrer cette page remplacera leur coût par ce standard. Vérifiez le coût de ces lignes avant d'enregistrer.
+        </div>
+    {% endif %}
+    {% endwith %}
+
     <form method="post" id="batch-form" novalidate>
         {% csrf_token %}
         <input type="hidden" name="client" value="{{ selected_client.pk }}">
@@ -83,16 +140,22 @@
         {% endif %}
 
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center gap-2">
-                <span><strong>{{ selected_client }}</strong> — {{ mois|stringformat:"02d" }}/{{ annee }}</span>
-                <button id="add-line" class="btn btn-sm btn-outline-primary" type="button">+ Ajouter une prestation</button>
+            <div class="card-header">
+                <strong>{% if selected_client.numero %}{{ selected_client.numero }} - {% endif %}{{ selected_client.nom }}</strong> — {{ mois|fs_nom_mois }} {{ annee }}
             </div>
-            <div class="table-responsive">
-                <table class="table table-sm align-middle mb-0" id="prestations-table">
-                    <thead>
+            <div class="fs-defilement">
+                <table class="table table-sm align-middle fs-table" id="prestations-table">
+                    <thead class="table-light">
                         <tr>
-                            <th>Prestation</th><th>Quantité</th><th>Salarié / détail</th><th>Prestataire</th>
-                            <th>Coût prestataire</th><th>Tarification client</th><th>Déjà facturée</th><th>Marge</th><th>Actions</th>
+                            <th>Prestation</th>
+                            <th>Salarié / détail</th>
+                            <th>Qté</th>
+                            <th>Prestataire</th>
+                            <th class="text-end">Coût unit.</th>
+                            <th class="text-end">Prix unit.</th>
+                            <th class="text-end">Total</th>
+                            <th class="text-center">Facturée</th>
+                            <th><span class="visually-hidden">Actions</span></th>
                         </tr>
                     </thead>
                     <tbody id="lines-body">
@@ -104,20 +167,32 @@
                     </tbody>
                     <tfoot class="table-light">
                         <tr>
-                            <th colspan="4" class="text-end">Totaux</th>
-                            <th id="total-cout">0,00 €</th><th id="total-facture">0,00 €</th>
-                            <th class="small fw-normal text-muted">dont déjà facturé : <span id="total-deja-facture" class="text-nowrap">0,00 €</span></th>
-                            <th id="total-marge">0,00 €</th><th></th>
+                            <td colspan="9">
+                                <div class="fs-totaux">
+                                    <span>Coût<strong id="total-cout">0,00 €</strong></span>
+                                    <span>Total<strong id="total-facture">0,00 €</strong></span>
+                                    <span class="text-muted">dont déjà facturé<strong id="total-deja-facture">0,00 €</strong></span>
+                                    <span class="text-primary">Reste à facturer<strong id="total-reste">0,00 €</strong></span>
+                                    <span>Marge<strong id="total-marge">0,00 €</strong></span>
+                                </div>
+                            </td>
                         </tr>
                     </tfoot>
                 </table>
             </div>
+            <div class="card-footer bg-white">
+                <button id="add-line" class="btn btn-sm btn-outline-primary" type="button">+ Ajouter une ligne</button>
+            </div>
         </div>
+
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
-            <div class="text-muted small">Les tarifs historiques sont conservés tant que la prestation ou le prestataire ne change pas.</div>
-            <button id="save-batch" class="btn btn-primary" type="submit">Enregistrer toutes les modifications</button>
+            <div class="text-muted small">ⓘ au survol : détail d'une exception · ⋯ : tarif, coût et suppression de la ligne</div>
+            <button id="save-batch" class="btn btn-primary" type="submit">Enregistrer</button>
         </div>
     </form>
+
+    {# Formulaire jamais envoyé : il regroupe les boutons radio des panneaux. #}
+    <form id="fs-hors-envoi" hidden></form>
 
     <template id="empty-line-template">
         {% include "facturation_sociale/includes/prestation_ligne.html" with form=formset.empty_form %}
@@ -126,19 +201,6 @@
         <div class="alert alert-info">Sélectionnez un client, un mois et une année pour afficher ses prestations.</div>
     {% endif %}
 </section>
-
-<style>
-    #prestations-table { min-width: 1250px; }
-    #prestations-table th { white-space: nowrap; }
-    .price-cell { min-width: 180px; }
-    .exception-fields { display: none; margin-top: .4rem; min-width: 210px; }
-    .exception-fields.visible { display: block; }
-    .line-deleted { opacity: .55; text-decoration: line-through; background: var(--bs-warning-bg-subtle); }
-    .ligne-deja-facturee > td { color: var(--bs-secondary-color); }
-    .ligne-deja-facturee .form-control,
-    .ligne-deja-facturee .form-select { color: var(--bs-secondary-color); background-color: var(--bs-secondary-bg); }
-    .negative-margin { color: var(--bs-danger); font-weight: 600; }
-</style>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -153,7 +215,6 @@ document.addEventListener("DOMContentLoaded", () => {
         mois: scopeMois.value,
         annee: scopeAnnee.value,
     };
-    const totalForms = document.getElementById("id_form-TOTAL_FORMS");
     const tarifs = JSON.parse(document.getElementById("tarifs-prestataires-data").textContent);
     const prestations = JSON.parse(document.getElementById("prestations-data").textContent);
     const standardClient = new Map(prestations.map(item => [String(item.id), Number(item.tarif_client_standard)]));
@@ -162,8 +223,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let submitting = false;
 
     const money = value => `${(Number(value) || 0).toLocaleString("fr-FR", {minimumFractionDigits: 2, maximumFractionDigits: 2})} €`;
-    const priceInput = (row, name) => row.querySelector(`[name$="-${name}"]`);
-    const field = (row, name) => row.querySelector(`[name$="-${name}"]`);
+    const moneyOrDash = value => value === null ? "—" : money(value);
+    const toNumber = raw => (raw === "" || raw === undefined || raw === null || isNaN(Number(raw))) ? null : Number(raw);
+
     const markDirty = () => {
         dirty = true;
         const status = document.getElementById("save-status");
@@ -171,13 +233,118 @@ document.addEventListener("DOMContentLoaded", () => {
         status.className = "badge text-bg-warning";
     };
 
-    function setExceptionVisible(row, kind, active) {
-        const block = row.querySelector(`.exception-${kind}`);
-        const button = row.querySelector(`.toggle-${kind}`);
-        block.classList.toggle("visible", active);
-        button.classList.toggle("btn-warning", active);
-        button.classList.toggle("btn-outline-secondary", !active);
-        button.title = active ? "Désactiver l'exception" : "Ajouter une exception";
+    // ---------------------------------------------------------------
+    // Accès aux champs : une ligne = <tr> principale + <tr> panneau.
+    // ---------------------------------------------------------------
+    const panelOf = row => document.getElementById("fs-panneau-" + row.dataset.prefix);
+    const field = (row, name) => {
+        const selector = `[name="${row.dataset.prefix}-${name}"]`;
+        return row.querySelector(selector) || panelOf(row).querySelector(selector);
+    };
+    const role = (row, name) => row.querySelector(`[data-role="${name}"]`) || panelOf(row).querySelector(`[data-role="${name}"]`);
+    const isPersonnalise = (row, kind) => field(row, kind === "client" ? "mode_tarification" : "mode_cout_prestataire").value === "personnalise";
+
+    // Valeurs standard : mêmes règles que le serveur (_appliquer_ligne_groupee).
+    // Prestation inchangée → snapshot historique du prix ; combinaison
+    // prestation + prestataire inchangée → snapshot historique du coût.
+    function stdClient(row) {
+        const prestation = field(row, "prestation").value;
+        if (row.dataset.prestationInitiale && prestation === row.dataset.prestationInitiale) {
+            return toNumber(row.dataset.stdClient);
+        }
+        return standardClient.has(prestation) ? standardClient.get(prestation) : null;
+    }
+
+    function combinaisonInchangee(row) {
+        return Boolean(row.dataset.prestationInitiale)
+            && field(row, "prestation").value === row.dataset.prestationInitiale
+            && field(row, "prestataire").value === row.dataset.prestataireInitial;
+    }
+
+    function stdCout(row) {
+        if (combinaisonInchangee(row)) return toNumber(row.dataset.stdCout);
+        const key = field(row, "prestation").value + ":" + field(row, "prestataire").value;
+        return standardCost.has(key) ? standardCost.get(key) : null;
+    }
+
+    function exceptionTitle(label, standard, motif) {
+        let text = `${label} · standard ${moneyOrDash(standard)}`;
+        if (motif.trim()) text += ` · Motif : ${motif.trim()}`;
+        return text;
+    }
+
+    function setValue(row, kind, value, isException, title) {
+        const valueEl = role(row, kind);
+        const info = role(row, kind + "-info");
+        valueEl.textContent = moneyOrDash(value);
+        valueEl.classList.toggle("fs-exceptionnel", isException);
+        if (isException) {
+            valueEl.title = title;
+            info.title = title;
+            info.setAttribute("aria-label", title);
+        } else {
+            valueEl.removeAttribute("title");
+            info.removeAttribute("title");
+            info.removeAttribute("aria-label");
+        }
+        info.hidden = !isException;
+    }
+
+    // Recalcule l'affichage d'une ligne (valeurs, infobulles, total, état).
+    function refreshRow(row) {
+        const prixStd = stdClient(row), coutStd = stdCout(row);
+        const prixExc = isPersonnalise(row, "client"), coutExc = isPersonnalise(row, "cout");
+        const prix = prixExc ? toNumber(field(row, "tarif_client_personnalise").value) : prixStd;
+        const cout = coutExc ? toNumber(field(row, "cout_prestataire_personnalise").value) : coutStd;
+        const qty = toNumber(field(row, "quantite").value);
+
+        setValue(row, "prix", prix, prixExc,
+            exceptionTitle("Tarif exceptionnel", prixStd, field(row, "motif_tarif_personnalise").value));
+        setValue(row, "cout", cout, coutExc,
+            exceptionTitle("Coût exceptionnel", coutStd, field(row, "motif_cout_prestataire_personnalise").value));
+
+        role(row, "std-client").textContent = moneyOrDash(prixStd);
+        role(row, "std-cout").textContent = moneyOrDash(coutStd);
+
+        // Coût historique incohérent (lignes antérieures au coût exceptionnel).
+        const alerte = row.dataset.anomalieCout === "1" && !coutExc && combinaisonInchangee(row);
+        const alerteIcon = role(row, "cout-alerte"), alerteTexte = role(row, "cout-alerte-texte");
+        const alerteMessage = `Coût enregistré : ${money(row.dataset.coutEnregistre)}. À l'enregistrement, il sera remplacé par le standard historique (${moneyOrDash(coutStd)}). Choisissez « Exceptionnel » pour le conserver.`;
+        alerteIcon.hidden = !alerte;
+        alerteTexte.hidden = !alerte;
+        alerteIcon.title = alerte ? alerteMessage : "";
+        alerteTexte.textContent = alerte ? alerteMessage : "";
+
+        const billed = field(row, "deja_facturee").checked;
+        role(row, "total").textContent = (prix === null || qty === null) ? "—" : money(qty * prix);
+        role(row, "mention-facturee").hidden = !billed;
+        row.classList.toggle("fs-facturee", billed);
+
+        return {
+            facture: (qty || 0) * (prix || 0),
+            cout: (qty || 0) * (cout || 0),
+            billed,
+            deleted: row.dataset.deleted === "1",
+        };
+    }
+
+    function refreshTotals() {
+        let facture = 0, cout = 0, dejaFacture = 0;
+        tableBody.querySelectorAll("tr.fs-ligne").forEach(row => {
+            const line = refreshRow(row);
+            if (line.deleted) return;
+            facture += line.facture;
+            cout += line.cout;
+            if (line.billed) dejaFacture += line.facture;
+        });
+        const marge = facture - cout;
+        document.getElementById("total-cout").textContent = money(cout);
+        document.getElementById("total-facture").textContent = money(facture);
+        document.getElementById("total-deja-facture").textContent = money(dejaFacture);
+        document.getElementById("total-reste").textContent = money(facture - dejaFacture);
+        const totalMargin = document.getElementById("total-marge");
+        totalMargin.textContent = money(marge);
+        totalMargin.classList.toggle("fs-negatif", marge < 0);
     }
 
     function filterProviders(row) {
@@ -193,109 +360,123 @@ document.addEventListener("DOMContentLoaded", () => {
         if (prestataire.selectedOptions[0] && prestataire.selectedOptions[0].disabled) prestataire.value = "";
     }
 
-    function refreshPrices(row, refreshClient, refreshCost) {
-        const prestation = field(row, "prestation");
-        const prestataire = field(row, "prestataire");
-        if (refreshClient) {
-            field(row, "mode_tarification").value = "standard";
-            setExceptionVisible(row, "client", false);
-            priceInput(row, "tarif_client_affiche").value = (standardClient.get(prestation.value) || 0).toFixed(2);
-        }
-        if (refreshCost) {
-            field(row, "mode_cout_prestataire").value = "standard";
-            setExceptionVisible(row, "cout", false);
-            priceInput(row, "cout_prestataire_affiche").value = (standardCost.get(prestation.value + ":" + prestataire.value) || 0).toFixed(2);
-        }
-        refreshTotals();
-    }
-
-    function refreshTotals() {
-        let facture = 0, cout = 0, marge = 0, dejaFacture = 0;
-        tableBody.querySelectorAll("tr.prestation-line").forEach(row => {
-            const isBilled = field(row, "deja_facturee").checked;
-            row.classList.toggle("ligne-deja-facturee", isBilled);
-            if (row.dataset.deleted === "1") return;
-            const qty = Number(field(row, "quantite").value) || 0;
-            const client = Number(priceInput(row, "tarif_client_affiche").value) || 0;
-            const provider = Number(priceInput(row, "cout_prestataire_affiche").value) || 0;
-            const lineFacture = qty * client, lineCout = qty * provider, lineMarge = lineFacture - lineCout;
-            const marginCell = row.querySelector(".margin-value");
-            marginCell.textContent = money(lineMarge);
-            marginCell.classList.toggle("negative-margin", lineMarge < 0);
-            facture += lineFacture; cout += lineCout; marge += lineMarge;
-            if (isBilled) dejaFacture += lineFacture;
+    // Radios du panneau → champs cachés existants.
+    function setMode(row, kind, mode) {
+        field(row, kind === "client" ? "mode_tarification" : "mode_cout_prestataire").value = mode;
+        panelOf(row).querySelectorAll(`[data-role="radio-${kind}"]`).forEach(radio => {
+            radio.checked = radio.value === mode;
         });
-        document.getElementById("total-facture").textContent = money(facture);
-        document.getElementById("total-cout").textContent = money(cout);
-        document.getElementById("total-deja-facture").textContent = money(dejaFacture);
-        const totalMargin = document.getElementById("total-marge");
-        totalMargin.textContent = money(marge);
-        totalMargin.classList.toggle("negative-margin", marge < 0);
+        role(row, "exception-" + kind).hidden = mode !== "personnalise";
     }
 
+    function togglePanel(row, open) {
+        const panel = panelOf(row);
+        const button = role(row, "ouvrir");
+        const show = open === undefined ? panel.hidden : open;
+        panel.hidden = !show;
+        button.setAttribute("aria-expanded", show ? "true" : "false");
+        button.classList.toggle("active", show);
+    }
+
+    function showEmptyRowIfNeeded() {
+        if (!tableBody.querySelector("tr.fs-ligne") && !document.getElementById("empty-row")) {
+            tableBody.insertAdjacentHTML("beforeend", '<tr id="empty-row"><td colspan="9" class="text-center text-muted py-4">Aucune prestation dans le tableau.</td></tr>');
+        }
+    }
+
+    function applyDeletedState(row) {
+        const deleted = row.dataset.deleted === "1";
+        row.classList.toggle("fs-supprimee", deleted);
+        role(row, "supprimer").textContent = deleted ? "Annuler la suppression" : "Supprimer la ligne";
+        role(row, "supprimer").classList.toggle("btn-danger", !deleted);
+        role(row, "supprimer").classList.toggle("btn-outline-secondary", deleted);
+    }
+
+    // Même comportement qu'avant : une ligne nouvelle est retirée, une ligne
+    // enregistrée est marquée DELETE (suppression confirmée à l'envoi).
     function removeOrMark(row) {
-        const id = field(row, "id").value;
-        if (!id) {
+        if (!field(row, "id").value) {
+            panelOf(row).remove();
             row.remove();
         } else {
             const deleted = row.dataset.deleted === "1";
             row.dataset.deleted = deleted ? "0" : "1";
             field(row, "DELETE").value = deleted ? "" : "on";
-            row.classList.toggle("line-deleted", !deleted);
-            row.querySelector(".delete-line").textContent = deleted ? "Supprimer" : "Annuler";
+            applyDeletedState(row);
         }
-        if (!tableBody.querySelector("tr.prestation-line")) {
-            tableBody.insertAdjacentHTML("beforeend", '<tr id="empty-row"><td colspan="9" class="text-center text-muted py-4">Aucune prestation dans le tableau.</td></tr>');
-        }
+        showEmptyRowIfNeeded();
         markDirty(); refreshTotals();
     }
 
     function setupRow(row, isNew = false) {
         const prestation = field(row, "prestation"), prestataire = field(row, "prestataire");
-        setExceptionVisible(row, "client", field(row, "mode_tarification").value === "personnalise");
-        setExceptionVisible(row, "cout", field(row, "mode_cout_prestataire").value === "personnalise");
+        const panel = panelOf(row);
+
+        setMode(row, "client", isPersonnalise(row, "client") ? "personnalise" : "standard");
+        setMode(row, "cout", isPersonnalise(row, "cout") ? "personnalise" : "standard");
         filterProviders(row);
-        if (isNew) refreshPrices(row, true, true);
-        prestation.addEventListener("change", () => { filterProviders(row); refreshPrices(row, true, true); markDirty(); });
-        prestataire.addEventListener("change", () => { refreshPrices(row, false, true); markDirty(); });
-        row.querySelector(".toggle-client").addEventListener("click", () => {
-            const active = field(row, "mode_tarification").value !== "personnalise";
-            field(row, "mode_tarification").value = active ? "personnalise" : "standard";
-            setExceptionVisible(row, "client", active);
-            if (!active) refreshPrices(row, true, false); else markDirty();
+        if (row.dataset.deleted === "1") applyDeletedState(row);
+        if (!panel.hidden) togglePanel(row, true);
+
+        prestation.addEventListener("change", () => {
+            filterProviders(row);
+            setMode(row, "client", "standard");
+            setMode(row, "cout", "standard");
         });
-        row.querySelector(".toggle-cout").addEventListener("click", () => {
-            const active = field(row, "mode_cout_prestataire").value !== "personnalise";
-            field(row, "mode_cout_prestataire").value = active ? "personnalise" : "standard";
-            setExceptionVisible(row, "cout", active);
-            if (!active) refreshPrices(row, false, true); else markDirty();
-        });
-        ["tarif_client_personnalise", "cout_prestataire_personnalise"].forEach(name => {
-            field(row, name).addEventListener("input", () => {
-                const target = name === "tarif_client_personnalise" ? "tarif_client_affiche" : "cout_prestataire_affiche";
-                priceInput(row, target).value = field(row, name).value;
-                refreshTotals(); markDirty();
+        prestataire.addEventListener("change", () => setMode(row, "cout", "standard"));
+
+        ["client", "cout"].forEach(kind => {
+            panel.querySelectorAll(`[data-role="radio-${kind}"]`).forEach(radio => {
+                radio.addEventListener("change", () => {
+                    if (!radio.checked) return;
+                    setMode(row, kind, radio.value);
+                    if (radio.value === "personnalise") {
+                        const input = field(row, kind === "client" ? "tarif_client_personnalise" : "cout_prestataire_personnalise");
+                        const standard = kind === "client" ? stdClient(row) : stdCout(row);
+                        if (input.value === "" && standard !== null) input.value = standard.toFixed(2);
+                        input.focus();
+                    }
+                    refreshTotals(); markDirty();
+                });
             });
         });
-        row.querySelector(".delete-line").addEventListener("click", () => removeOrMark(row));
-        row.querySelectorAll("input, select").forEach(control => control.addEventListener("input", () => { refreshTotals(); markDirty(); }));
+
+        role(row, "ouvrir").addEventListener("click", () => togglePanel(row));
+        role(row, "supprimer").addEventListener("click", () => removeOrMark(row));
+
+        [row, panel].forEach(container => {
+            container.querySelectorAll("input:not([form]), select").forEach(control => {
+                const update = () => { refreshTotals(); markDirty(); };
+                control.addEventListener("input", update);
+                control.addEventListener("change", update);
+            });
+        });
+
+        if (isNew) prestation.focus();
     }
 
     if (batchForm) {
-        tableBody.querySelectorAll("tr.prestation-line").forEach(row => setupRow(row));
+        const totalForms = document.getElementById("id_form-TOTAL_FORMS");
+        const template = document.getElementById("empty-line-template");
+
+        tableBody.querySelectorAll("tr.fs-ligne").forEach(row => setupRow(row));
         refreshTotals();
+
         document.getElementById("add-line").addEventListener("click", () => {
             document.getElementById("empty-row")?.remove();
             const index = Number(totalForms.value);
-            const html = document.getElementById("empty-line-template").innerHTML.replaceAll("__prefix__", index);
-            tableBody.insertAdjacentHTML("beforeend", html);
+            const fragment = document.createElement("template");
+            fragment.innerHTML = template.innerHTML.replaceAll("__prefix__", index);
+            const row = fragment.content.querySelector("tr.fs-ligne");
+            tableBody.append(fragment.content);
             totalForms.value = index + 1;
-            const row = tableBody.lastElementChild;
-            setupRow(row, true); markDirty();
+            setupRow(row, true);
+            refreshTotals(); markDirty();
         });
+
         batchForm.addEventListener("submit", event => {
             if (submitting) { event.preventDefault(); return; }
-            if (tableBody.querySelector('[data-deleted="1"]') && !window.confirm("Confirmez-vous la suppression définitive des prestations marquées ?")) {
+            if (tableBody.querySelector('tr.fs-ligne[data-deleted="1"]') && !window.confirm("Confirmez-vous la suppression définitive des prestations marquées ?")) {
                 event.preventDefault(); return;
             }
             submitting = true;
@@ -305,6 +486,9 @@ document.addEventListener("DOMContentLoaded", () => {
         window.addEventListener("beforeunload", event => { if (dirty && !submitting) { event.preventDefault(); event.returnValue = ""; } });
     }
 
+    // ---------------------------------------------------------------
+    // Sélection client / période : rechargement automatique.
+    // ---------------------------------------------------------------
     function setPeriodEnabled(enabled) {
         scopeMois.disabled = !enabled;
         scopeAnnee.disabled = !enabled;
@@ -321,44 +505,48 @@ document.addEventListener("DOMContentLoaded", () => {
         setPeriodEnabled(Boolean(loadedScope.client));
     }
 
+    function reloadScope() {
+        if (!scopeClient.value) return;
+        const unchanged = scopeClient.value === loadedScope.client && scopeMois.value === loadedScope.mois && scopeAnnee.value === loadedScope.annee;
+        if (unchanged && batchForm) return;
+        if (!confirmDiscard()) { restoreScope(); return; }
+        submitting = true;  // l'utilisateur a déjà confirmé : pas de seconde alerte
+        scopeForm.submit();
+    }
+
     document.getElementById("paie-only").addEventListener("change", event => {
         [...scopeClient.options].forEach(option => {
-            option.hidden = event.target.checked && option.dataset.paie === "0";
+            option.hidden = event.target.checked && option.dataset.paie === "0" && !option.selected;
         });
     });
+
     scopeForm.addEventListener("submit", event => {
-        if (!scopeClient.value) {
-            event.preventDefault();
-            setPeriodEnabled(false);
-            return;
-        }
-        if (!confirmDiscard()) {
-            event.preventDefault();
-            restoreScope();
-        }
+        event.preventDefault();
+        reloadScope();
     });
+
     scopeClient.addEventListener("change", () => {
-        if (!confirmDiscard()) {
-            restoreScope();
-            return;
-        }
         if (!scopeClient.value) {
+            if (!confirmDiscard()) { restoreScope(); return; }
             setPeriodEnabled(false);
-            window.location.assign(scopeForm.action);
+            submitting = true;
+            window.location.assign(window.location.pathname);
             return;
         }
         setPeriodEnabled(true);
-        scopeForm.submit();
+        reloadScope();
     });
-    [scopeMois, scopeAnnee].forEach(control => {
-        control.addEventListener("change", () => {
-            if (!scopeClient.value) return;
-            if (!confirmDiscard()) {
-                restoreScope();
-                return;
-            }
-            scopeForm.submit();
-        });
+
+    scopeMois.addEventListener("change", reloadScope);
+
+    // Les flèches du champ Année déclenchent un « change » à chaque clic :
+    // on attend une courte pause avant de recharger.
+    let anneeTimer = null;
+    scopeAnnee.addEventListener("input", () => clearTimeout(anneeTimer));
+    scopeAnnee.addEventListener("change", () => {
+        clearTimeout(anneeTimer);
+        if (!/^\d{4}$/.test(scopeAnnee.value) || !scopeAnnee.checkValidity()) return;
+        anneeTimer = setTimeout(reloadScope, 700);
     });
 });
 </script>
