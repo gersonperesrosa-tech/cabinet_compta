@@ -1,6 +1,10 @@
 ﻿{% extends "base.html" %}
 
 {% block content %}
+<style>
+    /* Les cellules Bootstrap imposent leur couleur : on grise cellule par cellule. */
+    .ligne-deja-facturee > td { color: var(--bs-secondary-color); }
+</style>
 <section class="section">
 <div class="container-fluid">
 
@@ -105,12 +109,18 @@
                         <div>
 
                             <div class="text-muted small mb-2">
-                                Facturé clients
+                                À facturer ce mois
                             </div>
 
                             <div class="h3 mb-0">
                                 {{ total_facture|floatformat:2 }} €
                             </div>
+
+                            {% if total_deja_facture > 0 %}
+                                <div class="small text-muted mt-1">
+                                    Déjà facturé hors mensuel : {{ total_deja_facture|floatformat:2 }} €
+                                </div>
+                            {% endif %}
 
                         </div>
 
@@ -467,10 +477,16 @@
 
                                                     {% for ligne in item.prestations %}
 
-                                                        <tr>
+                                                        <tr{% if ligne.deja_facturee %} class="ligne-deja-facturee text-muted"{% endif %}>
 
                                                             <td>
                                                                 {{ ligne.prestation.nom }}
+
+                                                                {% if ligne.deja_facturee %}
+                                                                    <span class="badge bg-secondary ms-1">
+                                                                        Déjà facturée
+                                                                    </span>
+                                                                {% endif %}
 
                                                                 {% if ligne.tarif_personnalise %}
 

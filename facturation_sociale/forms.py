@@ -306,6 +306,14 @@ class NouvellePrestationForm(forms.Form):
         ),
     )
 
+    deja_facturee = forms.BooleanField(
+        label="Déjà facturée (hors facturation mensuelle)",
+        required=False,
+        widget=forms.CheckboxInput(
+            attrs={"class": "form-check-input"}
+        ),
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -481,6 +489,16 @@ class PrestationLigneForm(forms.Form):
         required=False,
         max_length=255,
         widget=forms.TextInput(attrs={"class": "form-control form-control-sm"}),
+    )
+    deja_facturee = forms.BooleanField(
+        label="Déjà facturée (hors facturation mensuelle)",
+        required=False,
+        widget=forms.CheckboxInput(
+            attrs={
+                "class": "form-check-input",
+                "aria-label": "Déjà facturée (hors facturation mensuelle)",
+            }
+        ),
     )
     DELETE = forms.BooleanField(required=False, widget=forms.HiddenInput())
 

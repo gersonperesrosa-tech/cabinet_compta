@@ -83,6 +83,7 @@ def _initial_ligne(ligne):
         "motif_cout_prestataire_personnalise": (
             ligne.motif_cout_prestataire_personnalise
         ),
+        "deja_facturee": ligne.deja_facturee,
     }
 
 
@@ -109,6 +110,7 @@ def _appliquer_ligne_groupee(ligne, cleaned_data, tarif_prestataire, nouvelle):
     ligne.prestataire = cleaned_data["prestataire"]
     ligne.detail = cleaned_data.get("detail", "")
     ligne.quantite = cleaned_data["quantite"]
+    ligne.deja_facturee = cleaned_data["deja_facturee"]
 
     if prestation_changee:
         ligne.tarif_client_standard_snapshot = ligne.prestation.tarif_client_standard
@@ -230,10 +232,21 @@ def gestion(request):
     # KPI
     # ---------------------------------------------------------
 
+    # À facturer : sans les lignes déjà facturées hors mensuel.
     total_facture = sum(
         (
             prestation.montant_facture
             for prestation in prestations
+            if not prestation.deja_facturee
+        ),
+        Decimal("0.00"),
+    )
+
+    total_deja_facture = sum(
+        (
+            prestation.montant_facture
+            for prestation in prestations
+            if prestation.deja_facturee
         ),
         Decimal("0.00"),
     )
@@ -278,6 +291,7 @@ def gestion(request):
                 "nombre_lignes": 0,
                 "quantite": Decimal("0.00"),
                 "facture": Decimal("0.00"),
+                "deja_facture": Decimal("0.00"),
                 "cout": Decimal("0.00"),
                 "marge": Decimal("0.00"),
                 "prestations": [],
@@ -287,7 +301,10 @@ def gestion(request):
 
         client_data["nombre_lignes"] += 1
         client_data["quantite"] += ligne.quantite
-        client_data["facture"] += ligne.montant_facture
+        if ligne.deja_facturee:
+            client_data["deja_facture"] += ligne.montant_facture
+        else:
+            client_data["facture"] += ligne.montant_facture
         client_data["cout"] += ligne.cout_total
         client_data["marge"] += ligne.marge
 
@@ -323,7 +340,8 @@ def gestion(request):
 
         data["nombre_lignes"] += 1
         data["quantite"] += ligne.quantite
-        data["facture"] += ligne.montant_facture
+        if not ligne.deja_facturee:
+            data["facture"] += ligne.montant_facture
         data["cout"] += ligne.cout_total
         data["marge"] += ligne.marge
 
@@ -350,6 +368,7 @@ def gestion(request):
         "annee_suivante": annee_suivante,
 
         "total_facture": total_facture,
+        "total_deja_facture": total_deja_facture,
         "total_cout": total_cout,
         "total_marge": total_marge,
         "nombre_clients": nombre_clients,
@@ -408,6 +427,7 @@ def modifier_prestation_sociale(request, pk):
 
             ligne.detail = form.cleaned_data.get("detail", "")
             ligne.quantite = form.cleaned_data["quantite"]
+            ligne.deja_facturee = form.cleaned_data["deja_facturee"]
 
             # Nouveaux snapshots correspondant à la modification volontaire
             ligne.tarif_client_standard_snapshot = tarif_standard
@@ -497,6 +517,8 @@ def modifier_prestation_sociale(request, pk):
             "motif_cout_prestataire_personnalise": (
                 ligne.motif_cout_prestataire_personnalise
             ),
+
+            "deja_facturee": ligne.deja_facturee,
         }
 
         form = NouvellePrestationForm(initial=initial)
@@ -636,6 +658,7 @@ def nouvelle_prestation(request):
                 annee=form.cleaned_data["annee"],
                 detail=form.cleaned_data["detail"],
                 quantite=form.cleaned_data["quantite"],
+                deja_facturee=form.cleaned_data["deja_facturee"],
 
                 tarif_client_standard_snapshot=(
                     tarif_standard

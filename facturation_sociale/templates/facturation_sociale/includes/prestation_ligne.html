@@ -13,6 +13,7 @@
         {{ form.mode_tarification }}
         <div class="exception-fields exception-client"><label class="form-label small mb-1">Tarif exceptionnel</label>{{ form.tarif_client_personnalise }}{% for error in form.tarif_client_personnalise.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}<input class="form-control form-control-sm mt-1" name="{{ form.motif_tarif_personnalise.html_name }}" value="{{ form.motif_tarif_personnalise.value|default_if_none:'' }}" placeholder="Motif facultatif"></div>
     </td>
+    <td class="text-center">{{ form.deja_facturee }}{% for error in form.deja_facturee.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</td>
     <td><span class="margin-value">0,00 €</span>{% for error in form.non_field_errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</td>
     <td><button class="btn btn-sm btn-outline-danger delete-line" type="button">{% if form.id.value %}Supprimer{% else %}Retirer{% endif %}</button></td>
 </tr>

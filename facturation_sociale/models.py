@@ -182,6 +182,12 @@ class PrestationSociale(models.Model):
         default=0,
     )
 
+    # Prestation facturée à part : exclue de la facturation mensuelle.
+    deja_facturee = models.BooleanField(
+        default=False,
+        verbose_name="Déjà facturée (hors facturation mensuelle)",
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

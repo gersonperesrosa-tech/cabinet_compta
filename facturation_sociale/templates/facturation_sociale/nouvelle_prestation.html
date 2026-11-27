@@ -273,6 +273,14 @@
     {% endif %}
 
 
+    {% if mode_modification and form.deja_facturee.value %}
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            Cette prestation a déjà été facturée.
+        </div>
+    {% endif %}
+
+
     {% if form.non_field_errors %}
         <div class="alert alert-danger">
             {% for error in form.non_field_errors %}
@@ -829,6 +837,23 @@
 
                                 </div>
 
+                            </div>
+
+                        </div>
+
+
+                        <!-- DÉJÀ FACTURÉE -->
+                        <div class="form-check mt-3">
+
+                            {{ form.deja_facturee }}
+
+                            <label class="form-check-label fw-semibold"
+                                   for="{{ form.deja_facturee.id_for_label }}">
+                                Déjà facturée (hors facturation mensuelle)
+                            </label>
+
+                            <div class="form-text">
+                                Cochez si cette prestation a déjà été facturée à part : elle ne sera pas reprise dans la facturation mensuelle.
                             </div>
 
                         </div>

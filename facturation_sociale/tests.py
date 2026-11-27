@@ -65,6 +65,7 @@ class PrestationsParClientTests(TestCase):
             "mode_cout_prestataire": "standard",
             "cout_prestataire_personnalise": "",
             "motif_cout_prestataire_personnalise": "",
+            "deja_facturee": "",
             "DELETE": "",
         }
         for index, row in enumerate(rows):
@@ -248,3 +249,103 @@ class PrestationsParClientTests(TestCase):
         )
         self.assertRedirects(response, reverse("facturation_sociale:nouvelle_prestation"))
         self.assertEqual(PrestationSociale.objects.count(), 1)
+
+    def individual_payload(self, **overrides):
+        data = {
+            "client": self.client_a.pk,
+            "prestation": self.prestation.pk,
+            "prestataire": self.prestataire.pk,
+            "mois": "4",
+            "annee": "2026",
+            "detail": "",
+            "quantite": "1.00",
+            "mode_tarification": "standard",
+            "tarif_client_personnalise": "",
+            "motif_tarif_personnalise": "",
+            "mode_cout_prestataire": "standard",
+            "cout_prestataire_personnalise": "",
+            "motif_cout_prestataire_personnalise": "",
+        }
+        data.update(overrides)
+        return data
+
+    def test_existing_prestations_are_not_already_billed_by_default(self):
+        line = self.create_existing()
+        line.refresh_from_db()
+        self.assertFalse(line.deja_facturee)
+
+    def test_new_prestation_can_be_marked_as_already_billed(self):
+        self.client.post(
+            reverse("facturation_sociale:nouvelle_prestation"),
+            self.individual_payload(deja_facturee="on"),
+        )
+        self.assertTrue(PrestationSociale.objects.get().deja_facturee)
+
+    def test_editing_a_billed_prestation_keeps_the_flag(self):
+        line = self.create_existing(deja_facturee=True)
+        url = reverse("facturation_sociale:modifier_prestation_sociale", args=[line.pk])
+
+        # On renvoie exactement ce que la page d'édition pré-remplit.
+        response = self.client.get(url)
+        self.assertContains(response, "Cette prestation a déjà été facturée.")
+        form = response.context["form"]
+        self.assertIn("checked", str(form["deja_facturee"]))
+        data = {
+            name: form[name].value()
+            for name in form.fields
+            if form[name].value() not in (None, False)
+        }
+        data["detail"] = "Corrigé"
+
+        self.assertEqual(self.client.post(url, data).status_code, 302)
+        line.refresh_from_db()
+        self.assertEqual(line.detail, "Corrigé")
+        self.assertTrue(line.deja_facturee)
+
+    def test_editing_can_uncheck_the_flag(self):
+        line = self.create_existing(deja_facturee=True)
+        url = reverse("facturation_sociale:modifier_prestation_sociale", args=[line.pk])
+        self.client.post(url, self.individual_payload())
+        line.refresh_from_db()
+        self.assertFalse(line.deja_facturee)
+
+    def test_batch_entry_checks_and_unchecks_the_flag(self):
+        line = self.create_existing()
+        page = f"{self.url}?client={self.client_a.pk}&mois=4&annee=2026"
+
+        self.client.post(
+            self.url,
+            self.payload(
+                [{"id": str(line.pk), "deja_facturee": "on"}, {"deja_facturee": "on"}],
+                token="check",
+            ),
+        )
+        self.assertEqual(PrestationSociale.objects.filter(deja_facturee=True).count(), 2)
+        formset = self.client.get(page).context["formset"]
+        self.assertTrue(all(form["deja_facturee"].value() for form in formset))
+
+        self.client.post(self.url, self.payload([{"id": str(line.pk)}], token="uncheck"))
+        line.refresh_from_db()
+        self.assertFalse(line.deja_facturee)
+
+    def test_gestion_separates_amounts_already_billed(self):
+        self.create_existing(tarif_client_applique=Decimal("100.00"))
+        self.create_existing(deja_facturee=True)  # 50 € facturés, 20 € de coût
+
+        response = self.client.get(
+            reverse("facturation_sociale:gestion") + "?mois=4&annee=2026"
+        )
+        context = response.context
+        self.assertEqual(context["total_facture"], Decimal("100.00"))
+        self.assertEqual(context["total_deja_facture"], Decimal("50.00"))
+        self.assertEqual(context["total_cout"], Decimal("40.00"))
+        self.assertEqual(context["total_marge"], Decimal("110.00"))
+
+        for synthese in (context["synthese_clients"], context["synthese_prestations"]):
+            self.assertEqual(synthese[0]["facture"], Decimal("100.00"))
+            self.assertEqual(synthese[0]["cout"], Decimal("40.00"))
+            self.assertEqual(synthese[0]["marge"], Decimal("110.00"))
+        self.assertEqual(context["synthese_clients"][0]["deja_facture"], Decimal("50.00"))
+
+        self.assertContains(response, "À facturer ce mois")
+        self.assertContains(response, "Déjà facturé hors mensuel")

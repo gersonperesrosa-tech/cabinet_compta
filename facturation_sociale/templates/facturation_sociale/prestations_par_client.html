@@ -92,20 +92,22 @@
                     <thead>
                         <tr>
                             <th>Prestation</th><th>Quantité</th><th>Salarié / détail</th><th>Prestataire</th>
-                            <th>Coût prestataire</th><th>Tarification client</th><th>Marge</th><th>Actions</th>
+                            <th>Coût prestataire</th><th>Tarification client</th><th>Déjà facturée</th><th>Marge</th><th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="lines-body">
                         {% for form in formset.forms %}
                             {% include "facturation_sociale/includes/prestation_ligne.html" with form=form %}
                         {% empty %}
-                            <tr id="empty-row"><td colspan="8" class="text-center text-muted py-4">Aucune prestation enregistrée pour cette période.</td></tr>
+                            <tr id="empty-row"><td colspan="9" class="text-center text-muted py-4">Aucune prestation enregistrée pour cette période.</td></tr>
                         {% endfor %}
                     </tbody>
                     <tfoot class="table-light">
                         <tr>
                             <th colspan="4" class="text-end">Totaux</th>
-                            <th id="total-cout">0,00 €</th><th id="total-facture">0,00 €</th><th id="total-marge">0,00 €</th><th></th>
+                            <th id="total-cout">0,00 €</th><th id="total-facture">0,00 €</th>
+                            <th class="small fw-normal text-muted">dont déjà facturé : <span id="total-deja-facture" class="text-nowrap">0,00 €</span></th>
+                            <th id="total-marge">0,00 €</th><th></th>
                         </tr>
                     </tfoot>
                 </table>
@@ -126,12 +128,15 @@
 </section>
 
 <style>
-    #prestations-table { min-width: 1150px; }
+    #prestations-table { min-width: 1250px; }
     #prestations-table th { white-space: nowrap; }
     .price-cell { min-width: 180px; }
     .exception-fields { display: none; margin-top: .4rem; min-width: 210px; }
     .exception-fields.visible { display: block; }
     .line-deleted { opacity: .55; text-decoration: line-through; background: var(--bs-warning-bg-subtle); }
+    .ligne-deja-facturee > td { color: var(--bs-secondary-color); }
+    .ligne-deja-facturee .form-control,
+    .ligne-deja-facturee .form-select { color: var(--bs-secondary-color); background-color: var(--bs-secondary-bg); }
     .negative-margin { color: var(--bs-danger); font-weight: 600; }
 </style>
 
@@ -205,8 +210,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function refreshTotals() {
-        let facture = 0, cout = 0, marge = 0;
+        let facture = 0, cout = 0, marge = 0, dejaFacture = 0;
         tableBody.querySelectorAll("tr.prestation-line").forEach(row => {
+            const isBilled = field(row, "deja_facturee").checked;
+            row.classList.toggle("ligne-deja-facturee", isBilled);
             if (row.dataset.deleted === "1") return;
             const qty = Number(field(row, "quantite").value) || 0;
             const client = Number(priceInput(row, "tarif_client_affiche").value) || 0;
@@ -216,9 +223,11 @@ document.addEventListener("DOMContentLoaded", () => {
             marginCell.textContent = money(lineMarge);
             marginCell.classList.toggle("negative-margin", lineMarge < 0);
             facture += lineFacture; cout += lineCout; marge += lineMarge;
+            if (isBilled) dejaFacture += lineFacture;
         });
         document.getElementById("total-facture").textContent = money(facture);
         document.getElementById("total-cout").textContent = money(cout);
+        document.getElementById("total-deja-facture").textContent = money(dejaFacture);
         const totalMargin = document.getElementById("total-marge");
         totalMargin.textContent = money(marge);
         totalMargin.classList.toggle("negative-margin", marge < 0);
@@ -236,7 +245,7 @@ document.addEventListener("DOMContentLoaded", () => {
             row.querySelector(".delete-line").textContent = deleted ? "Supprimer" : "Annuler";
         }
         if (!tableBody.querySelector("tr.prestation-line")) {
-            tableBody.insertAdjacentHTML("beforeend", '<tr id="empty-row"><td colspan="8" class="text-center text-muted py-4">Aucune prestation dans le tableau.</td></tr>');
+            tableBody.insertAdjacentHTML("beforeend", '<tr id="empty-row"><td colspan="9" class="text-center text-muted py-4">Aucune prestation dans le tableau.</td></tr>');
         }
         markDirty(); refreshTotals();
     }
