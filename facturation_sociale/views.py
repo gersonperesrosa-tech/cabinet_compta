@@ -229,127 +229,77 @@ def gestion(request):
 
 
     # ---------------------------------------------------------
-    # KPI
+    # SYNTHÈSES (tout le mois)
     # ---------------------------------------------------------
 
-    # À facturer : sans les lignes déjà facturées hors mensuel.
-    total_facture = sum(
-        (
-            prestation.montant_facture
-            for prestation in prestations
-            if not prestation.deja_facturee
-        ),
-        Decimal("0.00"),
-    )
+    zero = Decimal("0.00")
+    colonnes = ("total", "deja_facture", "reste", "cout", "marge")
 
-    total_deja_facture = sum(
-        (
-            prestation.montant_facture
-            for prestation in prestations
-            if prestation.deja_facturee
-        ),
-        Decimal("0.00"),
-    )
+    def cumuler(cumul, ligne):
+        cumul["total"] += ligne.montant_facture
+        cle = "deja_facture" if ligne.deja_facturee else "reste"
+        cumul[cle] += ligne.montant_facture
+        cumul["cout"] += ligne.cout_total
+        cumul["marge"] += ligne.marge
 
-    total_cout = sum(
-        (
-            prestation.cout_total
-            for prestation in prestations
-        ),
-        Decimal("0.00"),
-    )
-
-    total_marge = sum(
-        (
-            prestation.marge
-            for prestation in prestations
-        ),
-        Decimal("0.00"),
-    )
-
-    clients_ids = {
-        prestation.client_id
-        for prestation in prestations
-    }
-
-    nombre_clients = len(clients_ids)
-
-
-    # ---------------------------------------------------------
-    # SYNTHÈSE PAR CLIENT
-    # ---------------------------------------------------------
-
+    totaux = dict.fromkeys(colonnes, zero)
     clients_dict = {}
-
-    for ligne in prestations:
-
-        client_id = ligne.client_id
-
-        if client_id not in clients_dict:
-            clients_dict[client_id] = {
-                "client": ligne.client,
-                "nombre_lignes": 0,
-                "quantite": Decimal("0.00"),
-                "facture": Decimal("0.00"),
-                "deja_facture": Decimal("0.00"),
-                "cout": Decimal("0.00"),
-                "marge": Decimal("0.00"),
-                "prestations": [],
-            }
-
-        client_data = clients_dict[client_id]
-
-        client_data["nombre_lignes"] += 1
-        client_data["quantite"] += ligne.quantite
-        if ligne.deja_facturee:
-            client_data["deja_facture"] += ligne.montant_facture
-        else:
-            client_data["facture"] += ligne.montant_facture
-        client_data["cout"] += ligne.cout_total
-        client_data["marge"] += ligne.marge
-
-        client_data["prestations"].append(ligne)
-
-
-    synthese_clients = list(
-        clients_dict.values()
-    )
-
-
-    # ---------------------------------------------------------
-    # SYNTHÈSE PAR TYPE DE PRESTATION
-    # ---------------------------------------------------------
-
     prestations_dict = {}
 
     for ligne in prestations:
-
-        prestation_id = ligne.prestation_id
-
-        if prestation_id not in prestations_dict:
-            prestations_dict[prestation_id] = {
+        client_data = clients_dict.setdefault(
+            ligne.client_id,
+            {"client": ligne.client, "lignes": [], **dict.fromkeys(colonnes, zero)},
+        )
+        prestation_data = prestations_dict.setdefault(
+            ligne.prestation_id,
+            {
                 "prestation": ligne.prestation,
-                "nombre_lignes": 0,
-                "quantite": Decimal("0.00"),
-                "facture": Decimal("0.00"),
-                "cout": Decimal("0.00"),
-                "marge": Decimal("0.00"),
-            }
+                "quantite": zero,
+                **dict.fromkeys(colonnes, zero),
+            },
+        )
 
-        data = prestations_dict[prestation_id]
+        client_data["lignes"].append(ligne)
+        prestation_data["quantite"] += ligne.quantite
 
-        data["nombre_lignes"] += 1
-        data["quantite"] += ligne.quantite
-        if not ligne.deja_facturee:
-            data["facture"] += ligne.montant_facture
-        data["cout"] += ligne.cout_total
-        data["marge"] += ligne.marge
+        for cumul in (totaux, client_data, prestation_data):
+            cumuler(cumul, ligne)
 
+    for client_data in clients_dict.values():
+        client_data["statut"] = (
+            "a_facturer" if client_data["reste"] > 0 else "tout_facture"
+        )
+
+    synthese_clients = list(clients_dict.values())
+    nombre_clients = len(synthese_clients)
+    nombre_clients_a_facturer = sum(
+        item["statut"] == "a_facturer" for item in synthese_clients
+    )
 
     synthese_prestations = sorted(
         prestations_dict.values(),
         key=lambda item: item["prestation"].nom.lower(),
     )
+
+
+    # ---------------------------------------------------------
+    # FILTRE (ne concerne que le tableau des clients)
+    # ---------------------------------------------------------
+
+    a_facturer = request.GET.get("a_facturer") == "1"
+
+    if a_facturer:
+        synthese_clients = [
+            item for item in synthese_clients
+            if item["statut"] == "a_facturer"
+        ]
+
+    # Le pied de tableau additionne les clients affichés.
+    totaux_affiches = {
+        colonne: sum((item[colonne] for item in synthese_clients), zero)
+        for colonne in colonnes
+    }
 
 
     # ---------------------------------------------------------
@@ -367,13 +317,16 @@ def gestion(request):
         "mois_suivant": mois_suivant,
         "annee_suivante": annee_suivante,
 
-        "total_facture": total_facture,
-        "total_deja_facture": total_deja_facture,
-        "total_cout": total_cout,
-        "total_marge": total_marge,
+        "total_prestations": totaux["total"],
+        "total_deja_facture": totaux["deja_facture"],
+        "total_reste": totaux["reste"],
+        "total_cout": totaux["cout"],
+        "total_marge": totaux["marge"],
         "nombre_clients": nombre_clients,
+        "nombre_clients_a_facturer": nombre_clients_a_facturer,
 
-        "prestations": prestations,
+        "a_facturer": a_facturer,
+        "totaux_affiches": totaux_affiches,
         "synthese_clients": synthese_clients,
         "synthese_prestations": synthese_prestations,
     }

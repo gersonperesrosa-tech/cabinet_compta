@@ -3,8 +3,14 @@
 {% block content %}
 <style>
     /* Les cellules Bootstrap imposent leur couleur : on grise cellule par cellule. */
-    .ligne-deja-facturee > td { color: var(--bs-secondary-color); }
+    .fs-grisee > td { color: var(--bs-secondary-color); }
+    .fs-info { cursor: help; }
+    /* Neutralise les règles globales « form input » et « form label ». */
+    .fs-filtre { display: flex; align-items: center; gap: .5rem; margin: 0; }
+    .fs-filtre input.form-check-input { width: 1em; height: 1em; padding: 0; margin: 0; flex: none; }
+    .fs-filtre label { margin: 0; font-weight: 400; color: var(--bs-body-color); }
 </style>
+
 <section class="section">
 <div class="container-fluid">
 
@@ -15,24 +21,14 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
 
         <div>
-
-            <h1 class="h3 mb-1">
-                Gestion
-            </h1>
-
-            <p class="text-muted mb-0">
-                Suivi mensuel de la facturation sociale.
-            </p>
-
+            <h1 class="h3 mb-1">Gestion</h1>
+            <p class="text-muted mb-0">Liste de travail de la facturation sociale du mois.</p>
         </div>
 
-
-        <a href="{% url 'facturation_sociale:nouvelle_prestation' %}"
+        <a href="{% url 'facturation_sociale:prestations_par_client' %}?mois={{ mois }}&annee={{ annee }}"
            class="btn btn-primary">
-
             <i class="bi bi-plus-lg me-1"></i>
-            Nouvelle prestation
-
+            Saisir des prestations
         </a>
 
     </div>
@@ -43,752 +39,345 @@
          ===================================================== -->
 
     <div class="card border-0 shadow-sm mb-4">
-
         <div class="card-body">
-
             <div class="d-flex justify-content-between align-items-center">
 
-                <a href="?mois={{ mois_precedent }}&annee={{ annee_precedente }}"
+                <a href="?mois={{ mois_precedent }}&annee={{ annee_precedente }}{% if a_facturer %}&a_facturer=1{% endif %}"
                    class="btn btn-outline-secondary">
-
                     <i class="bi bi-chevron-left"></i>
-
-                    <span class="d-none d-md-inline ms-1">
-                        Mois précédent
-                    </span>
-
+                    <span class="d-none d-md-inline ms-1">Mois précédent</span>
                 </a>
 
-
                 <div class="text-center">
-
-                    <div class="small text-muted">
-                        Période
-                    </div>
-
-                    <div class="h4 mb-0">
-                        {{ mois_nom }} {{ annee }}
-                    </div>
-
+                    <div class="small text-muted">Période</div>
+                    <div class="h4 mb-0">{{ mois_nom }} {{ annee }}</div>
                 </div>
 
-
-                <a href="?mois={{ mois_suivant }}&annee={{ annee_suivante }}"
+                <a href="?mois={{ mois_suivant }}&annee={{ annee_suivante }}{% if a_facturer %}&a_facturer=1{% endif %}"
                    class="btn btn-outline-secondary">
-
-                    <span class="d-none d-md-inline me-1">
-                        Mois suivant
-                    </span>
-
+                    <span class="d-none d-md-inline me-1">Mois suivant</span>
                     <i class="bi bi-chevron-right"></i>
-
                 </a>
 
             </div>
-
         </div>
-
     </div>
 
 
     <!-- =====================================================
-         KPI
+         CARTES (toujours calculées sur tout le mois)
          ===================================================== -->
 
     <div class="row g-4 mb-4">
 
-        <!-- FACTURÉ -->
         <div class="col-md-6 col-xl-3">
-
-            <div class="card border-0 shadow-sm h-100">
-
+            <div class="card bg-primary text-white border-0 shadow h-100">
                 <div class="card-body">
-
                     <div class="d-flex justify-content-between align-items-start">
-
                         <div>
-
-                            <div class="text-muted small mb-2">
-                                À facturer ce mois
+                            <div class="small fw-semibold mb-2">Reste à facturer</div>
+                            <div class="h3 mb-0 text-white">{{ total_reste|floatformat:"2g" }}&nbsp;€</div>
+                            <div class="small mt-1">
+                                {{ nombre_clients_a_facturer }} client{{ nombre_clients_a_facturer|pluralize }} à facturer
                             </div>
-
-                            <div class="h3 mb-0">
-                                {{ total_facture|floatformat:2 }} €
-                            </div>
-
-                            {% if total_deja_facture > 0 %}
-                                <div class="small text-muted mt-1">
-                                    Déjà facturé hors mensuel : {{ total_deja_facture|floatformat:2 }} €
-                                </div>
-                            {% endif %}
-
                         </div>
-
-                        <div class="fs-3 text-primary">
-                            <i class="bi bi-receipt"></i>
-                        </div>
-
+                        <div class="fs-3"><i class="bi bi-receipt"></i></div>
                     </div>
-
                 </div>
-
             </div>
-
         </div>
 
-
-        <!-- COÛT -->
         <div class="col-md-6 col-xl-3">
-
             <div class="card border-0 shadow-sm h-100">
-
                 <div class="card-body">
-
                     <div class="d-flex justify-content-between align-items-start">
-
                         <div>
-
-                            <div class="text-muted small mb-2">
-                                Coût prestataires
+                            <div class="text-muted small mb-2">Total des prestations</div>
+                            <div class="h3 mb-0">{{ total_prestations|floatformat:"2g" }}&nbsp;€</div>
+                            <div class="small text-muted mt-1">
+                                dont déjà facturé : {{ total_deja_facture|floatformat:"2g" }}&nbsp;€
                             </div>
-
-                            <div class="h3 mb-0">
-                                {{ total_cout|floatformat:2 }} €
-                            </div>
-
                         </div>
-
-                        <div class="fs-3 text-warning">
-                            <i class="bi bi-building"></i>
-                        </div>
-
+                        <div class="fs-3 text-primary"><i class="bi bi-list-check"></i></div>
                     </div>
-
                 </div>
-
             </div>
-
         </div>
 
-
-        <!-- MARGE -->
         <div class="col-md-6 col-xl-3">
-
             <div class="card border-0 shadow-sm h-100">
-
                 <div class="card-body">
-
                     <div class="d-flex justify-content-between align-items-start">
-
                         <div>
-
-                            <div class="text-muted small mb-2">
-                                Marge
-                            </div>
-
-                            {% if total_marge < 0 %}
-
-                                <div class="h3 mb-0 text-danger">
-                                    {{ total_marge|floatformat:2 }} €
-                                </div>
-
-                            {% else %}
-
-                                <div class="h3 mb-0 text-success">
-                                    {{ total_marge|floatformat:2 }} €
-                                </div>
-
-                            {% endif %}
-
+                            <div class="text-muted small mb-2">Coût prestataires</div>
+                            <div class="h3 mb-0">{{ total_cout|floatformat:"2g" }}&nbsp;€</div>
                         </div>
-
-                        <div class="fs-3 text-success">
-                            <i class="bi bi-graph-up-arrow"></i>
-                        </div>
-
+                        <div class="fs-3 text-warning"><i class="bi bi-building"></i></div>
                     </div>
-
                 </div>
-
             </div>
-
         </div>
 
-
-        <!-- CLIENTS -->
         <div class="col-md-6 col-xl-3">
-
             <div class="card border-0 shadow-sm h-100">
-
                 <div class="card-body">
-
                     <div class="d-flex justify-content-between align-items-start">
-
                         <div>
-
-                            <div class="text-muted small mb-2">
-                                Clients concernés
+                            <div class="text-muted small mb-2">Marge</div>
+                            <div class="h3 mb-0 {% if total_marge < 0 %}text-danger{% else %}text-success{% endif %}">
+                                {{ total_marge|floatformat:"2g" }}&nbsp;€
                             </div>
-
-                            <div class="h3 mb-0">
-                                {{ nombre_clients }}
+                            <div class="small text-muted mt-1">
+                                {{ nombre_clients }} client{{ nombre_clients|pluralize }} concerné{{ nombre_clients|pluralize }}
                             </div>
-
                         </div>
-
-                        <div class="fs-3 text-info">
-                            <i class="bi bi-people"></i>
-                        </div>
-
+                        <div class="fs-3 text-success"><i class="bi bi-graph-up-arrow"></i></div>
                     </div>
-
                 </div>
-
             </div>
-
         </div>
 
     </div>
 
 
     <!-- =====================================================
-         SYNTHÈSE CLIENTS
+         FACTURATION PAR CLIENT
          ===================================================== -->
 
     <div class="card border-0 shadow-sm mb-4">
 
         <div class="card-header bg-white py-3">
-
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
 
                 <div>
-
-                    <h5 class="mb-1">
-                        Facturation par client
-                    </h5>
-
-                    <div class="small text-muted">
-                        {{ mois_nom }} {{ annee }}
-                    </div>
-
+                    <h5 class="mb-1">Facturation par client</h5>
+                    <div class="small text-muted">{{ mois_nom }} {{ annee }}</div>
                 </div>
 
-                <span class="badge bg-light text-dark border">
-                    {{ nombre_clients }} client{{ nombre_clients|pluralize }}
-                </span>
+                <form method="get" class="fs-filtre">
+                    <input type="hidden" name="mois" value="{{ mois }}">
+                    <input type="hidden" name="annee" value="{{ annee }}">
+                    <input class="form-check-input" type="checkbox" id="fs-a-facturer"
+                           name="a_facturer" value="1" autocomplete="off"
+                           onchange="this.form.submit()"
+                           {% if a_facturer %}checked{% endif %}>
+                    <label class="form-check-label small" for="fs-a-facturer">
+                        Seulement les clients avec un reste à facturer
+                    </label>
+                </form>
 
             </div>
-
         </div>
 
-
         <div class="card-body p-0">
-
             <div class="table-responsive">
-
                 <table class="table table-hover align-middle mb-0">
 
                     <thead class="table-light">
-
                         <tr>
-
-                            <th class="ps-4">
-                                Client
-                            </th>
-
-                            <th class="text-center">
-                                Lignes
-                            </th>
-
-                            <th class="text-center">
-                                Quantité
-                            </th>
-
-                            <th class="text-end">
-                                Facturé
-                            </th>
-
-                            <th class="text-end">
-                                Coût
-                            </th>
-
-                            <th class="text-end">
-                                Marge
-                            </th>
-
-                            <th class="text-end pe-4">
-                                Détail
-                            </th>
-
+                            <th class="text-start ps-4">Client</th>
+                            <th class="text-end">Total</th>
+                            <th class="text-end">Déjà facturé</th>
+                            <th class="text-end">Reste à facturer</th>
+                            <th class="text-end">Coût</th>
+                            <th class="text-end">Marge</th>
+                            <th class="text-center">Statut</th>
+                            <th class="text-end pe-4">Actions</th>
                         </tr>
-
                     </thead>
 
-
                     <tbody>
+                    {% for item in synthese_clients %}
 
-                        {% for item in synthese_clients %}
+                        <tr{% if item.statut == "tout_facture" %} class="fs-grisee"{% endif %}>
+                            <td class="text-start ps-4">
+                                <div class="fw-semibold">{{ item.client.nom }}</div>
+                                {% if item.client.numero %}
+                                    <div class="small text-muted">Client n° {{ item.client.numero }}</div>
+                                {% endif %}
+                            </td>
+                            <td class="text-end text-nowrap">{{ item.total|floatformat:"2g" }}&nbsp;€</td>
+                            <td class="text-end text-nowrap">{{ item.deja_facture|floatformat:"2g" }}&nbsp;€</td>
+                            <td class="text-end text-nowrap fw-bold">{{ item.reste|floatformat:"2g" }}&nbsp;€</td>
+                            <td class="text-end text-nowrap">{{ item.cout|floatformat:"2g" }}&nbsp;€</td>
+                            <td class="text-end text-nowrap">
+                                <span class="{% if item.marge < 0 %}text-danger{% elif item.statut == 'a_facturer' %}text-success{% endif %}">
+                                    {{ item.marge|floatformat:"2g" }}&nbsp;€
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                {% if item.statut == "a_facturer" %}
+                                    <span class="badge bg-warning text-dark">À facturer</span>
+                                {% else %}
+                                    <span class="badge bg-success">Tout facturé</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end text-nowrap pe-4">
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#fs-client-{{ item.client.pk }}"
+                                        aria-expanded="false">
+                                    <i class="bi bi-eye me-1"></i>Détail
+                                </button>
+                                <a href="{% url 'facturation_sociale:prestations_par_client' %}?client={{ item.client.pk }}&mois={{ mois }}&annee={{ annee }}"
+                                   class="btn btn-sm btn-primary">
+                                    <i class="bi bi-pencil me-1"></i>Saisir
+                                </a>
+                            </td>
+                        </tr>
 
-                            <!-- LIGNE CLIENT -->
-                            <tr>
-
-                                <td class="ps-4">
-
-                                    <div class="fw-semibold">
-                                        {{ item.client.nom }}
+                        <tr class="collapse" id="fs-client-{{ item.client.pk }}">
+                            <td colspan="8" class="bg-light p-0">
+                                <div class="p-3">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm bg-white mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-start">Prestation</th>
+                                                    <th class="text-start">Salarié / détail</th>
+                                                    <th class="text-end">Quantité × prix unitaire</th>
+                                                    <th class="text-end">Coût</th>
+                                                    <th class="text-end">Marge</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                            {% for ligne in item.lignes %}
+                                                <tr{% if ligne.deja_facturee %} class="fs-grisee"{% endif %}>
+                                                    <td class="text-start">
+                                                        {{ ligne.prestation.nom }}
+                                                        {% if ligne.deja_facturee %}
+                                                            <span class="badge bg-secondary ms-1">Facturée</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="text-start">{{ ligne.detail|default:"—" }}</td>
+                                                    <td class="text-end text-nowrap">
+                                                        {{ ligne.quantite|floatformat:"-2g" }} × {{ ligne.tarif_client_applique|floatformat:"2g" }}&nbsp;€
+                                                        {% if ligne.tarif_personnalise %}
+                                                            <span class="fs-info" title="Tarif exceptionnel · standard {{ ligne.tarif_client_standard_snapshot|floatformat:'2g' }} €{% if ligne.motif_tarif_personnalise %} · Motif : {{ ligne.motif_tarif_personnalise }}{% endif %}">ⓘ</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="text-end text-nowrap">
+                                                        {{ ligne.cout_total|floatformat:"2g" }}&nbsp;€
+                                                        {% if ligne.cout_prestataire_personnalise %}
+                                                            <span class="fs-info" title="Coût exceptionnel · standard {{ ligne.cout_prestataire_standard_snapshot|floatformat:'2g' }} €{% if ligne.motif_cout_prestataire_personnalise %} · Motif : {{ ligne.motif_cout_prestataire_personnalise }}{% endif %}">ⓘ</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="text-end text-nowrap">
+                                                        <span class="{% if ligne.marge < 0 %}text-danger{% elif not ligne.deja_facturee %}text-success{% endif %}">
+                                                            {{ ligne.marge|floatformat:"2g" }}&nbsp;€
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                            </tbody>
+                                        </table>
                                     </div>
-
-                                    {% if item.client.numero %}
-
-                                        <div class="small text-muted">
-                                            Client n° {{ item.client.numero }}
-                                        </div>
-
-                                    {% endif %}
-
-                                </td>
-
-
-                                <td class="text-center">
-                                    {{ item.nombre_lignes }}
-                                </td>
-
-
-                                <td class="text-center">
-                                    {{ item.quantite|floatformat:-2 }}
-                                </td>
-
-
-                                <td class="text-end fw-semibold">
-                                    {{ item.facture|floatformat:2 }} €
-                                </td>
-
-
-                                <td class="text-end">
-                                    {{ item.cout|floatformat:2 }} €
-                                </td>
-
-
-                                <td class="text-end">
-
-                                    {% if item.marge < 0 %}
-
-                                        <span class="fw-semibold text-danger">
-                                            {{ item.marge|floatformat:2 }} €
-                                        </span>
-
-                                    {% else %}
-
-                                        <span class="fw-semibold text-success">
-                                            {{ item.marge|floatformat:2 }} €
-                                        </span>
-
-                                    {% endif %}
-
-                                </td>
-
-
-                                <td class="text-end pe-4">
-
-                                    <button type="button"
-                                            class="btn btn-sm btn-outline-primary"
-                                            data-bs-toggle="collapse"
-                                            data-bs-target="#client-detail-{{ item.client.pk }}"
-                                            aria-expanded="false">
-
-                                        <i class="bi bi-eye me-1"></i>
-                                        Voir
-
-                                    </button>
-
-                                </td>
-
-                            </tr>
-
-
-                            <!-- DÉTAIL CLIENT -->
-                            <tr class="collapse"
-                                id="client-detail-{{ item.client.pk }}">
-
-                                <td colspan="7"
-                                    class="bg-light p-0">
-
-                                    <div class="p-3">
-
-                                        <div class="small fw-semibold text-muted mb-2">
-                                            Détail des prestations
-                                        </div>
-
-
-                                        <div class="table-responsive">
-
-                                            <table class="table table-sm table-bordered bg-white mb-0">
-
-                                                <thead>
-
-                                                    <tr>
-
-                                                        <th>
-                                                            Prestation
-                                                        </th>
-
-                                                        <th>
-                                                            Prestataire
-                                                        </th>
-
-                                                        <th>
-                                                            Détail
-                                                        </th>
-
-                                                        <th class="text-center">
-                                                            Qté
-                                                        </th>
-
-                                                        <th class="text-end">
-                                                            Tarif client
-                                                        </th>
-
-                                                        <th class="text-end">
-                                                            Coût unitaire
-                                                        </th>
-
-                                                        <th class="text-end">
-                                                            Facturé
-                                                        </th>
-
-                                                        <th class="text-end">
-                                                            Coût
-                                                        </th>
-
-                                                        <th class="text-end">
-                                                            Marge
-                                                        </th>
-
-                                                        <th class="text-end">
-                                                            Actions
-                                                        </th>
-
-                                                    </tr>
-
-                                                </thead>
-
-
-                                                <tbody>
-
-                                                    {% for ligne in item.prestations %}
-
-                                                        <tr{% if ligne.deja_facturee %} class="ligne-deja-facturee text-muted"{% endif %}>
-
-                                                            <td>
-                                                                {{ ligne.prestation.nom }}
-
-                                                                {% if ligne.deja_facturee %}
-                                                                    <span class="badge bg-secondary ms-1">
-                                                                        Déjà facturée
-                                                                    </span>
-                                                                {% endif %}
-
-                                                                {% if ligne.tarif_personnalise %}
-
-                                                                    <span class="badge bg-warning text-dark ms-1"
-                                                                          title="Tarif standard : {{ ligne.tarif_client_standard_snapshot|floatformat:2 }} €{% if ligne.motif_tarif_personnalise %} — {{ ligne.motif_tarif_personnalise }}{% endif %}">
-                                                                        Personnalisé
-                                                                    </span>
-
-                                                                {% endif %}
-                                                            </td>
-
-
-                                                            <td>
-                                                                {{ ligne.prestataire.nom }}
-                                                            </td>
-
-
-                                                            <td>
-
-                                                                {% if ligne.detail %}
-                                                                    {{ ligne.detail }}
-                                                                {% else %}
-                                                                    <span class="text-muted">
-                                                                        —
-                                                                    </span>
-                                                                {% endif %}
-
-                                                            </td>
-
-
-                                                            <td class="text-center">
-                                                                {{ ligne.quantite|floatformat:-2 }}
-                                                            </td>
-
-
-                                                            <td class="text-end">
-                                                                {{ ligne.tarif_client_applique|floatformat:2 }} €
-                                                            </td>
-
-
-                                                            <td class="text-end">
-                                                                {{ ligne.cout_prestataire_unitaire_snapshot|floatformat:2 }} €
-                                                                {% if ligne.cout_prestataire_personnalise %}
-                                                                    <div class="mt-1">
-                                                                        <span
-                                                                            class="badge bg-warning text-dark"
-                                                                            title="Coût standard : {{ ligne.cout_prestataire_standard_snapshot|floatformat:2 }} €{% if ligne.motif_cout_prestataire_personnalise %} — {{ ligne.motif_cout_prestataire_personnalise }}{% endif %}"
-                                                                        >
-                                                                            Exception
-                                                                        </span>
-                                                                    </div>
-                                                                {% endif %}
-                                                            </td>
-
-
-                                                            <td class="text-end">
-                                                                {{ ligne.montant_facture|floatformat:2 }} €
-                                                            </td>
-
-
-                                                            <td class="text-end">
-                                                                {{ ligne.cout_total|floatformat:2 }} €
-                                                            </td>
-
-
-                                                            <td class="text-end">
-
-                                                                {% if ligne.marge < 0 %}
-
-                                                                    <span class="text-danger fw-semibold">
-                                                                        {{ ligne.marge|floatformat:2 }} €
-                                                                    </span>
-
-                                                                {% else %}
-
-                                                                    <span class="text-success fw-semibold">
-                                                                        {{ ligne.marge|floatformat:2 }} €
-                                                                    </span>
-
-                                                                {% endif %}
-
-                                                            </td>
-
-
-                                                            <td class="text-end text-nowrap">
-
-                                                                <a href="{% url 'facturation_sociale:modifier_prestation_sociale' ligne.pk %}"
-                                                                   class="btn btn-sm btn-outline-primary"
-                                                                   title="Modifier">
-
-                                                                    <i class="bi bi-pencil"></i>
-
-                                                                </a>
-
-
-                                                                <form method="post"
-                                                                      action="{% url 'facturation_sociale:supprimer_prestation_sociale' ligne.pk %}"
-                                                                      class="d-inline"
-                                                                      onsubmit="return confirm('Supprimer cette prestation : {{ ligne.prestation.nom|escapejs }} pour {{ ligne.client.nom|escapejs }} ?');">
-
-                                                                    {% csrf_token %}
-
-                                                                    <button type="submit"
-                                                                            class="btn btn-sm btn-outline-danger"
-                                                                            title="Supprimer">
-
-                                                                        <i class="bi bi-trash"></i>
-
-                                                                    </button>
-
-                                                                </form>
-
-                                                            </td>
-
-                                                        </tr>
-
-                                                    {% endfor %}
-
-                                                </tbody>
-
-                                            </table>
-
-                                        </div>
-
+                                </div>
+                            </td>
+                        </tr>
+
+                    {% empty %}
+
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <i class="bi bi-inbox fs-2 text-muted d-block mb-2"></i>
+                                {% if a_facturer and nombre_clients %}
+                                    <div class="fw-semibold">Plus rien à facturer</div>
+                                    <div class="text-muted small mt-1">
+                                        Aucun client n'a de reste à facturer pour {{ mois_nom }} {{ annee }}.
                                     </div>
-
-                                </td>
-
-                            </tr>
-
-                        {% empty %}
-
-                            <tr>
-
-                                <td colspan="7"
-                                    class="text-center py-5">
-
-                                    <i class="bi bi-inbox fs-2 text-muted d-block mb-2"></i>
-
-                                    <div class="fw-semibold">
-                                        Aucune prestation
-                                    </div>
-
+                                {% else %}
+                                    <div class="fw-semibold">Aucune prestation</div>
                                     <div class="text-muted small mt-1">
                                         Aucune prestation n'a été enregistrée pour {{ mois_nom }} {{ annee }}.
                                     </div>
+                                {% endif %}
+                            </td>
+                        </tr>
 
-                                    <a href="{% url 'facturation_sociale:nouvelle_prestation' %}"
-                                       class="btn btn-sm btn-primary mt-3">
-
-                                        <i class="bi bi-plus-lg me-1"></i>
-                                        Nouvelle prestation
-
-                                    </a>
-
-                                </td>
-
-                            </tr>
-
-                        {% endfor %}
-
+                    {% endfor %}
                     </tbody>
 
+                    {% if synthese_clients %}
+                        <tfoot class="table-light">
+                            <tr>
+                                <th class="text-start ps-4">{% if a_facturer %}Total affiché{% else %}Total{% endif %}</th>
+                                <th class="text-end text-nowrap">{{ totaux_affiches.total|floatformat:"2g" }}&nbsp;€</th>
+                                <th class="text-end text-nowrap">{{ totaux_affiches.deja_facture|floatformat:"2g" }}&nbsp;€</th>
+                                <th class="text-end text-nowrap fw-bold">{{ totaux_affiches.reste|floatformat:"2g" }}&nbsp;€</th>
+                                <th class="text-end text-nowrap">{{ totaux_affiches.cout|floatformat:"2g" }}&nbsp;€</th>
+                                <th class="text-end text-nowrap">{{ totaux_affiches.marge|floatformat:"2g" }}&nbsp;€</th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                    {% endif %}
+
                 </table>
-
             </div>
-
         </div>
 
     </div>
 
 
     <!-- =====================================================
-         SYNTHÈSE PRESTATIONS
+         SYNTHÈSE PAR PRESTATION
          ===================================================== -->
 
     <div class="card border-0 shadow-sm">
 
         <div class="card-header bg-white py-3">
-
-            <h5 class="mb-1">
-                Synthèse des prestations
-            </h5>
-
-            <div class="small text-muted">
-                Répartition par type de prestation
-            </div>
-
+            <h5 class="mb-1">Synthèse par prestation</h5>
+            <div class="small text-muted">Tout le mois</div>
         </div>
 
-
         <div class="card-body p-0">
-
             <div class="table-responsive">
-
                 <table class="table table-hover align-middle mb-0">
 
                     <thead class="table-light">
-
                         <tr>
-
-                            <th class="ps-4">
-                                Prestation
-                            </th>
-
-                            <th class="text-center">
-                                Lignes
-                            </th>
-
-                            <th class="text-center">
-                                Quantité
-                            </th>
-
-                            <th class="text-end">
-                                Facturé
-                            </th>
-
-                            <th class="text-end">
-                                Coût
-                            </th>
-
-                            <th class="text-end pe-4">
-                                Marge
-                            </th>
-
+                            <th class="text-start ps-4">Prestation</th>
+                            <th class="text-center">Qté</th>
+                            <th class="text-end">Total</th>
+                            <th class="text-end">Déjà facturé</th>
+                            <th class="text-end">Reste à facturer</th>
+                            <th class="text-end">Coût</th>
+                            <th class="text-end pe-4">Marge</th>
                         </tr>
-
                     </thead>
 
-
                     <tbody>
-
-                        {% for item in synthese_prestations %}
-
-                            <tr>
-
-                                <td class="ps-4 fw-semibold">
-                                    {{ item.prestation.nom }}
-                                </td>
-
-                                <td class="text-center">
-                                    {{ item.nombre_lignes }}
-                                </td>
-
-                                <td class="text-center">
-                                    {{ item.quantite|floatformat:-2 }}
-                                </td>
-
-                                <td class="text-end">
-                                    {{ item.facture|floatformat:2 }} €
-                                </td>
-
-                                <td class="text-end">
-                                    {{ item.cout|floatformat:2 }} €
-                                </td>
-
-                                <td class="text-end pe-4">
-
-                                    {% if item.marge < 0 %}
-
-                                        <span class="text-danger fw-semibold">
-                                            {{ item.marge|floatformat:2 }} €
-                                        </span>
-
-                                    {% else %}
-
-                                        <span class="text-success fw-semibold">
-                                            {{ item.marge|floatformat:2 }} €
-                                        </span>
-
-                                    {% endif %}
-
-                                </td>
-
-                            </tr>
-
-                        {% empty %}
-
-                            <tr>
-
-                                <td colspan="6"
-                                    class="text-center text-muted py-4">
-
-                                    Aucune donnée pour cette période.
-
-                                </td>
-
-                            </tr>
-
-                        {% endfor %}
-
+                    {% for item in synthese_prestations %}
+                        <tr>
+                            <td class="text-start ps-4 fw-semibold">{{ item.prestation.nom }}</td>
+                            <td class="text-center">{{ item.quantite|floatformat:"-2g" }}</td>
+                            <td class="text-end text-nowrap">{{ item.total|floatformat:"2g" }}&nbsp;€</td>
+                            <td class="text-end text-nowrap">{{ item.deja_facture|floatformat:"2g" }}&nbsp;€</td>
+                            <td class="text-end text-nowrap fw-bold">{{ item.reste|floatformat:"2g" }}&nbsp;€</td>
+                            <td class="text-end text-nowrap">{{ item.cout|floatformat:"2g" }}&nbsp;€</td>
+                            <td class="text-end text-nowrap pe-4">
+                                <span class="{% if item.marge < 0 %}text-danger{% else %}text-success{% endif %}">
+                                    {{ item.marge|floatformat:"2g" }}&nbsp;€
+                                </span>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                Aucune donnée pour cette période.
+                            </td>
+                        </tr>
+                    {% endfor %}
                     </tbody>
 
                 </table>
-
             </div>
-
         </div>
 
     </div>
 
 </div>
-
+</section>
 {% endblock %}
-

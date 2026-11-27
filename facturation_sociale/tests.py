@@ -328,24 +328,106 @@ class PrestationsParClientTests(TestCase):
         line.refresh_from_db()
         self.assertFalse(line.deja_facturee)
 
-    def test_gestion_separates_amounts_already_billed(self):
-        self.create_existing(tarif_client_applique=Decimal("100.00"))
-        self.create_existing(deja_facturee=True)  # 50 € facturés, 20 € de coût
-
-        response = self.client.get(
-            reverse("facturation_sociale:gestion") + "?mois=4&annee=2026"
+    def gestion(self, extra=""):
+        return self.client.get(
+            reverse("facturation_sociale:gestion") + "?mois=4&annee=2026" + extra
         )
-        context = response.context
-        self.assertEqual(context["total_facture"], Decimal("100.00"))
+
+    def billing_line(self, client, montant, billed=False, **overrides):
+        return self.create_existing(
+            client=client,
+            tarif_client_applique=Decimal(montant),
+            deja_facturee=billed,
+            **overrides,
+        )
+
+    def create_clients_a_and_b(self):
+        self.billing_line(self.client_a, "100.00")
+        self.billing_line(self.client_b, "50.00", billed=True)
+        self.billing_line(self.client_b, "30.00")
+
+    def displayed_clients(self, response):
+        return [item["client"] for item in response.context["synthese_clients"]]
+
+    def test_gestion_totals_and_synthesis(self):
+        self.create_clients_a_and_b()
+        context = self.gestion().context
+
+        self.assertEqual(context["total_prestations"], Decimal("180.00"))
         self.assertEqual(context["total_deja_facture"], Decimal("50.00"))
-        self.assertEqual(context["total_cout"], Decimal("40.00"))
-        self.assertEqual(context["total_marge"], Decimal("110.00"))
+        self.assertEqual(context["total_reste"], Decimal("130.00"))
+        self.assertEqual(context["total_cout"], Decimal("60.00"))
+        self.assertEqual(context["total_marge"], Decimal("120.00"))
+        self.assertEqual(context["nombre_clients"], 2)
+        self.assertEqual(context["nombre_clients_a_facturer"], 2)
 
-        for synthese in (context["synthese_clients"], context["synthese_prestations"]):
-            self.assertEqual(synthese[0]["facture"], Decimal("100.00"))
-            self.assertEqual(synthese[0]["cout"], Decimal("40.00"))
-            self.assertEqual(synthese[0]["marge"], Decimal("110.00"))
-        self.assertEqual(context["synthese_clients"][0]["deja_facture"], Decimal("50.00"))
+        beta = context["synthese_clients"][1]
+        self.assertEqual(
+            [beta[k] for k in ("total", "deja_facture", "reste", "cout", "marge")],
+            [Decimal(n) for n in ("80", "50", "30", "40", "40")],
+        )
+        self.assertEqual(len(beta["lignes"]), 2)
+        self.assertEqual(beta["statut"], "a_facturer")
 
-        self.assertContains(response, "À facturer ce mois")
-        self.assertContains(response, "Déjà facturé hors mensuel")
+        bulletin = context["synthese_prestations"][0]
+        self.assertEqual(bulletin["quantite"], Decimal("3"))
+        self.assertEqual(bulletin["total"], Decimal("180.00"))
+        self.assertEqual(bulletin["deja_facture"], Decimal("50.00"))
+        self.assertEqual(bulletin["reste"], Decimal("130.00"))
+
+    def test_gestion_filter_hides_only_fully_billed_clients(self):
+        self.create_clients_a_and_b()
+        self.assertEqual(
+            self.displayed_clients(self.gestion("&a_facturer=1")),
+            [self.client_a, self.client_b],
+        )
+
+        client_c = Client.objects.create(nom="Gamma", forme_juridique="SAS")
+        self.billing_line(client_c, "70.00", billed=True)
+
+        full = self.gestion()
+        self.assertEqual(
+            self.displayed_clients(full), [self.client_a, self.client_b, client_c]
+        )
+        self.assertEqual(full.context["synthese_clients"][2]["statut"], "tout_facture")
+
+        filtered = self.gestion("&a_facturer=1")
+        self.assertEqual(
+            self.displayed_clients(filtered), [self.client_a, self.client_b]
+        )
+        # Les cartes restent sur tout le mois ; le pied de tableau suit le filtre.
+        self.assertEqual(filtered.context["total_prestations"], Decimal("250.00"))
+        self.assertEqual(filtered.context["total_deja_facture"], Decimal("120.00"))
+        self.assertEqual(filtered.context["nombre_clients"], 3)
+        self.assertEqual(filtered.context["nombre_clients_a_facturer"], 2)
+        self.assertEqual(filtered.context["totaux_affiches"]["total"], Decimal("180.00"))
+        # Le filtre est conservé en changeant de mois.
+        self.assertContains(filtered, "?mois=3&annee=2026&a_facturer=1")
+        self.assertContains(filtered, "?mois=5&annee=2026&a_facturer=1")
+        self.assertNotContains(full, "&a_facturer=1")
+
+    def test_gestion_page_is_read_only_and_formats_amounts(self):
+        line = self.billing_line(
+            self.client_a,
+            "1234.50",
+            billed=True,
+            tarif_personnalise=True,
+            motif_tarif_personnalise='Accord "2026"',
+            cout_prestataire_personnalise=True,
+        )
+        response = self.gestion()
+
+        self.assertContains(response, "1\xa0234,50")
+        self.assertContains(
+            response,
+            'title="Tarif exceptionnel · standard 50,00 € · Motif : Accord &quot;2026&quot;"',
+        )
+        self.assertContains(response, 'title="Coût exceptionnel · standard 20,00 €"')
+        self.assertContains(
+            response,
+            f"{self.url}?client={self.client_a.pk}&mois=4&annee=2026",
+        )
+        for name in ("modifier_prestation_sociale", "supprimer_prestation_sociale"):
+            self.assertNotContains(
+                response, reverse(f"facturation_sociale:{name}", args=[line.pk])
+            )
