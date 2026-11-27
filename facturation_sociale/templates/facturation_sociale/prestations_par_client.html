@@ -87,7 +87,7 @@
             </div>
             <div class="fs-scope-mois">
                 <label class="form-label" for="scope-mois">Mois</label>
-                <select class="form-select" id="scope-mois" name="mois" {% if not scope_client %}disabled{% endif %}>
+                <select class="form-select" id="scope-mois" name="mois" {% if not scope_client or scope_client.archive %}disabled{% endif %}>
                     <option value="1" {% if mois == 1 %}selected{% endif %}>Janvier</option>
                     <option value="2" {% if mois == 2 %}selected{% endif %}>Février</option>
                     <option value="3" {% if mois == 3 %}selected{% endif %}>Mars</option>
@@ -104,7 +104,7 @@
             </div>
             <div class="fs-scope-annee">
                 <label class="form-label" for="scope-annee">Année</label>
-                <input class="form-control" id="scope-annee" name="annee" type="number" min="2000" max="2100" value="{{ annee }}" {% if not scope_client %}disabled{% endif %}>
+                <input class="form-control" id="scope-annee" name="annee" type="number" min="2000" max="2100" value="{{ annee }}" {% if not scope_client or scope_client.archive %}disabled{% endif %}>
             </div>
             <div class="fs-scope-paie">
                 <input class="form-check-input" id="paie-only" type="checkbox" autocomplete="off">
@@ -142,6 +142,7 @@
         <div class="card">
             <div class="card-header">
                 <strong>{% if selected_client.numero %}{{ selected_client.numero }} - {% endif %}{{ selected_client.nom }}</strong> — {{ mois|fs_nom_mois }} {{ annee }}
+                {% if selected_client.archive %}<span class="badge text-bg-secondary ms-2">Client archivé</span>{% endif %}
             </div>
             <div class="fs-defilement">
                 <table class="table table-sm align-middle fs-table" id="prestations-table">
@@ -180,9 +181,11 @@
                     </tfoot>
                 </table>
             </div>
+            {% if not selected_client.archive %}
             <div class="card-footer bg-white">
                 <button id="add-line" class="btn btn-sm btn-outline-primary" type="button">+ Ajouter une ligne</button>
             </div>
+            {% endif %}
         </div>
 
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
@@ -462,7 +465,7 @@ document.addEventListener("DOMContentLoaded", () => {
         tableBody.querySelectorAll("tr.fs-ligne").forEach(row => setupRow(row));
         refreshTotals();
 
-        document.getElementById("add-line").addEventListener("click", () => {
+        document.getElementById("add-line")?.addEventListener("click", () => {
             document.getElementById("empty-row")?.remove();
             const index = Number(totalForms.value);
             const fragment = document.createElement("template");

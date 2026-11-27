@@ -1,3 +1,4 @@
+import re
 from decimal import Decimal
 from html.parser import HTMLParser
 from pathlib import Path
@@ -302,84 +303,8 @@ class PrestationsParClientTests(DonneesFacturationSociale, TestCase):
         self.client.post(self.url, data)
         self.assertEqual(PrestationSociale.objects.count(), 1)
 
-    def test_individual_form_still_creates_a_prestation(self):
-        response = self.client.post(
-            reverse("facturation_sociale:nouvelle_prestation"),
-            {
-                "client": self.client_a.pk,
-                "prestation": self.prestation.pk,
-                "prestataire": self.prestataire.pk,
-                "mois": "4",
-                "annee": "2026",
-                "detail": "Individuelle",
-                "quantite": "1.00",
-                "mode_tarification": "standard",
-                "tarif_client_personnalise": "",
-                "motif_tarif_personnalise": "",
-                "mode_cout_prestataire": "standard",
-                "cout_prestataire_personnalise": "",
-                "motif_cout_prestataire_personnalise": "",
-            },
-        )
-        self.assertRedirects(response, reverse("facturation_sociale:nouvelle_prestation"))
-        self.assertEqual(PrestationSociale.objects.count(), 1)
-
-    def individual_payload(self, **overrides):
-        data = {
-            "client": self.client_a.pk,
-            "prestation": self.prestation.pk,
-            "prestataire": self.prestataire.pk,
-            "mois": "4",
-            "annee": "2026",
-            "detail": "",
-            "quantite": "1.00",
-            "mode_tarification": "standard",
-            "tarif_client_personnalise": "",
-            "motif_tarif_personnalise": "",
-            "mode_cout_prestataire": "standard",
-            "cout_prestataire_personnalise": "",
-            "motif_cout_prestataire_personnalise": "",
-        }
-        data.update(overrides)
-        return data
-
     def test_existing_prestations_are_not_already_billed_by_default(self):
         line = self.create_existing()
-        line.refresh_from_db()
-        self.assertFalse(line.deja_facturee)
-
-    def test_new_prestation_can_be_marked_as_already_billed(self):
-        self.client.post(
-            reverse("facturation_sociale:nouvelle_prestation"),
-            self.individual_payload(deja_facturee="on"),
-        )
-        self.assertTrue(PrestationSociale.objects.get().deja_facturee)
-
-    def test_editing_a_billed_prestation_keeps_the_flag(self):
-        line = self.create_existing(deja_facturee=True)
-        url = reverse("facturation_sociale:modifier_prestation_sociale", args=[line.pk])
-
-        # On renvoie exactement ce que la page d'édition pré-remplit.
-        response = self.client.get(url)
-        self.assertContains(response, "Cette prestation a déjà été facturée.")
-        form = response.context["form"]
-        self.assertIn("checked", str(form["deja_facturee"]))
-        data = {
-            name: form[name].value()
-            for name in form.fields
-            if form[name].value() not in (None, False)
-        }
-        data["detail"] = "Corrigé"
-
-        self.assertEqual(self.client.post(url, data).status_code, 302)
-        line.refresh_from_db()
-        self.assertEqual(line.detail, "Corrigé")
-        self.assertTrue(line.deja_facturee)
-
-    def test_editing_can_uncheck_the_flag(self):
-        line = self.create_existing(deja_facturee=True)
-        url = reverse("facturation_sociale:modifier_prestation_sociale", args=[line.pk])
-        self.client.post(url, self.individual_payload())
         line.refresh_from_db()
         self.assertFalse(line.deja_facturee)
 
@@ -501,10 +426,125 @@ class PrestationsParClientTests(DonneesFacturationSociale, TestCase):
             response,
             f"{self.url}?client={self.client_a.pk}&mois=4&annee=2026",
         )
-        for name in ("modifier_prestation_sociale", "supprimer_prestation_sociale"):
-            self.assertNotContains(
-                response, reverse(f"facturation_sociale:{name}", args=[line.pk])
-            )
+        self.assertNotContains(
+            response,
+            reverse("facturation_sociale:modifier_prestation_sociale", args=[line.pk]),
+        )
+
+
+class SaisieUniqueTests(DonneesFacturationSociale, TestCase):
+    """La Saisie est la seule page de création et de modification."""
+
+    def page_url(self, client=None, mois=4, annee=2026):
+        return f"{self.url}?client={(client or self.client_a).pk}&mois={mois}&annee={annee}"
+
+    def archive(self, client):
+        client.archive = True
+        client.save()
+
+    def test_new_prestation_url_redirects_with_period(self):
+        url = reverse("facturation_sociale:nouvelle_prestation")
+        self.assertRedirects(self.client.get(url), self.url)
+        self.assertRedirects(
+            self.client.get(f"{url}?mois=4&annee=2026"), f"{self.url}?mois=4&annee=2026"
+        )
+
+    def test_edit_url_redirects_to_the_client_and_month_of_the_line(self):
+        line = self.create_existing(client=self.client_b, mois=7, annee=2025)
+        url = reverse("facturation_sociale:modifier_prestation_sociale", args=[line.pk])
+        target = self.page_url(self.client_b, 7, 2025)
+        self.assertRedirects(self.client.get(url), target)
+
+        # Un POST n'est plus traité : rien ne change.
+        self.assertRedirects(self.client.post(url, {"detail": "Ignoré"}), target)
+        line.refresh_from_db()
+        self.assertEqual(line.detail, "")
+
+        missing = reverse("facturation_sociale:modifier_prestation_sociale", args=[999])
+        self.assertEqual(self.client.get(missing).status_code, 404)
+
+    def test_saisie_alias(self):
+        url = reverse("facturation_sociale:saisie")
+        self.assertEqual(url, "/facturation-sociale/saisie/")
+        response = self.client.get(f"{url}?client={self.client_a.pk}&mois=4&annee=2026")
+        self.assertEqual(response.context["selected_client"], self.client_a)
+
+    def test_menu_marks_the_active_entry(self):
+        saisie = reverse("facturation_sociale:saisie")
+        cases = {
+            saisie: saisie,
+            self.url: saisie,
+            reverse("facturation_sociale:gestion"): reverse("facturation_sociale:gestion"),
+            reverse("facturation_sociale:configurations"):
+                reverse("facturation_sociale:configurations"),
+        }
+        for page, active in cases.items():
+            with self.subTest(page=page):
+                content = self.client.get(page).content.decode()
+                self.assertNotIn("Nouvelle prestation", content)
+                self.assertEqual(
+                    re.findall(r'active"\s+href="(/facturation-sociale/[^"]*)"', content),
+                    [active],
+                )
+
+    def test_archived_client_is_accepted_only_with_lines_on_the_period(self):
+        line = self.create_existing()
+        self.archive(self.client_a)
+
+        response = self.client.get(self.page_url())
+        self.assertEqual(response.context["selected_client"], self.client_a)
+        self.assertContains(response, "Client archivé</span>")
+        self.assertNotIn(self.client_a, response.context["clients"])
+        self.assertNotContains(response, 'id="add-line" class=')
+        self.assertContains(response, 'id="scope-mois" name="mois" disabled')
+
+        # Le lien « Saisir » de Gestion et l'ancienne URL de modification y mènent.
+        gestion = self.client.get(
+            reverse("facturation_sociale:gestion") + "?mois=4&annee=2026"
+        )
+        self.assertContains(gestion, self.page_url())
+        self.assertRedirects(
+            self.client.get(
+                reverse("facturation_sociale:modifier_prestation_sociale", args=[line.pk])
+            ),
+            self.page_url(),
+        )
+
+        response = self.client.get(self.page_url(mois=5))
+        self.assertIsNone(response.context["selected_client"])
+        self.assertContains(response, "Le client sélectionné est invalide ou archivé.")
+
+    def test_archived_client_lines_can_be_modified_but_not_added(self):
+        line = self.create_existing()
+        self.archive(self.client_a)
+
+        response = self.client.post(
+            self.url,
+            self.payload([{"id": str(line.pk), "detail": "Refusé"}, {}], token="ajout"),
+        )
+        self.assertContains(response, "aucune nouvelle ligne ne peut être ajoutée")
+        self.assertEqual(PrestationSociale.objects.count(), 1)
+        line.refresh_from_db()
+        self.assertEqual(line.detail, "")
+
+        response = self.client.post(
+            self.url,
+            self.payload([{"id": str(line.pk), "detail": "Corrigé"}], token="modif"),
+        )
+        self.assertRedirects(response, self.page_url())
+        line.refresh_from_db()
+        self.assertEqual(line.detail, "Corrigé")
+
+    def test_deleting_the_last_line_of_an_archived_client_returns_to_gestion(self):
+        line = self.create_existing()
+        self.archive(self.client_a)
+        response = self.client.post(
+            self.url, self.payload([{"id": str(line.pk), "DELETE": "on"}])
+        )
+        gestion = reverse("facturation_sociale:gestion") + "?mois=4&annee=2026"
+        self.assertRedirects(response, gestion, fetch_redirect_response=False)
+        self.assertContains(self.client.get(gestion), "Prestations supprimées.")
+        self.assertFalse(PrestationSociale.objects.exists())
 
 
 class SaisieRefonteTests(DonneesFacturationSociale, TestCase):

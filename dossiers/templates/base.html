@@ -543,19 +543,19 @@
     <div class="collapse ps-4" id="menuFACTURATION">
 
         <a class="nav-link text-white d-flex align-items-center gap-2
-           {% if request.resolver_match.url_name == 'facturation_sociale:gestion' %}active{% endif %}"
+           {% if request.resolver_match.view_name == 'facturation_sociale:gestion' %}active{% endif %}"
            href="{% url 'facturation_sociale:gestion' %}">
             <span class="sidebar-text">Gestion</span>
         </a>
 
         <a class="nav-link text-white d-flex align-items-center gap-2
-           {% if request.resolver_match.url_name == 'facturation_sociale:nouvelle_prestation' %}active{% endif %}"
-           href="{% url 'facturation_sociale:nouvelle_prestation' %}">
-            <span class="sidebar-text">Nouvelle prestation</span>
+           {% if request.resolver_match.view_name == 'facturation_sociale:saisie' or request.resolver_match.view_name == 'facturation_sociale:prestations_par_client' %}active{% endif %}"
+           href="{% url 'facturation_sociale:saisie' %}">
+            <span class="sidebar-text">Saisie</span>
         </a>
 
         <a class="nav-link text-white d-flex align-items-center gap-2
-           {% if request.resolver_match.url_name == 'facturation_sociale:configurations' %}active{% endif %}"
+           {% if request.resolver_match.view_name == 'facturation_sociale:configurations' %}active{% endif %}"
            href="{% url 'facturation_sociale:configurations' %}">
             <span class="sidebar-text">Configurations</span>
         </a>

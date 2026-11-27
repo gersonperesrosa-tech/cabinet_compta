@@ -33,6 +33,12 @@
 
     </div>
 
+    {% for message in messages %}
+        {% if "fs-gestion" in message.tags %}
+            <div class="alert alert-info">{{ message }}</div>
+        {% endif %}
+    {% endfor %}
+
 
     <!-- =====================================================
          NAVIGATION PÉRIODE

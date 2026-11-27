@@ -11,11 +11,6 @@ urlpatterns = [
         name="modifier_prestation_sociale",
     ),
     path(
-        "prestation/<int:pk>/supprimer/",
-        views.supprimer_prestation_sociale,
-        name="supprimer_prestation_sociale",
-    ),
-    path(
         "gestion/",
         views.gestion,
         name="gestion",
@@ -25,6 +20,12 @@ urlpatterns = [
         views.nouvelle_prestation,
         name="nouvelle_prestation",
     ),
+    path(
+        "saisie/",
+        views.prestations_par_client,
+        name="saisie",
+    ),
+    # Ancienne adresse de la Saisie, conservée pour les favoris.
     path(
         "prestations-par-client/",
         views.prestations_par_client,

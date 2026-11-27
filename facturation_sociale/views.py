@@ -3,6 +3,8 @@ from django.db import transaction
 from django.forms import formset_factory
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils.http import urlencode
 from django.utils.crypto import get_random_string
 from django.utils.timezone import localdate
 
@@ -10,7 +12,6 @@ from dossiers.models import Client
 
 from .decorators import acces_cabinet
 from .forms import (
-    NouvellePrestationForm,
     PrestationLigneForm,
     PrestataireSocialForm,
     TarifPrestataireForm,
@@ -340,372 +341,27 @@ def gestion(request):
     )
 
 
+def _url_saisie(**params):
+    url = reverse("facturation_sociale:prestations_par_client")
+    return f"{url}?{urlencode(params)}" if params else url
+
+
 @acces_cabinet
 def modifier_prestation_sociale(request, pk):
-    from django.shortcuts import get_object_or_404, redirect
-
-    ligne = get_object_or_404(
-        PrestationSociale.objects.select_related(
-            "client",
-            "prestation",
-            "prestataire",
-        ),
-        pk=pk,
-    )
-
-    if request.method == "POST":
-        form = NouvellePrestationForm(request.POST)
-
-        if form.is_valid():
-
-            prestation = form.cleaned_data["prestation"]
-            tarif_prestataire = form.cleaned_data["tarif_prestataire_obj"]
-
-            tarif_standard = prestation.tarif_client_standard
-
-            mode_tarification = form.cleaned_data["mode_tarification"]
-
-            if mode_tarification == "personnalise":
-                tarif_applique = form.cleaned_data["tarif_client_personnalise"]
-                tarif_personnalise = True
-                motif = form.cleaned_data.get("motif_tarif_personnalise", "")
-            else:
-                tarif_applique = tarif_standard
-                tarif_personnalise = False
-                motif = ""
-
-            ligne.client = form.cleaned_data["client"]
-            ligne.prestation = prestation
-            ligne.prestataire = form.cleaned_data["prestataire"]
-
-            ligne.mois = form.cleaned_data["mois"]
-            ligne.annee = form.cleaned_data["annee"]
-
-            ligne.detail = form.cleaned_data.get("detail", "")
-            ligne.quantite = form.cleaned_data["quantite"]
-            ligne.deja_facturee = form.cleaned_data["deja_facturee"]
-
-            # Nouveaux snapshots correspondant à la modification volontaire
-            ligne.tarif_client_standard_snapshot = tarif_standard
-            ligne.tarif_client_applique = tarif_applique
-            ligne.tarif_personnalise = tarif_personnalise
-            ligne.motif_tarif_personnalise = motif
-
-            cout_prestataire_standard = tarif_prestataire.cout_unitaire
-
-            if form.cleaned_data["mode_cout_prestataire"] == "personnalise":
-                cout_prestataire_applique = form.cleaned_data[
-                    "cout_prestataire_personnalise"
-                ]
-                cout_prestataire_personnalise = True
-                motif_cout_prestataire = form.cleaned_data.get(
-                    "motif_cout_prestataire_personnalise",
-                    "",
-                )
-            else:
-                cout_prestataire_applique = cout_prestataire_standard
-                cout_prestataire_personnalise = False
-                motif_cout_prestataire = ""
-
-            ligne.cout_prestataire_standard_snapshot = (
-                cout_prestataire_standard
-            )
-            ligne.cout_prestataire_unitaire_snapshot = (
-                cout_prestataire_applique
-            )
-            ligne.cout_prestataire_personnalise = (
-                cout_prestataire_personnalise
-            )
-            ligne.motif_cout_prestataire_personnalise = (
-                motif_cout_prestataire
-            )
-
-            ligne.save()
-
-            messages.success(
-                request,
-                "La prestation a été modifiée avec succès."
-            )
-
-            return redirect(
-                f"/facturation-sociale/gestion/?mois={ligne.mois}&annee={ligne.annee}"
-            )
-
-    else:
-
-        initial = {
-            "mois": ligne.mois,
-            "annee": ligne.annee,
-            "client": ligne.client_id,
-            "prestation": ligne.prestation_id,
-            "prestataire": ligne.prestataire_id,
-            "detail": ligne.detail,
-            "quantite": ligne.quantite,
-
-            "mode_tarification": (
-                "personnalise"
-                if ligne.tarif_personnalise
-                else "standard"
-            ),
-
-            "tarif_client_personnalise": (
-                ligne.tarif_client_applique
-                if ligne.tarif_personnalise
-                else None
-            ),
-
-            "motif_tarif_personnalise": (
-                ligne.motif_tarif_personnalise
-            ),
-
-            "mode_cout_prestataire": (
-                "personnalise"
-                if ligne.cout_prestataire_personnalise
-                else "standard"
-            ),
-
-            "cout_prestataire_personnalise": (
-                ligne.cout_prestataire_unitaire_snapshot
-                if ligne.cout_prestataire_personnalise
-                else None
-            ),
-
-            "motif_cout_prestataire_personnalise": (
-                ligne.motif_cout_prestataire_personnalise
-            ),
-
-            "deja_facturee": ligne.deja_facturee,
-        }
-
-        form = NouvellePrestationForm(initial=initial)
-
-    clients_queryset = form.fields["client"].queryset
-
-    context = {
-        "form": form,
-
-        "mode_modification": True,
-        "ligne_modifiee": ligne,
-
-        "tarifs_prestataires": list(
-            TarifPrestataire.objects
-            .filter(actif=True)
-            .values(
-                "prestation_id",
-                "prestataire_id",
-                "cout_unitaire",
-            )
-        ),
-
-        "prestations_data": list(
-            TypePrestation.objects
-            .filter(actif=True)
-            .values(
-                "id",
-                "tarif_client_standard",
-            )
-        ),
-
-        "clients_paie_ids": list(
-            clients_queryset
-            .filter(module_paie=True)
-            .values_list("id", flat=True)
-        ),
-    }
-
-    return render(
-        request,
-        "facturation_sociale/nouvelle_prestation.html",
-        context,
-    )
-
-
-@acces_cabinet
-def supprimer_prestation_sociale(request, pk):
-    from django.contrib import messages
-    from django.http import HttpResponseNotAllowed
-    from django.shortcuts import get_object_or_404, redirect
-
-    if request.method != "POST":
-        return HttpResponseNotAllowed(["POST"])
-
-    ligne = get_object_or_404(
-        PrestationSociale,
-        pk=pk,
-    )
-
-    mois = ligne.mois
-    annee = ligne.annee
-
-    ligne.delete()
-
-    messages.success(
-        request,
-        "La prestation a été supprimée."
-    )
-
+    """Ancienne page de modification : renvoie vers la Saisie."""
+    ligne = get_object_or_404(PrestationSociale, pk=pk)
     return redirect(
-        f"/facturation-sociale/gestion/?mois={mois}&annee={annee}"
+        _url_saisie(client=ligne.client_id, mois=ligne.mois, annee=ligne.annee)
     )
+
 
 @acces_cabinet
 def nouvelle_prestation(request):
-
-    if request.method == "POST":
-        form = NouvellePrestationForm(request.POST)
-
-        if form.is_valid():
-
-            prestation = form.cleaned_data["prestation"]
-            tarif_prestataire = (
-                form.cleaned_data["tarif_prestataire_obj"]
-            )
-
-            tarif_standard = (
-                prestation.tarif_client_standard
-            )
-
-            if (
-                form.cleaned_data["mode_tarification"]
-                == "personnalise"
-            ):
-                tarif_applique = (
-                    form.cleaned_data[
-                        "tarif_client_personnalise"
-                    ]
-                )
-                tarif_personnalise = True
-
-            else:
-                tarif_applique = tarif_standard
-                tarif_personnalise = False
-            # Coût prestataire :
-            # le tarif configuré reste la référence standard.
-            cout_prestataire_standard = (
-                tarif_prestataire.cout_unitaire
-            )
-
-            if (
-                form.cleaned_data["mode_cout_prestataire"]
-                == "personnalise"
-            ):
-                cout_prestataire_applique = (
-                    form.cleaned_data[
-                        "cout_prestataire_personnalise"
-                    ]
-                )
-                cout_prestataire_personnalise = True
-                motif_cout_prestataire = (
-                    form.cleaned_data.get(
-                        "motif_cout_prestataire_personnalise",
-                        "",
-                    )
-                )
-            else:
-                cout_prestataire_applique = (
-                    cout_prestataire_standard
-                )
-                cout_prestataire_personnalise = False
-                motif_cout_prestataire = ""
-
-            prestation_sociale = PrestationSociale(
-                client=form.cleaned_data["client"],
-                prestation=prestation,
-                prestataire=form.cleaned_data["prestataire"],
-                mois=form.cleaned_data["mois"],
-                annee=form.cleaned_data["annee"],
-                detail=form.cleaned_data["detail"],
-                quantite=form.cleaned_data["quantite"],
-                deja_facturee=form.cleaned_data["deja_facturee"],
-
-                tarif_client_standard_snapshot=(
-                    tarif_standard
-                ),
-
-                tarif_client_applique=(
-                    tarif_applique
-                ),
-
-                tarif_personnalise=(
-                    tarif_personnalise
-                ),
-
-                motif_tarif_personnalise=(
-                    form.cleaned_data[
-                        "motif_tarif_personnalise"
-                    ]
-                    if tarif_personnalise
-                    else ""
-                ),
-
-                cout_prestataire_standard_snapshot=(
-                    cout_prestataire_standard
-                ),
-
-                cout_prestataire_unitaire_snapshot=(
-                    cout_prestataire_applique
-                ),
-
-                cout_prestataire_personnalise=(
-                    cout_prestataire_personnalise
-                ),
-
-                motif_cout_prestataire_personnalise=(
-                    motif_cout_prestataire
-                ),
-            )
-
-            prestation_sociale.save()
-
-            return redirect(
-                "facturation_sociale:nouvelle_prestation"
-            )
-
-    else:
-        form = NouvellePrestationForm()
-
-    # Données nécessaires au JavaScript.
-    tarifs_prestataires = list(
-        TarifPrestataire.objects
-        .filter(
-            actif=True,
-            prestation__actif=True,
-            prestataire__actif=True,
-        )
-        .values(
-            "prestation_id",
-            "prestataire_id",
-            "cout_unitaire",
-        )
-    )
-
-    prestations_data = list(
-        TypePrestation.objects
-        .filter(actif=True)
-        .values(
-            "id",
-            "tarif_client_standard",
-        )
-    )
-
-    clients_paie_ids = list(
-        form.fields["client"].queryset
-        .filter(module_paie=True)
-        .values_list("id", flat=True)
-    )
-
-    context = {
-        "form": form,
-        "tarifs_prestataires": tarifs_prestataires,
-        "prestations_data": prestations_data,
-        "clients_paie_ids": clients_paie_ids,
+    """Ancienne page de création : renvoie vers la Saisie."""
+    periode = {
+        nom: request.GET[nom] for nom in ("mois", "annee") if request.GET.get(nom)
     }
-
-    return render(
-        request,
-        "facturation_sociale/nouvelle_prestation.html",
-        context,
-    )
+    return redirect(_url_saisie(**periode))
 
 
 @acces_cabinet
@@ -734,11 +390,19 @@ def prestations_par_client(request):
     except (TypeError, ValueError):
         client_id = None
 
-    scope_client = (
-        _clients_facturation_sociale().filter(pk=client_id).first()
-        if client_id
-        else None
-    )
+    scope_client = None
+    if client_id:
+        scope_client = _clients_facturation_sociale().filter(pk=client_id).first()
+        if not scope_client and period_is_valid:
+            # Client archivé : accepté seulement s'il a déjà des prestations
+            # sur la période (modification et suppression, aucun ajout).
+            scope_client = Client.objects.filter(
+                pk=client_id,
+                archive=True,
+                pk__in=PrestationSociale.objects.filter(
+                    mois=mois, annee=annee
+                ).values("client_id"),
+            ).first()
     selected_client = scope_client if period_is_valid else None
     lignes = []
     scope_error = ""
@@ -801,6 +465,13 @@ def prestations_par_client(request):
                     continue
 
                 nouvelle = ligne_existante is None
+                if nouvelle and selected_client.archive:
+                    form.add_error(
+                        None,
+                        "Client archivé : aucune nouvelle ligne ne peut être ajoutée.",
+                    )
+                    is_valid = False
+                    continue
                 prestation_changee = (
                     nouvelle
                     or ligne_existante.prestation_id != cleaned_data["prestation"].pk
@@ -884,6 +555,20 @@ def prestations_par_client(request):
                         processed_tokens[-19:] + [token]
                     )
 
+                # Plus aucune ligne : la saisie d'un client archivé n'est plus
+                # accessible, on revient à la Gestion du mois.
+                if selected_client.archive and not PrestationSociale.objects.filter(
+                    client=selected_client, mois=mois, annee=annee
+                ).exists():
+                    messages.info(
+                        request,
+                        f"Prestations supprimées. {selected_client.nom} est archivé : "
+                        "sa saisie n'est plus disponible pour ce mois.",
+                        extra_tags="fs-gestion",
+                    )
+                    url = reverse("facturation_sociale:gestion")
+                    return redirect(f"{url}?mois={mois}&annee={annee}")
+
                 return redirect(
                     f"{request.path}?client={selected_client.pk}&mois={mois}&annee={annee}"
                 )
@@ -902,11 +587,6 @@ def prestations_par_client(request):
         "annee": annee,
         "scope_error": scope_error,
         "submission_id": get_random_string(32),
-        "clients_paie_ids": list(
-            _clients_facturation_sociale()
-            .filter(module_paie=True)
-            .values_list("pk", flat=True)
-        ),
         **_donnees_saisie_groupee(),
     }
     return render(request, "facturation_sociale/prestations_par_client.html", context)
