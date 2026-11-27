@@ -2,11 +2,13 @@ from decimal import Decimal
 from html.parser import HTMLParser
 from pathlib import Path
 
+from django.contrib.auth.models import Group, User
 from django.test import TestCase
 from django.urls import reverse
 
 from dossiers.models import Client
 
+from . import urls as fs_urls
 from .models import (
     PrestataireSocial,
     PrestationSociale,
@@ -84,6 +86,7 @@ class DonneesFacturationSociale:
     """Jeu de données et aides communs aux tests de l'app."""
 
     def setUp(self):
+        self.client.force_login(User.objects.create_user("cabinet", is_staff=True))
         self.client_a = Client.objects.create(nom="Alpha", forme_juridique="SARL")
         self.client_b = Client.objects.create(nom="Beta", forme_juridique="SAS")
         self.prestation = TypePrestation.objects.create(
@@ -667,3 +670,55 @@ class SaisieRefonteTests(DonneesFacturationSociale, TestCase):
         response = self.page()
         self.assertContains(response, 'data-anomalie-cout="1"')
         self.assertContains(response, "Enregistrer cette page remplacera leur coût")
+
+
+class AccesTests(TestCase):
+    """Toute l'app est réservée au personnel du cabinet."""
+
+    def urls(self):
+        # Parcourt urls.py : une nouvelle URL est vérifiée automatiquement.
+        for pattern in fs_urls.urlpatterns:
+            kwargs = {"pk": 1} if "<int:pk>" in str(pattern.pattern) else {}
+            yield reverse(f"facturation_sociale:{pattern.name}", kwargs=kwargs)
+
+    def user_in_group(self, group):
+        user = User.objects.create_user(group.lower())
+        user.groups.add(Group.objects.create(name=group))
+        return user
+
+    def assert_denied(self, user):
+        self.client.force_login(user)
+        for url in self.urls():
+            for method in (self.client.get, self.client.post):
+                with self.subTest(url=url, method=method.__name__):
+                    self.assertRedirects(
+                        method(url), reverse("access_denied"),
+                        fetch_redirect_response=False,
+                    )
+
+    def test_anonymous_is_sent_to_login(self):
+        for url in self.urls():
+            for method in (self.client.get, self.client.post):
+                with self.subTest(url=url, method=method.__name__):
+                    response = method(url)
+                    self.assertEqual(response.status_code, 302)
+                    self.assertTrue(response.url.startswith("/login/?next="))
+
+    def test_client_group_is_denied(self):
+        self.assert_denied(self.user_in_group("Client"))
+
+    def test_partner_group_is_denied(self):
+        self.assert_denied(self.user_in_group("Partenaire"))
+
+    def test_staff_and_superuser_are_accepted(self):
+        users = (
+            User.objects.create_user("equipe", is_staff=True),
+            User.objects.create_user("super", is_superuser=True),
+        )
+        for user in users:
+            self.client.force_login(user)
+            for name in ("gestion", "prestations_par_client", "configurations",
+                         "prestations", "prestataires", "tarifs_prestataires"):
+                with self.subTest(user=user.username, name=name):
+                    url = reverse(f"facturation_sociale:{name}")
+                    self.assertEqual(self.client.get(url).status_code, 200)

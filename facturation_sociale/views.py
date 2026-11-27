@@ -8,6 +8,7 @@ from django.utils.timezone import localdate
 
 from dossiers.models import Client
 
+from .decorators import acces_cabinet
 from .forms import (
     NouvellePrestationForm,
     PrestationLigneForm,
@@ -145,6 +146,7 @@ def _appliquer_ligne_groupee(ligne, cleaned_data, tarif_prestataire, nouvelle):
         ligne.motif_cout_prestataire_personnalise = ""
 
 
+@acces_cabinet
 def gestion(request):
     from calendar import monthrange
     from datetime import date
@@ -338,6 +340,7 @@ def gestion(request):
     )
 
 
+@acces_cabinet
 def modifier_prestation_sociale(request, pk):
     from django.shortcuts import get_object_or_404, redirect
 
@@ -517,6 +520,7 @@ def modifier_prestation_sociale(request, pk):
     )
 
 
+@acces_cabinet
 def supprimer_prestation_sociale(request, pk):
     from django.contrib import messages
     from django.http import HttpResponseNotAllowed
@@ -544,6 +548,7 @@ def supprimer_prestation_sociale(request, pk):
         f"/facturation-sociale/gestion/?mois={mois}&annee={annee}"
     )
 
+@acces_cabinet
 def nouvelle_prestation(request):
 
     if request.method == "POST":
@@ -703,6 +708,7 @@ def nouvelle_prestation(request):
     )
 
 
+@acces_cabinet
 def prestations_par_client(request):
     """Création et édition atomique des prestations d'un client/période."""
     today = localdate()
@@ -906,6 +912,7 @@ def prestations_par_client(request):
     return render(request, "facturation_sociale/prestations_par_client.html", context)
 
 
+@acces_cabinet
 def configurations(request):
     return render(
         request,
@@ -913,6 +920,7 @@ def configurations(request):
     )
 
 
+@acces_cabinet
 def prestations(request):
     prestations = TypePrestation.objects.all()
 
@@ -946,6 +954,7 @@ def prestations(request):
     )
 
 
+@acces_cabinet
 def modifier_prestation(request, pk):
     prestation = get_object_or_404(
         TypePrestation,
@@ -990,6 +999,7 @@ def modifier_prestation(request, pk):
     )
 
 
+@acces_cabinet
 def prestataires(request):
     prestataires = PrestataireSocial.objects.all()
 
@@ -1023,6 +1033,7 @@ def prestataires(request):
     )
 
 
+@acces_cabinet
 def modifier_prestataire(request, pk):
     prestataire = get_object_or_404(
         PrestataireSocial,
@@ -1067,6 +1078,7 @@ def modifier_prestataire(request, pk):
     )
 
 
+@acces_cabinet
 def tarifs_prestataires(request):
     tarifs = (
         TarifPrestataire.objects
@@ -1109,6 +1121,7 @@ def tarifs_prestataires(request):
     )
 
 
+@acces_cabinet
 def modifier_tarif_prestataire(request, pk):
     tarif = get_object_or_404(
         TarifPrestataire.objects.select_related(
